@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities; 
+
+@layer base {
+  html,
+  body,
+  #root {
+    @apply h-full overflow-hidden bg-gray-50;
+  }
+
+  #root > div {
+    @apply h-full;
+  }
+}
+
+@layer utilities {
+  .highlight-order {
+    animation: highlight 2.5s ease-out;
+  }
+
+  @keyframes autoplay-progress-kf {
+    from {
+      width: 0%;
+    }
+    to {
+      width: 100%;
+    }
+  }
+
+  @keyframes highlight {
+    0% {
+      background-color: #dbeafe;
+      box-shadow: 0 0 0 4px #93c5fd;
+    }
+    80% {
+      background-color: #dbeafe;
+      box-shadow: 0 0 0 4px #93c5fd;
+    }
+    100% {
+      background-color: #ffffff;
+      box-shadow: 0 0 0 0px rgba(147, 197, 253, 0);
+    }
+  }
+
+  /* Hide scrollbar for horizontal filter bar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth scroll behavior for filter bar */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+}

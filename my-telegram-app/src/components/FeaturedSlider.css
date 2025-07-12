@@ -1,0 +1,15 @@
+/* If using FeaturedSlider.css */
+.slides-wrapper {
+    /* ... other styles ... */
+    touch-action: pan-y; /* Allows vertical scroll, prioritizes horizontal for slider if content overflows */
+    user-select: none; /* Prevents text selection during drag */
+}@keyframes autoplay-progress-kf {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.animate-progress {
+  animation-name: autoplay-progress-kf;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}

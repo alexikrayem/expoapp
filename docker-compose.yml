@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build: 
+      context: ./telegram-app-backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ADMIN_SECRET=${JWT_ADMIN_SECRET}
+      - JWT_DELIVERY_SECRET=${JWT_DELIVERY_SECRET}
+    volumes:
+      - ./telegram-app-backend:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=medical_expo
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # Customer TMA (Development Server)
+  customer-tma:
+    build:
+      context: ./my-telegram-app
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:3001
+    volumes:
+      - ./my-telegram-app:/app
+      - /app/node_modules
+    networks:
+      - app-network
+
+  # Delivery Agent TMA (Development Server)
+  delivery-tma:
+    build:
+      context: ./delivery-agent-tma
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5174:5173"
+    environment:
+      - VITE_DELIVERY_API_BASE_URL=http://localhost:3001
+    volumes:
+      - ./delivery-agent-tma:/app
+      - /app/node_modules
+    networks:
+      - app-network
+
+  # Supplier Admin Panel (Development Server)
+  supplier-panel:
+    build:
+      context: ./supplier-admin-panel
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5175:5173"
+    environment:
+      - VITE_SUPPLIER_API_BASE_URL=http://localhost:3001
+      - VITE_CLOUDINARY_CLOUD_NAME=${VITE_CLOUDINARY_CLOUD_NAME}
+      - VITE_CLOUDINARY_UPLOAD_PRESET=${VITE_CLOUDINARY_UPLOAD_PRESET}
+    volumes:
+      - ./supplier-admin-panel:/app
+      - /app/node_modules
+    networks:
+      - app-network
+
+  # Platform Admin Panel (Development Server)
+  admin-panel:
+    build:
+      context: ./platform-admin-panel
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5176:5173"
+    environment:
+      - VITE_ADMIN_API_BASE_URL=http://localhost:3001
+    volumes:
+      - ./platform-admin-panel:/app
+      - /app/node_modules
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
