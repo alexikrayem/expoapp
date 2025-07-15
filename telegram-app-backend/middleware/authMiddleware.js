@@ -10,14 +10,20 @@ if (!BOT_TOKEN) {
 }
 
 const validateTelegramAuth = (req, res, next) => {
+    // Check for a special header ONLY used for local development
+    const isDevRequest = req.header('X-Dev-Bypass-Auth') === 'true';
+
+    if (process.env.NODE_ENV === 'development' && isDevRequest) {
+        console.warn('⚠️  Bypassing Telegram auth for local development via X-Dev-Bypass-Auth header.');
+        // This mock user MUST match the one on your client-side for consistency
+        req.telegramUser = { id: 123456789, first_name: 'Local', last_name: 'Dev' };
+        return next();
+    }
+    
+    // --- Standard Production Logic ---
     const initDataString = req.header('X-Telegram-Init-Data');
 
     if (!initDataString) {
-        if (process.env.NODE_ENV === 'development') {
-            console.warn('⚠️  Bypassing Telegram auth for local development. Using mock user.');
-            req.telegramUser = { id: 123456789, first_name: 'Local', last_name: 'Dev' };
-            return next();
-        }
         return res.status(401).json({ message: 'Authentication required: X-Telegram-Init-Data header is missing.' });
     }
 
@@ -39,7 +45,7 @@ const validateTelegramAuth = (req, res, next) => {
         
         if (calculatedHash === hash) {
             const user = JSON.parse(params.get('user'));
-            req.telegramUser = user; // IMPORTANT: Attaching secure user data to the request
+            req.telegramUser = user;
             return next();
         }
 
