@@ -1,6 +1,7 @@
-// src/api/apiClient.js
+// my-telegram-app/src/api/apiClient.js
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const IS_DEVELOPMENT = import.meta.env.DEV; // Vite provides this boolean
 
 async function apiClient(endpoint, { body, ...customConfig } = {}) {
     const tg = window.Telegram?.WebApp;
@@ -8,12 +9,18 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
 
     const headers = { 'Content-Type': 'application/json' };
 
-    if (initData) {
+    // This is the key change:
+    if (IS_DEVELOPMENT && !initData) {
+        // If we're in development mode AND there's no real Telegram data,
+        // send the special bypass header.
+        headers['X-Dev-Bypass-Auth'] = 'true';
+        console.log("DEV MODE: Sending bypass auth header.");
+    } else if (initData) {
+        // Otherwise, if we DO have initData (in production), send it.
         headers['X-Telegram-Init-Data'] = initData;
     }
 
     const config = {
-        // Set a default method, which can be overridden by customConfig
         method: body ? 'POST' : 'GET', 
         ...customConfig,
         headers: {
@@ -35,16 +42,12 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
             let error = { message: `Request failed with status ${response.status}`};
             try {
                 error = await response.json();
-            } catch (_) {
-                // Ignore if the response is not JSON
-            }
+            } catch (_) { /* Ignore if not JSON */ }
             error.status = response.status;
             return Promise.reject(error);
         }
         
-        if (response.status === 204) {
-            return null; // Handle No Content responses
-        }
+        if (response.status === 204) return null;
 
         return await response.json();
     } catch (error) {
