@@ -1,71 +1,59 @@
-// src/services/apiClient.js - Centralized API client
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+// my-telegram-app/src/api/apiClient.js
 
-class ApiClient {
-    constructor(baseURL = API_BASE_URL) {
-        this.baseURL = baseURL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const IS_DEVELOPMENT = import.meta.env.DEV; // Vite provides this boolean
+
+async function apiClient(endpoint, { body, ...customConfig } = {}) {
+    const tg = window.Telegram?.WebApp;
+    const initData = tg?.initData || '';
+
+    const headers = { 'Content-Type': 'application/json' };
+
+    // This is the key change:
+    if (IS_DEVELOPMENT && !initData) {
+        // If we're in development mode AND there's no real Telegram data,
+        // send the special bypass header.
+        headers['X-Dev-Bypass-Auth'] = 'true';
+        console.log("DEV MODE: Sending bypass auth header.");
+    } else if (initData) {
+        // Otherwise, if we DO have initData (in production), send it.
+        headers['X-Telegram-Init-Data'] = initData;
     }
 
-    async request(endpoint, options = {}) {
-        const url = `${this.baseURL}${endpoint}`;
+    const config = {
+        method: body ? 'POST' : 'GET', 
+        ...customConfig,
+        headers: {
+            ...headers,
+            ...customConfig.headers,
+        },
+    };
+    
+    if (body) {
+        config.body = JSON.stringify(body);
+    }
 
-        // Grab the initData from Telegram WebApp if available
-        const tg = window.Telegram?.WebApp;
-        const initData = tg?.initData || '';
+    const fullUrl = `${API_BASE_URL}/${endpoint}`;
 
-        // Merge headers, add X-Telegram-Init-Data if available
-        const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-                ...(initData ? { 'X-Telegram-Init-Data': initData } : {}),
-            },
-            ...options,
-        };
+    try {
+        const response = await fetch(fullUrl, config);
 
-        if (config.body && typeof config.body === 'object') {
-            config.body = JSON.stringify(config.body);
+        if (!response.ok) {
+            let error = { message: `Request failed with status ${response.status}`};
+            try {
+                error = await response.json();
+            } catch (_) { /* Ignore if not JSON */ }
+            error.status = response.status;
+            return Promise.reject(error);
         }
+        
+        if (response.status === 204) return null;
 
-        try {
-            const response = await fetch(url, config);
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error(`API request failed: ${endpoint}`, error);
-            throw error;
-        }
-    }
-
-    get(endpoint, options = {}) {
-        return this.request(endpoint, { method: 'GET', ...options });
-    }
-
-    post(endpoint, data, options = {}) {
-        return this.request(endpoint, {
-            method: 'POST',
-            body: data,
-            ...options,
-        });
-    }
-
-    put(endpoint, data, options = {}) {
-        return this.request(endpoint, {
-            method: 'PUT',
-            body: data,
-            ...options,
-        });
-    }
-
-    delete(endpoint, options = {}) {
-        return this.request(endpoint, { method: 'DELETE', ...options });
+        return await response.json();
+    } catch (error) {
+        console.error('API Client Error:', error);
+        return Promise.reject(error);
     }
 }
 
-export const apiClient = new ApiClient();
-export default apiClient;
+export { apiClient };
