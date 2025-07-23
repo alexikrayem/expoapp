@@ -1,4 +1,4 @@
-// routes/cities.js
+// routes/cities.js (CORRECTED)
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
@@ -20,13 +20,16 @@ router.get('/:cityId/suppliers', async (req, res) => {
     try {
         const { cityId } = req.params;
         
+        // FIX: The query now joins with `supplier_cities` to filter by city.
+        // It also removes the incorrect `p.is_active` check.
         const query = `
             SELECT 
                 s.*,
                 COUNT(p.id) as product_count
             FROM suppliers s
-            LEFT JOIN products p ON s.id = p.supplier_id AND p.is_active = true
-            WHERE s.city_id = $1 AND s.is_active = true
+            JOIN supplier_cities sc ON s.id = sc.supplier_id
+            LEFT JOIN products p ON s.id = p.supplier_id
+            WHERE sc.city_id = $1 AND s.is_active = true
             GROUP BY s.id
             ORDER BY s.name ASC
         `;
@@ -44,6 +47,7 @@ router.get('/:cityId/deals', async (req, res) => {
     try {
         const { cityId } = req.params;
         
+        // FIX: The query now joins with `supplier_cities` to filter by city.
         const query = `
             SELECT 
                 d.*,
@@ -51,8 +55,9 @@ router.get('/:cityId/deals', async (req, res) => {
                 p.name as product_name
             FROM deals d
             JOIN suppliers s ON d.supplier_id = s.id
+            JOIN supplier_cities sc ON s.id = sc.supplier_id
             LEFT JOIN products p ON d.product_id = p.id
-            WHERE s.city_id = $1 AND d.is_active = true
+            WHERE sc.city_id = $1 AND d.is_active = true AND s.is_active = true
             AND (d.start_date IS NULL OR d.start_date <= NOW())
             AND (d.end_date IS NULL OR d.end_date >= NOW())
             ORDER BY d.created_at DESC

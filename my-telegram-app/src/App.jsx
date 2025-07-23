@@ -15,6 +15,7 @@ function App() {
         try {
             // No more passing user.id! The apiClient handles the secure data.
             const profileData = await userService.getProfile();
+             console.log('[App.jsx] User profile fetched successfully:', profileData);
             setUserProfile(profileData);
         } catch (err) {
             if (err.status === 404) {

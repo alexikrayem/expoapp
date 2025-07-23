@@ -21,6 +21,7 @@ import { useCart } from '../hooks/useCart';
 import { useDeals } from '../hooks/useDeals';
 import { useSuppliers } from '../hooks/useSuppliers';
 import { useOrders } from '../hooks/useOrders';
+import { useFavoriteProducts } from '../hooks/useFavoriteProducts';
 
 // Import Components
 import FeaturedSlider from './FeaturedSlider';
@@ -45,7 +46,7 @@ const MainPanel = ({ telegramUser, userProfile, onProfileUpdate }) => {
     // =================================================================
     // 1. STATE MANAGEMENT
     // =================================================================
-
+  console.log('[MainPanel.jsx] Component rendered. userProfile is:', userProfile);
 const {
     products,
     isLoadingProducts,
@@ -61,6 +62,8 @@ const {
     const [activeSection, setActiveSection] = useState('exhibitions');
     const [showCart, setShowCart] = useState(false);
     const [pendingUpdate, setPendingUpdate] = useState(false);
+const [activeMiniCartItem, setActiveMiniCartItem] = useState(null);
+const [showActiveItemControls, setShowActiveItemControls] = useState(false);
 
     // --- Search State ---
 const {
@@ -75,13 +78,7 @@ const {
 } = useSearch(userProfile?.selected_city_id);
 
     // --- Cart State ---
-   const {
-    cartItems,
-    isLoadingCart,
-    cartError,
-    isCartUpdating,
-    actions: cartActions,
-} = useCart(telegramUser);
+   const { cartItems, isLoadingCart, cartError, actions: cartActions } = useCart(telegramUser);
 
 
     // --- Deals State ---
@@ -93,6 +90,10 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
    
     // --- Favorites State ---
      const { favoriteIds, toggleFavorite, isFavorite } = useFavorites(telegramUser);
+const { favoriteProducts, isLoadingFavoritesTab, favoritesTabError } = useFavoriteProducts(
+    favoriteIds, // This comes from your useFavorites hook
+    activeSection === 'favorites'
+);
 
     // --- Orders State ---
     const [highlightedOrderId, setHighlightedOrderId] = useState(null);
@@ -190,34 +191,7 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
         showCart,
     ]); 
 
-    useEffect(() => {
-        const fetchFullFavoriteProducts = async () => {
-            if (activeSection === 'favorites' && telegramUser?.id) {
-                setIsLoadingFavoritesTab(true);
-                setFavoritesTabError(null);
-                setFetchedFavoriteProducts([]);
-    
-                if (userFavoriteProductIds.size === 0) {
-                    console.log("No favorite product IDs to fetch details for.");
-                    setIsLoadingFavoritesTab(false);
-                    return;
-                }
-    
-                try {
-                    const idsString = Array.from(userFavoriteProductIds).join(',');
-                    const productsData = await productService.getProductBatch(idsString);
-                    setFetchedFavoriteProducts(productsData);
-                } catch (error) {
-                    console.error("Failed to fetch full favorite products:", error);
-                    setFavoritesTabError(error.message);
-                } finally {
-                    setIsLoadingFavoritesTab(false);
-                }
-            }
-        };
-    
-        fetchFullFavoriteProducts();
-    }, [activeSection, telegramUser?.id, userFavoriteProductIds]);
+
 
     
    
@@ -339,9 +313,14 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
             setShowAddressModal(true);
         }
     };
-    const addToCart = (product) => {
-    cartActions.addToCart(product);
-    setActiveMiniCartItem({ ...product, quantity: 1 }); // Optimistically set quantity to 1
+ const addToCart = (product) => {
+    console.log("addToCart called in MainPanel for product:", product.name); // Debugging line
+
+    // 1. Call the hook to handle the actual cart logic (optimistic update)
+    cartActions.addToCart(product); 
+    
+    // 2. Set the local UI state to show the temporary controls
+    setActiveMiniCartItem(product);
     setShowActiveItemControls(true);
 };
 
@@ -382,9 +361,9 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
             console.log("Order created:", orderResult);
             setHighlightedOrderId(orderResult.orderId);
             setConfirmedOrderDetails(orderResult);
+            cartActions.afterOrderPlacement();
             refetchOrders();
             setShowOrderConfirmationModal(true);
-            setCartItems([]);
             setShowCart(false);
         } catch (error) {
             console.error("Error creating order:", error);
@@ -393,16 +372,17 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
             setIsPlacingOrder(false);
         }
     };
-
-    const handleCityChange = async (city) => {
-        if (!telegramUser || !city) return;
-        try {
-            await userService.updateProfile(telegramUser.id, { selected_city_id: city.id });
-            onProfileUpdate();
-        } catch (err) {
-            console.error("Failed to change city:", err);
-        }
-    };
+console.log('[MainPanel] Data from useSearch hook:', searchResults);
+   const handleCityChange = async (city) => {
+    if (!telegramUser || !city) return;
+    try {
+        // FIX: The user is identified securely by the backend, so we only send the data object.
+        await userService.updateProfile({ selected_city_id: city.id });
+        onProfileUpdate(); // This will trigger the refetch in App.jsx
+    } catch (err) {
+        console.error("Failed to change city:", err);
+    }
+};
 
     const handleViewAllSupplierProducts = (supplierName) => {
         setShowSupplierDetailModal(false);
@@ -486,7 +466,7 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
 
             {/* Main Content */}
             <main className="p-4 max-w-4xl mx-auto pb-32">
-                {showSearchResultsView ? (
+                {showSearchResults ? (
                     <SearchResultsView
                         searchTerm={debouncedSearchTerm}
                         isSearching={isSearching}
@@ -495,9 +475,9 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
                         onShowProductDetails={handleShowProductDetails}
                         onShowDealDetails={handleShowDealDetails}
                         onShowSupplierDetails={handleShowSupplierDetails}
-                        onAddToCart={cartActions.addToCart}
+                        onAddToCart={addToCart}
                         onToggleFavorite={toggleFavorite}
-                        userFavoriteProductIds={favoriteIds}
+                        favoriteIds={favoriteIds}
                     />
                 ) : (
                     <>
@@ -529,7 +509,7 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
     onLoadMore={loadMoreProducts} 
     hasMorePages={hasMorePages} 
     isLoadingMore={isLoadingMore} 
-    onAddToCart={cartActions.addToCart} 
+    onAddToCart={addToCart} 
     onToggleFavorite={toggleFavorite} // Assuming you also have useFavorites hook
     onShowDetails={handleShowProductDetails} 
     favoriteProductIds={favoriteIds} // Assuming you also have useFavorites hook
@@ -539,8 +519,16 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
 />
                         )}
                         {activeSection === 'suppliers' && <SuppliersTab suppliers={suppliers} isLoading={isLoadingSuppliers} error={supplierError} onShowDetails={handleShowSupplierDetails} />}
-                        {activeSection === 'favorites' && <FavoritesTab favoriteProducts={fetchedFavoriteProducts} isLoading={isLoadingFavoritesTab} error={favoritesTabError} onAddToCart={cartActions.addToCart} onToggleFavorite={toggleFavorite} onShowDetails={handleShowProductDetails} favoriteProductIds={favoriteIds} />}
-                        {activeSection === 'orders' && <OrdersTab orders={orders} isLoading={isLoadingOrdersTab} error={ordersTabError} highlightedOrderId={highlightedOrderId} />}
+                        {activeSection === 'favorites' && <FavoritesTab 
+    favoriteProducts={favoriteProducts} 
+    isLoading={isLoadingFavoritesTab} 
+    error={favoritesTabError} 
+    onAddToCart={addToCart} 
+    onToggleFavorite={toggleFavorite} 
+    onShowDetails={handleShowProductDetails} 
+    favoriteProductIds={favoriteIds} 
+/>}
+                        {activeSection === 'orders' && <OrdersTab orders={orders} isLoading={isLoadingOrders} error={ordersError} highlightedOrderId={highlightedOrderId} />}
                     </>
                 )}
             </main>
@@ -578,7 +566,7 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
                         onRemove={cartActions.removeItem}
                         onCheckout={handleCheckout}
                         isPlacingOrder={isPlacingOrder || isLoadingProfile}
-                        pendingUpdate={isCartUpdating}
+                
                     />
                 )}
                 
@@ -607,10 +595,10 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
                         productData={selectedProductDetails}
                         isLoading={isLoadingProductDetail}
                         error={productDetailError}
-                        onAddToCart={cartActions.addToCart}
+                        onAddToCart={addToCart}
                         onToggleFavorite={{
                             toggle: toggleFavorite,
-                            isFavorite:  (id) => userFavoriteProductIds.has(id)
+                            isFavorite:  (id) => favoriteIds.has(id)
                         }}
                         onSelectAlternative={handleSelectAlternativeProduct} 
                     />
@@ -644,9 +632,9 @@ const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(active
                             handleShowProductDetails(id);
                         }}
                         onViewAllProducts={handleViewAllSupplierProducts}
-                        onAddToCart={cartActions.addToCart}
+                        onAddToCart={addToCart}
                         onToggleFavorite={toggleFavorite}
-                        userFavoriteProductIds={favoriteIds}
+                        favoriteIds={favoriteIds}
                     />
                 )}
                 

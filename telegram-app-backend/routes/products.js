@@ -1,4 +1,4 @@
-// routes/products.js (COMPLETE AND CORRECTED)
+// routes/products.js (FINAL CORRECTED VERSION)
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
@@ -6,97 +6,62 @@ const db = require('../config/db');
 // Get all products with filtering, search, and pagination
 router.get('/', async (req, res) => {
     try {
-        const {
-            page = 1,
-            limit = 12,
-            cityId,
-            category,
-            searchTerm,
-            minPrice,
-            maxPrice,
-            onSale
-        } = req.query;
-
+        const { page = 1, limit = 12, cityId, category, searchTerm, minPrice, maxPrice, onSale } = req.query;
         const offset = (parseInt(page) - 1) * parseInt(limit);
         
-        let whereConditions = ['p.is_active = true', 's.is_active = true'];
+        // FIX: Removed p.is_active = true from the initial conditions
+        let whereConditions = ['s.is_active = true'];
         let queryParams = [];
         let paramIndex = 1;
 
+        // City filter
         if (cityId) {
-            whereConditions.push(`s.city_id = $${paramIndex++}`);
+            // FIX: Changed cityId filter to use the supplier_cities join table
+            whereConditions.push(`s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${paramIndex++})`);
             queryParams.push(cityId);
         }
 
+        // Category filter
         if (category && category !== 'all') {
-            whereConditions.push(`p.category ILIKE $${paramIndex++}`);
-            queryParams.push(category); // No need for % signs if category name is exact
+            // Using '=' for exact match is slightly more performant than ILIKE if not needed
+            whereConditions.push(`p.category = $${paramIndex++}`);
+            queryParams.push(category);
         }
 
+        // Search filter (searching product name and supplier name)
         if (searchTerm) {
-            whereConditions.push(`(p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex} OR s.name ILIKE $${paramIndex})`);
+            whereConditions.push(`(p.name ILIKE $${paramIndex} OR s.name ILIKE $${paramIndex})`);
             queryParams.push(`%${searchTerm}%`);
             paramIndex++;
         }
 
-        if (minPrice) {
-            whereConditions.push(`p.price >= $${paramIndex++}`);
-            queryParams.push(parseFloat(minPrice));
-        }
+        if (minPrice) { whereConditions.push(`p.price >= $${paramIndex++}`); queryParams.push(parseFloat(minPrice)); }
+        if (maxPrice) { whereConditions.push(`p.price <= $${paramIndex++}`); queryParams.push(parseFloat(maxPrice)); }
+        if (onSale === 'true') { whereConditions.push('p.is_on_sale = true'); }
 
-        if (maxPrice) {
-            whereConditions.push(`p.price <= $${paramIndex++}`);
-            queryParams.push(parseFloat(maxPrice));
-        }
-
-        if (onSale === 'true') {
-            whereConditions.push('p.is_on_sale = true AND p.discount_price IS NOT NULL');
-        }
-
-        const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+        const whereClause = `WHERE ${whereConditions.join(' AND ')}`;
 
         const productsQuery = `
-            SELECT 
-                p.*,
-                s.name as supplier_name,
-                s.location as supplier_location,
-                CASE 
-                    WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL 
-                    THEN p.discount_price 
-                    ELSE p.price 
-                END as effective_selling_price
+            SELECT p.*, s.name as supplier_name,
+                   CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
             FROM products p
             JOIN suppliers s ON p.supplier_id = s.id
             ${whereClause}
             ORDER BY p.created_at DESC
-            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-        `;
+            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
 
-        const productsParams = [...queryParams, parseInt(limit), offset];
-
-        const countQuery = `
-            SELECT COUNT(*) as total
-            FROM products p
-            JOIN suppliers s ON p.supplier_id = s.id
-            ${whereClause}
-        `;
-
+        const countQuery = `SELECT COUNT(*) as total FROM products p JOIN suppliers s ON p.supplier_id = s.id ${whereClause}`;
+        
         const [productsResult, countResult] = await Promise.all([
-            db.query(productsQuery, productsParams),
-            db.query(countQuery, queryParams) // Use original params for count
+            db.query(productsQuery, [...queryParams, limit, offset]),
+            db.query(countQuery, queryParams)
         ]);
-
-        const totalItems = parseInt(countResult.rows[0].total);
-        const totalPages = Math.ceil(totalItems / parseInt(limit));
 
         res.json({
             items: productsResult.rows,
             currentPage: parseInt(page),
-            totalPages,
-            totalItems,
-            limit: parseInt(limit)
+            totalPages: Math.ceil(parseInt(countResult.rows[0].total) / limit),
         });
-
     } catch (error) {
         console.error('Error fetching products:', error);
         res.status(500).json({ error: 'Failed to fetch products' });
@@ -107,15 +72,17 @@ router.get('/', async (req, res) => {
 router.get('/categories', async (req, res) => {
     try {
         const { cityId } = req.query;
+        // FIX: Removed p.is_active from WHERE clause
         let query = `
             SELECT p.category, COUNT(*) as product_count
             FROM products p
             JOIN suppliers s ON p.supplier_id = s.id
-            WHERE p.is_active = true AND s.is_active = true
+            WHERE s.is_active = true
         `;
         const queryParams = [];
         if (cityId) {
-            query += ' AND s.city_id = $1';
+            // FIX: Changed cityId filter to use the supplier_cities join table
+            query += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $1)`;
             queryParams.push(cityId);
         }
         query += `
@@ -141,16 +108,11 @@ router.get('/batch', async (req, res) => {
 
         const placeholders = productIds.map((_, index) => `$${index + 1}`).join(',');
         const query = `
-            SELECT 
-                p.*, s.name as supplier_name,
-                CASE 
-                    WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL 
-                    THEN p.discount_price ELSE p.price 
-                END as effective_selling_price
+            SELECT p.*, s.name as supplier_name,
+                   CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
             FROM products p
             JOIN suppliers s ON p.supplier_id = s.id
-            WHERE p.id IN (${placeholders}) AND p.is_active = true
-            ORDER BY p.created_at DESC
+            WHERE p.id IN (${placeholders}) AND s.is_active = true -- FIX: Changed p.is_active to s.is_active
         `;
         const result = await db.query(query, productIds);
         res.json(result.rows);
@@ -160,41 +122,34 @@ router.get('/batch', async (req, res) => {
     }
 });
 
-// ======================================================================
-// === THIS IS THE NEW ROUTE WE MOVED FROM favorites.js =================
-// ======================================================================
+
 // Get favorite product details with alternatives (used in ProductDetailModal)
 router.get('/favorite-details/:productId', async (req, res) => {
     try {
         const { productId } = req.params;
-        
         const productQuery = `
             SELECT p.*, s.name as supplier_name,
-                   CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL 
-                   THEN p.discount_price ELSE p.price END as effective_selling_price
+                   CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
             FROM products p
             JOIN suppliers s ON p.supplier_id = s.id
-            WHERE p.id = $1
+            WHERE p.id = $1 AND s.is_active = true -- FIX: Check s.is_active
         `;
         const productResult = await db.query(productQuery, [productId]);
         
-        if (productResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
+        if (productResult.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
         
         const product = productResult.rows[0];
-        const isAvailable = product.stock_level > 0 && product.is_active;
+        const isAvailable = product.stock_level > 0; // Product's own active status is inherent in it being found
         
         let alternatives = [];
         if (!isAvailable && product.standardized_name_input) {
             const alternativesQuery = `
                 SELECT p.*, s.name as supplier_name,
-                       CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL 
-                       THEN p.discount_price ELSE p.price END as effective_selling_price
+                       CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
                 FROM products p
                 JOIN suppliers s ON p.supplier_id = s.id
                 WHERE p.standardized_name_input ILIKE $1 
-                  AND p.id != $2 AND p.is_active = true AND p.stock_level > 0
+                  AND p.id != $2 AND s.is_active = true AND p.stock_level > 0 -- FIX: Check s.is_active
                 ORDER BY p.price ASC
                 LIMIT 3
             `;
@@ -202,12 +157,7 @@ router.get('/favorite-details/:productId', async (req, res) => {
             alternatives = alternativesResult.rows;
         }
         
-        res.json({
-            originalProduct: product,
-            isAvailable,
-            alternatives
-        });
-        
+        res.json({ originalProduct: product, isAvailable, alternatives });
     } catch (error) {
         console.error('Error fetching favorite product details:', error);
         res.status(500).json({ error: 'Failed to fetch product details' });
@@ -221,25 +171,21 @@ router.get('/:id', async (req, res) => {
         if (isNaN(productId)) return res.status(400).json({ error: 'Invalid product ID' });
 
         const query = `
-            SELECT 
-                p.*, s.name as supplier_name,
-                CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL 
-                THEN p.discount_price ELSE p.price END as effective_selling_price
+            SELECT p.*, s.name as supplier_name,
+                   CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
             FROM products p
             JOIN suppliers s ON p.supplier_id = s.id
-            WHERE p.id = $1 AND p.is_active = true
+            WHERE p.id = $1 AND s.is_active = true -- FIX: Changed p.is_active to s.is_active
         `;
         const result = await db.query(query, [productId]);
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
+        
         res.json(result.rows[0]);
     } catch (error) {
         console.error('Error fetching product:', error);
         res.status(500).json({ error: 'Failed to fetch product' });
     }
 });
-
 
 module.exports = router;

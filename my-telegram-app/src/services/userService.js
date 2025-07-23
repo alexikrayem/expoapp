@@ -3,29 +3,29 @@ import { apiClient } from '../api/apiClient';
 export const userService = {
     getProfile: () => {
         // The user ID is determined securely by the backend using the Telegram auth middleware
-        return apiClient('api/user/profile');
+        return apiClient('user/profile');
     },
 
     updateProfile: (profileData) => {
-        return apiClient('api/user/profile', {
+        return apiClient('user/profile', {
             method: 'PUT',
             body: profileData,
         });
     },
 
     getFavorites: () => {
-        return apiClient('api/favorites');
+        return apiClient('favorites');
     },
 
     addFavorite: (productId) => {
-        return apiClient('api/favorites', {
+        return apiClient('favorites', {
             method: 'POST',
             body: { productId },
         });
     },
 
     removeFavorite: (productId) => {
-        return apiClient(`api/favorites/${productId}`, {
+        return apiClient(`favorites/${productId}`, {
             method: 'DELETE',
         });
     },

@@ -1,4 +1,4 @@
-// routes/featuredItems.js
+// routes/featuredItems.js (CORRECTED)
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
@@ -6,41 +6,42 @@ const db = require('../config/db');
 // Get featured items for the slider
 router.get('/', async (req, res) => {
     try {
+        // This query is now corrected to use the right table and column names.
         const query = `
             SELECT 
-                fd.id as feature_definition_id,
-                fd.item_type,
-                fd.item_id,
-                fd.display_order,
-                fd.custom_title,
-                fd.custom_description,
-                fd.custom_image_url,
-                fd.is_active,
-                fd.active_from,
-                fd.active_until,
+                fi.id as feature_id, -- Using the actual table's primary key
+                fi.item_type,
+                fi.item_id,
+                fi.display_order,
+                fi.custom_title,
+                fi.custom_description,
+                fi.custom_image_url,
+                fi.is_active,
+                fi.active_from,
+                fi.active_until,
                 CASE 
-                    WHEN fd.item_type = 'product' THEN p.name
-                    WHEN fd.item_type = 'deal' THEN d.title
-                    WHEN fd.item_type = 'supplier' THEN s.name
+                    WHEN fi.item_type = 'product' THEN p.name
+                    WHEN fi.item_type = 'deal' THEN d.title
+                    WHEN fi.item_type = 'supplier' THEN s.name
                 END as original_item_name,
                 CASE 
-                    WHEN fd.item_type = 'product' THEN p.description
-                    WHEN fd.item_type = 'deal' THEN d.description
-                    WHEN fd.item_type = 'supplier' THEN s.description
+                    WHEN fi.item_type = 'product' THEN p.description
+                    WHEN fi.item_type = 'deal' THEN d.description
+                    WHEN fi.item_type = 'supplier' THEN s.description
                 END as original_item_description,
                 CASE 
-                    WHEN fd.item_type = 'product' THEN p.image_url
-                    WHEN fd.item_type = 'deal' THEN d.image_url
-                    WHEN fd.item_type = 'supplier' THEN s.image_url
+                    WHEN fi.item_type = 'product' THEN p.image_url
+                    WHEN fi.item_type = 'deal' THEN d.image_url
+                    WHEN fi.item_type = 'supplier' THEN s.image_url
                 END as original_item_image_url
-            FROM featured_items_definitions fd
-            LEFT JOIN products p ON fd.item_type = 'product' AND fd.item_id = p.id
-            LEFT JOIN deals d ON fd.item_type = 'deal' AND fd.item_id = d.id
-            LEFT JOIN suppliers s ON fd.item_type = 'supplier' AND fd.item_id = s.id
-            WHERE fd.is_active = true
-            AND (fd.active_from IS NULL OR fd.active_from <= NOW())
-            AND (fd.active_until IS NULL OR fd.active_until >= NOW())
-            ORDER BY fd.display_order ASC, fd.created_at DESC
+            FROM featured_items fi -- FIX: Correct table name is 'featured_items'
+            LEFT JOIN products p ON fi.item_type = 'product' AND fi.item_id = p.id
+            LEFT JOIN deals d ON fi.item_type = 'deal' AND fi.item_id = d.id
+            LEFT JOIN suppliers s ON fi.item_type = 'supplier' AND fi.item_id = s.id
+            WHERE fi.is_active = true
+            AND (fi.active_from IS NULL OR fi.active_from <= NOW())
+            AND (fi.active_until IS NULL OR fi.active_until >= NOW())
+            ORDER BY fi.display_order ASC, fi.created_at DESC
         `;
         
         const result = await db.query(query);
@@ -51,8 +52,7 @@ router.get('/', async (req, res) => {
             type: row.item_type,
             title: row.custom_title || row.original_item_name || 'Featured Item',
             description: row.custom_description || row.original_item_description || '',
-            imageUrl: row.custom_image_url || row.original_item_image_url || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            displayOrder: row.display_order
+            imageUrl: row.custom_image_url || row.original_item_image_url || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
         }));
         
         res.json(featuredItems);

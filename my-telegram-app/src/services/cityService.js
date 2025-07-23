@@ -2,18 +2,18 @@ import { apiClient } from '../api/apiClient';
 
 export const cityService = {
     getCities: () => {
-        return apiClient('api/cities');
+        return apiClient('cities');
     },
     getSuppliers: (cityId) => {
-        return apiClient(`api/cities/${cityId}/suppliers`);
+        return apiClient(`cities/${cityId}/suppliers`);
     },
     getDeals: (cityId) => {
-        return apiClient(`api/cities/${cityId}/deals`);
+        return apiClient(`cities/${cityId}/deals`);
     },
     getDealDetails: (dealId) => {
-        return apiClient(`api/deals/${dealId}`);
+        return apiClient(`deals/${dealId}`);
     },
     getSupplierDetails: (supplierId) => {
-        return apiClient(`api/suppliers/${supplierId}`);
+        return apiClient(`suppliers/${supplierId}`);
     },
 };

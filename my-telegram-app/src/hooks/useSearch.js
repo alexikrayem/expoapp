@@ -1,6 +1,6 @@
-// src/hooks/useSearch.js
+// src/hooks/useSearch.js (DEFINITIVE CORRECTED VERSION)
 import { useState, useEffect } from 'react';
-import { useDebounce } from './useDebounce'; // Assuming you already have this hook
+import { useDebounce } from './useDebounce';
 import { searchService } from '../services/searchService';
 import { PAGINATION } from '../utils/constants';
 
@@ -9,31 +9,34 @@ export const useSearch = (cityId) => {
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState({ products: { items: [], totalItems: 0 }, deals: [], suppliers: [] });
     const [searchError, setSearchError] = useState(null);
-    const [showResults, setShowResults] = useState(false);
+    const [showResults, setShowResults] = useState(false); // The state variable is 'showResults'
 
-    // Debounce the search term to avoid firing API calls on every keystroke
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
+    console.log(`[useSearch.js] Hook re-running. Received cityId: ${cityId}, debouncedSearchTerm: '${debouncedSearchTerm}'`);
 
     useEffect(() => {
         const performSearch = async () => {
-            if (!cityId) return;
-
             const trimmedTerm = debouncedSearchTerm.trim();
             
-            // Only search if the term is long enough
-            if (trimmedTerm.length < 3) {
+            if (trimmedTerm.length < 2) {
                 setShowResults(false);
                 setSearchResults({ products: { items: [], totalItems: 0 }, deals: [], suppliers: [] });
                 return;
             }
             
+            if (!cityId) {   
+                console.error('[useSearch.js] ABORTING SEARCH: The cityId is missing or invalid.', `(Value was: ${cityId})`);
+
+                return;
+            }
+ console.log(`[useSearch.js] SUCCESS: Proceeding with search for '${trimmedTerm}' in city ${cityId}`);
             setIsSearching(true);
             setSearchError(null);
-            setShowResults(true); // Show the results view as soon as we start searching
+            setShowResults(true);
             
             try {
                 const data = await searchService.search(trimmedTerm, cityId, PAGINATION.SEARCH_LIMIT);
-                setSearchResults(data.results);
+                setSearchResults(data.results || { products: { items: [], totalItems: 0 }, deals: [], suppliers: [] });
             } catch (error) {
                 console.error("Search error:", error);
                 setSearchError(error.message);
@@ -51,7 +54,8 @@ export const useSearch = (cityId) => {
 
     const clearSearch = () => {
         setSearchTerm('');
-        setShowResults(false);
+        // FIX: Use the correct state setter function 'setShowResults'
+        setShowResults(false); 
     };
 
     return {
@@ -62,6 +66,6 @@ export const useSearch = (cityId) => {
         showSearchResults: showResults,
         handleSearchTermChange,
         clearSearch,
-        debouncedSearchTerm, // Exporting this is useful for the UI
+        debouncedSearchTerm,
     };
 };
