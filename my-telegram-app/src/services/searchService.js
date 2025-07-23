@@ -1,10 +1,7 @@
-// src/services/searchService.js (FINAL CORRECTED VERSION)
-import { apiClient } from '../api/apiClient';
-
+// src/services/searchService.js (FIXED)
 export const searchService = {
     search: (term, cityId, limit) => {
-        const params = new URLSearchParams({ term, cityId, limit });
-        // FIX: The "api/" prefix has been removed.
+        const params = new URLSearchParams({ searchTerm: term, cityId, limit }); // ✅ FIXED: changed `term` to `searchTerm`
         return apiClient(`search?${params.toString()}`);
     },
 };
