@@ -14,6 +14,11 @@ export const productService = {
     getFavoriteProductDetails: (productId) => {
         return apiClient(`products/${productId}/favorite-details`);
     },
+      // NEW PRIMARY FUNCTION for getting all details for the modal
+    getProductDetailsWithAlternatives: (productId) => {
+        // This hits the smart backend route we built
+        return apiClient(`products/favorite-details/${productId}`);
+    },
     
     getProductBatch: (idsString) => {
         const params = new URLSearchParams({ ids: idsString });

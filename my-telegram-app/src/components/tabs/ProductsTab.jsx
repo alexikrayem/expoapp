@@ -101,9 +101,9 @@ const ProductsTab = ({
 
             {/* Category Filter Bar */}
             <ProductFilterBar
-                selectedCategory={localFilters.category}
-                onCategoryChange={handleCategoryChange}
-                selectedCityId={selectedCityId}
+                currentFilters={currentFilters}
+            onFiltersChange={onFiltersChange}
+            selectedCityId={selectedCityId}
             />
 
             {/* Advanced Filters Panel */}

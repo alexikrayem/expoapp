@@ -1,39 +1,47 @@
-// src/components/common/ProductFilterBar.jsx
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+// src/components/common/ProductFilterBar.jsx (CORRECTED LOGIC + ENHANCED DESIGN)
+import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { productService } from '../../services/productService';
 
-const ProductFilterBar = ({ selectedCategory, onCategoryChange, selectedCityId }) => {
+const ProductFilterBar = ({ currentFilters, onFiltersChange, selectedCityId }) => {
     const [categories, setCategories] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const scrollContainerRef = useRef(null);
 
+    // This useEffect fetches the categories data, same as before.
     useEffect(() => {
         const fetchCategories = async () => {
             if (!selectedCityId) return;
-            
             setIsLoading(true);
             setError(null);
-            
             try {
                 const data = await productService.getProductCategories(selectedCityId);
-                setCategories(data.categories || []);
+                // Prepend the 'All' category
+                setCategories([{ category: 'all', product_count: null }, ...(data.categories || [])]);
             } catch (err) {
                 console.error('Failed to fetch categories:', err);
                 setError('فشل في تحميل الفئات');
-                setCategories([]);
             } finally {
                 setIsLoading(false);
             }
         };
-
         fetchCategories();
     }, [selectedCityId]);
 
+    // This is the corrected handler function.
+    const handleCategoryClick = (category) => {
+        if (currentFilters.category === category) return; // Prevent re-clicking the same category
+        onFiltersChange({ ...currentFilters, category: category });
+    };
+
+    // --- RENDER LOGIC ---
+
     if (isLoading) {
+        // Enhanced Skeleton Loader
         return (
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                {[...Array(6)].map((_, i) => (
+            <div className="flex space-x-3 space-x-reverse overflow-hidden p-2">
+                {[...Array(5)].map((_, i) => (
                     <div key={i} className="h-10 w-24 bg-gray-200 rounded-full animate-pulse flex-shrink-0"></div>
                 ))}
             </div>
@@ -41,48 +49,43 @@ const ProductFilterBar = ({ selectedCategory, onCategoryChange, selectedCityId }
     }
 
     if (error) {
-        return (
-            <div className="text-center py-4 text-red-500 text-sm">
-                {error}
-            </div>
-        );
+        return <div className="text-center py-4 text-red-500">{error}</div>;
     }
-
-    const allCategories = [
-        { category: 'all', product_count: 'الكل' },
-        ...categories
-    ];
 
     return (
         <div className="relative">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-smooth" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                {allCategories.map((cat) => {
-                    const isSelected = selectedCategory === cat.category || (selectedCategory === 'all' && cat.category === 'all');
+            <div
+                ref={scrollContainerRef}
+                className="flex items-center gap-3 overflow-x-auto p-2 scrollbar-hide"
+            >
+                {categories.map((cat) => {
+                    const isSelected = currentFilters.category === cat.category;
                     const displayName = cat.category === 'all' ? 'الكل' : cat.category;
-                    const count = cat.category === 'all' ? '' : ` (${cat.product_count})`;
-                    
+                    const count = cat.product_count ? `(${cat.product_count})` : '';
+
                     return (
                         <button
                             key={cat.category}
-                            onClick={() => onCategoryChange(cat.category)}
+                            onClick={() => handleCategoryClick(cat.category)}
                             className={`
-                                flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ease-in-out
-                                ${isSelected 
-                                    ? 'bg-blue-600 text-white shadow-lg transform scale-105' 
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md'
-                                }
-                                whitespace-nowrap min-w-fit
+                                relative flex-shrink-0 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap
+                                transition-colors duration-300 ease-in-out
+                                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                                ${isSelected ? 'text-white' : 'text-gray-600 bg-gray-100 hover:bg-gray-200'}
                             `}
                         >
-                            {displayName}{count}
+                            {isSelected && (
+                                <motion.div
+                                    layoutId="activeCategory" // This is the magic for the sliding animation
+                                    className="absolute inset-0 bg-blue-600 rounded-full"
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                />
+                            )}
+                            <span className="relative z-10">{displayName} {count}</span>
                         </button>
                     );
                 })}
             </div>
-            
-            {/* Scroll indicators */}
-            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-white pointer-events-none opacity-50"></div>
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-transparent to-white pointer-events-none opacity-50"></div>
         </div>
     );
 };

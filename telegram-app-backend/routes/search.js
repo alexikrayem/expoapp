@@ -1,4 +1,4 @@
-// routes/search.js (CORRECTED)
+// routes/search.js (UPGRADED SEARCH LOGIC)
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
     try {
         const { searchTerm, cityId, limit = 10 } = req.query;
         
-        if (!searchTerm || searchTerm.trim().length < 2) { // Lowered to 2 chars for better UX
+        if (!searchTerm || searchTerm.trim().length < 2) {
             return res.json({
                 results: { products: { items: [], totalItems: 0 }, deals: [], suppliers: [] }
             });
@@ -18,14 +18,14 @@ router.get('/', async (req, res) => {
         const searchLimit = parseInt(limit);
         
         // --- Search Products ---
-        // FIX: Removed p.is_active, changed cityId filter to use supplier_cities
         let productsQuery = `
             SELECT p.*, s.name as supplier_name,
                    CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
             FROM products p
             JOIN suppliers s ON p.supplier_id = s.id
             WHERE s.is_active = true
-            AND (p.name ILIKE $1 OR p.description ILIKE $1 OR p.standardized_name_input ILIKE $1)
+            -- FIX: The search now includes the supplier's name (s.name)
+            AND (p.name ILIKE $1 OR p.description ILIKE $1 OR p.standardized_name_input ILIKE $1 OR s.name ILIKE $1)
         `;
         const queryParams = [searchPattern];
         let paramIndex = 2;
@@ -37,14 +37,14 @@ router.get('/', async (req, res) => {
         queryParams.push(searchLimit);
         
         // --- Search Deals ---
-        // FIX: Changed cityId filter to use supplier_cities
         let dealsQuery = `
             SELECT d.*, s.name as supplier_name, p.name as product_name
             FROM deals d
             JOIN suppliers s ON d.supplier_id = s.id
             LEFT JOIN products p ON d.product_id = p.id
             WHERE d.is_active = true AND s.is_active = true
-            AND (d.title ILIKE $1 OR d.description ILIKE $1)
+            -- FIX: The search now includes the supplier's name (s.name)
+            AND (d.title ILIKE $1 OR d.description ILIKE $1 OR s.name ILIKE $1)
             AND (d.start_date IS NULL OR d.start_date <= NOW())
             AND (d.end_date IS NULL OR d.end_date >= NOW())
         `;
@@ -57,8 +57,7 @@ router.get('/', async (req, res) => {
         dealsQuery += ` ORDER BY d.created_at DESC LIMIT $${dealsParamIndex}`;
         dealsParams.push(searchLimit);
         
-        // --- Search Suppliers ---
-        // FIX: Removed p.is_active, changed cityId filter to use supplier_cities
+        // --- Search Suppliers (No changes needed here, it already works) ---
         let suppliersQuery = `
             SELECT s.*, COUNT(p.id) as product_count
             FROM suppliers s
@@ -86,7 +85,7 @@ router.get('/', async (req, res) => {
             results: {
                 products: {
                     items: productsResult.rows,
-                    totalItems: productsResult.rows.length // Note: This is just the count of returned items, not total possible results. This is fine for search.
+                    totalItems: productsResult.rows.length
                 },
                 deals: dealsResult.rows,
                 suppliers: suppliersResult.rows

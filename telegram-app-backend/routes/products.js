@@ -1,4 +1,4 @@
-// routes/products.js (FINAL CORRECTED VERSION)
+// routes/products.js (UPGRADED WITH SMARTER ALTERNATIVES)
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
@@ -9,32 +9,23 @@ router.get('/', async (req, res) => {
         const { page = 1, limit = 12, cityId, category, searchTerm, minPrice, maxPrice, onSale } = req.query;
         const offset = (parseInt(page) - 1) * parseInt(limit);
         
-        // FIX: Removed p.is_active = true from the initial conditions
         let whereConditions = ['s.is_active = true'];
         let queryParams = [];
         let paramIndex = 1;
 
-        // City filter
         if (cityId) {
-            // FIX: Changed cityId filter to use the supplier_cities join table
             whereConditions.push(`s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${paramIndex++})`);
             queryParams.push(cityId);
         }
-
-        // Category filter
         if (category && category !== 'all') {
-            // Using '=' for exact match is slightly more performant than ILIKE if not needed
             whereConditions.push(`p.category = $${paramIndex++}`);
             queryParams.push(category);
         }
-
-        // Search filter (searching product name and supplier name)
         if (searchTerm) {
             whereConditions.push(`(p.name ILIKE $${paramIndex} OR s.name ILIKE $${paramIndex})`);
             queryParams.push(`%${searchTerm}%`);
             paramIndex++;
         }
-
         if (minPrice) { whereConditions.push(`p.price >= $${paramIndex++}`); queryParams.push(parseFloat(minPrice)); }
         if (maxPrice) { whereConditions.push(`p.price <= $${paramIndex++}`); queryParams.push(parseFloat(maxPrice)); }
         if (onSale === 'true') { whereConditions.push('p.is_on_sale = true'); }
@@ -72,7 +63,6 @@ router.get('/', async (req, res) => {
 router.get('/categories', async (req, res) => {
     try {
         const { cityId } = req.query;
-        // FIX: Removed p.is_active from WHERE clause
         let query = `
             SELECT p.category, COUNT(*) as product_count
             FROM products p
@@ -81,7 +71,6 @@ router.get('/categories', async (req, res) => {
         `;
         const queryParams = [];
         if (cityId) {
-            // FIX: Changed cityId filter to use the supplier_cities join table
             query += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $1)`;
             queryParams.push(cityId);
         }
@@ -112,7 +101,7 @@ router.get('/batch', async (req, res) => {
                    CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
             FROM products p
             JOIN suppliers s ON p.supplier_id = s.id
-            WHERE p.id IN (${placeholders}) AND s.is_active = true -- FIX: Changed p.is_active to s.is_active
+            WHERE p.id IN (${placeholders}) AND s.is_active = true
         `;
         const result = await db.query(query, productIds);
         res.json(result.rows);
@@ -127,42 +116,73 @@ router.get('/batch', async (req, res) => {
 router.get('/favorite-details/:productId', async (req, res) => {
     try {
         const { productId } = req.params;
+
+        // Step 1: Fetch the main product and its supplier in a single, efficient query.
         const productQuery = `
-            SELECT p.*, s.name as supplier_name,
-                   CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
+            SELECT p.*, s.name as supplier_name, s.is_active as supplier_is_active
             FROM products p
-            JOIN suppliers s ON p.supplier_id = s.id
-            WHERE p.id = $1 AND s.is_active = true -- FIX: Check s.is_active
+            LEFT JOIN suppliers s ON p.supplier_id = s.id
+            WHERE p.id = $1
         `;
-        const productResult = await db.query(productQuery, [productId]);
-        
-        if (productResult.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
-        
+        const productPromise = db.query(productQuery, [productId]);
+
+        // We will run the product fetch and potentially the alternatives fetch in parallel.
+        const [productResult] = await Promise.all([productPromise]);
+
+        if (productResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
         const product = productResult.rows[0];
-        const isAvailable = product.stock_level > 0; // Product's own active status is inherent in it being found
-        
+        const isAvailable = product.stock_level > 0 && product.supplier_is_active;
+
         let alternatives = [];
-        if (!isAvailable && product.standardized_name_input) {
-            const alternativesQuery = `
-                SELECT p.*, s.name as supplier_name,
-                       CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
-                FROM products p
-                JOIN suppliers s ON p.supplier_id = s.id
-                WHERE p.standardized_name_input ILIKE $1 
-                  AND p.id != $2 AND s.is_active = true AND p.stock_level > 0 -- FIX: Check s.is_active
-                ORDER BY p.price ASC
-                LIMIT 3
-            `;
-            const alternativesResult = await db.query(alternativesQuery, [product.standardized_name_input, productId]);
-            alternatives = alternativesResult.rows;
+        // Step 2: If unavailable, fetch alternatives.
+        if (!isAvailable) {
+            let alternativesQuery = '';
+            let alternativesParams = [];
+
+            if (product.master_product_id) {
+                alternativesQuery = `
+                    SELECT p.*, s.name as supplier_name,
+                           CASE WHEN p.is_on_sale AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
+                    FROM products p JOIN suppliers s ON p.supplier_id = s.id
+                    WHERE p.master_product_id = $1 AND p.id != $2 AND s.is_active = true AND p.stock_level > 0
+                    ORDER BY p.price ASC LIMIT 5`;
+                alternativesParams = [product.master_product_id, productId];
+            } else if (product.standardized_name_input) {
+                alternativesQuery = `
+                    SELECT p.*, s.name as supplier_name,
+                           CASE WHEN p.is_on_sale AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
+                    FROM products p JOIN suppliers s ON p.supplier_id = s.id
+                    WHERE p.standardized_name_input ILIKE $1 AND p.id != $2 AND s.is_active = true AND p.stock_level > 0
+                    ORDER BY p.price ASC LIMIT 3`;
+                alternativesParams = [`%${product.standardized_name_input}%`, productId];
+            }
+
+            if (alternativesQuery) {
+                const alternativesResult = await db.query(alternativesQuery, alternativesParams);
+                alternatives = alternativesResult.rows;
+            }
         }
         
-        res.json({ originalProduct: product, isAvailable, alternatives });
+        const responseData = {
+            originalProduct: {
+                ...product,
+                effective_selling_price: (product.is_on_sale && product.discount_price) ? product.discount_price : product.price
+            },
+            isAvailable,
+            alternatives
+        };
+
+        res.json(responseData);
+        
     } catch (error) {
-        console.error('Error fetching favorite product details:', error);
+        console.error('Error fetching product details:', error);
         res.status(500).json({ error: 'Failed to fetch product details' });
     }
 });
+
 
 // Get individual product by ID
 router.get('/:id', async (req, res) => {
@@ -175,7 +195,7 @@ router.get('/:id', async (req, res) => {
                    CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
             FROM products p
             JOIN suppliers s ON p.supplier_id = s.id
-            WHERE p.id = $1 AND s.is_active = true -- FIX: Changed p.is_active to s.is_active
+            WHERE p.id = $1 AND s.is_active = true
         `;
         const result = await db.query(query, [productId]);
 

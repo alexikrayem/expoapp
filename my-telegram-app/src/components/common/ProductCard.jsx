@@ -18,7 +18,7 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite, onShowDetails, is
         <motion.div
             className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer flex flex-col z-0"
             whileHover={{ y: -5, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)' }}
-            onClick={() => onShowDetails(product.id)}
+            onClick={() => onShowDetails(product)}
             layout
         >
             <div className="h-32 w-full flex items-center justify-center text-white relative bg-gray-100 rounded-t-xl overflow-hidden">
