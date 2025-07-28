@@ -115,5 +115,57 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch orders' });
     }
 });
+// PUT /:orderId/status - Update the status of an order
+router.put('/:orderId/status', async (req, res) => {
+    const { id: userId } = req.telegramUser;
+    const { orderId } = req.params;
+    const { status } = req.body;
 
+    // Basic validation
+    if (!status || !['cancelled'].includes(status)) { // Only allow cancelling for now
+        return res.status(400).json({ error: 'Invalid or unsupported status update.' });
+    }
+
+    const client = await db.pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Verify the user owns this order and it is in a cancelable state
+        const verifyQuery = `
+            SELECT * FROM orders 
+            WHERE id = $1 AND user_id = $2 AND status = 'pending'
+        `;
+        const verifyResult = await client.query(verifyQuery, [orderId, userId]);
+
+        if (verifyResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Order not found or it cannot be cancelled.' });
+        }
+
+        // If cancelling, restore the stock for the items in the order
+        if (status === 'cancelled') {
+            const itemsQuery = 'SELECT product_id, quantity FROM order_items WHERE order_id = $1';
+            const itemsResult = await client.query(itemsQuery, [orderId]);
+            
+            for (const item of itemsResult.rows) {
+                const stockUpdateQuery = 'UPDATE products SET stock_level = stock_level + $1 WHERE id = $2';
+                await client.query(stockUpdateQuery, [item.quantity, item.product_id]);
+            }
+        }
+        
+        // Update the order status
+        const updateQuery = 'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *';
+        const result = await client.query(updateQuery, [status, orderId]);
+
+        await client.query('COMMIT');
+        res.json(result.rows[0]);
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error updating order status:', error);
+        res.status(500).json({ error: 'Failed to update order status.' });
+    } finally {
+        client.release();
+    }
+});
 module.exports = router;

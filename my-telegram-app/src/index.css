@@ -13,9 +13,9 @@ layer base {
     /* Set up the sticky footer layout on our main App container */
     @apply min-h-full flex flex-col;
     
-     padding-top: env(safe-area-inset-top, 1rem);
+    /* padding-top: env(safe-area-inset-top, 1rem);
     padding-left: env(safe-area-inset-left, 1rem);
-    padding-right: env(safe-area-inset-right, 1rem);
+    padding-right: env(safe-area-inset-right, 1rem);*/
     
   }
 }

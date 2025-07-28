@@ -4,11 +4,14 @@ export const orderService = {
     getUserOrders: () => {
         return apiClient('orders');
     },
-
     createOrder: () => {
-        // No body is needed; the backend will use the user's validated cart.
-        return apiClient('orders', {
-            method: 'POST',
+        return apiClient('orders', { method: 'POST' });
+    },
+    // --- ADD THIS NEW FUNCTION ---
+    updateOrderStatus: (orderId, status) => {
+        return apiClient(`orders/${orderId}/status`, {
+            method: 'PUT',
+            body: { status },
         });
     },
 };
