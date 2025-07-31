@@ -1,20 +1,17 @@
+// src/pages/HomePage.jsx (FINAL CORRECTED VERSION)
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useModal } from '../context/ModalContext';
 
-// --- FIX: IMPORT EVERYTHING DIRECTLY FROM ITS SOURCE FILE ---
-
-// Hooks
+// Direct, explicit imports
 import { useProducts } from '../hooks/useProducts';
 import { useDeals } from '../hooks/useDeals';
 import { useSuppliers } from '../hooks/useSuppliers';
 import { useSearch } from '../context/SearchContext';
 import { useFavorites } from '../hooks/useFavorites';
-import { useCart } from '../hooks/useCart';
-
-// Services
+import { useCart } from '../context/CartContext';
+import { useFilters } from '../context/FilterContext';
 import { productService } from '../services/productService';
-import { cityService } from '../services/cityService';
 
 // Components
 import Header from '../components/layout/Header';
@@ -24,20 +21,21 @@ import DealsTab from '../components/tabs/DealsTab';
 import SuppliersTab from '../components/tabs/SuppliersTab';
 import SearchResultsView from '../components/search/SearchResultsView';
 
-
 const HomePage = () => {
     // --- CONTEXT & GLOBAL DATA ---
-    const { telegramUser, userProfile, onProfileUpdate } = useOutletContext();
+    const { telegramUser, userProfile } = useOutletContext();
     const { openModal } = useModal();
-    const { cartItems, actions: cartActions } = useCart(telegramUser);
+    // FIX: Get the 'addToCart' action directly from the cart context.
+    const { actions: { addToCart } } = useCart(); 
     const { favoriteIds, toggleFavorite } = useFavorites(telegramUser);
+    const { searchResults, showSearchResults, isSearching, searchError, debouncedSearchTerm } = useSearch();
+    const { currentFilters, handleFiltersChange } = useFilters();
 
     // --- LOCAL UI STATE ---
-    const [activeSection, setActiveSection] = useState('exhibitions');
+    const [activeSection, setActiveSection] = useState('products'); // Default to products
 
-    // --- DATA FETCHING HOOKS for this page ---
-const { searchResults, showSearchResults, isSearching, searchError, debouncedSearchTerm } = useSearch();
-    const { products, isLoadingProducts, productError, loadMoreProducts, hasMorePages, isLoadingMore, currentFilters, handleFiltersChange } = useProducts(userProfile?.selected_city_id);
+    // --- DATA FETCHING HOOKS ---
+    const { products, isLoadingProducts, productError, loadMoreProducts, hasMorePages, isLoadingMore } = useProducts(userProfile?.selected_city_id);
     const { deals, isLoadingDeals, dealError } = useDeals(activeSection === 'exhibitions' ? userProfile?.selected_city_id : null);
     const { suppliers, isLoadingSuppliers, supplierError } = useSuppliers(activeSection === 'suppliers' ? userProfile?.selected_city_id : null);
     const [featuredItems, setFeaturedItems] = useState([]);
@@ -58,14 +56,15 @@ const { searchResults, showSearchResults, isSearching, searchError, debouncedSea
         fetchFeatured();
     }, []);
 
-    // --- HANDLER FUNCTIONS that use the Modal Context ---
+    // --- HANDLER FUNCTIONS ---
+    // The local 'addToCart' handler is now removed. We use the one from context directly.
+    
     const handleShowProductDetails = (product) => {
         if (!product || !product.id) return;
         openModal('productDetail', {
-            // We pass ALL props the modal needs. This is the key to decoupling.
-            product: product, // The basic product data for optimistic display
-            productId: product.id, // Pass ID for the background fetch
-            onAddToCart: addToCart,
+            product: product,
+            productId: product.id,
+            onAddToCart: addToCart, // Pass the context's addToCart
             onToggleFavorite: { toggle: toggleFavorite, isFavorite: (id) => favoriteIds.has(id) },
         });
     };
@@ -79,17 +78,11 @@ const { searchResults, showSearchResults, isSearching, searchError, debouncedSea
         if (!supplierId) return;
         openModal('supplierDetail', { supplierId, onAddToCart: addToCart, onToggleFavorite: toggleFavorite, favoriteIds });
     };
-    
-    const addToCart = (product) => {
-        cartActions.addToCart(product);
-        // The MiniCartBar logic will now be handled globally or removed if not desired
-    };
 
     // --- RENDER METHOD ---
     return (
-        <div className='pb-24'> {/* Padding bottom to clear the fixed footer */}
+        <div className='pb-24'>
             <Header>
-                {/* The home page's tab navigation is passed as children to the Header */}
                 {!showSearchResults && (
                     <nav className="flex gap-2 border-b border-gray-200">
                         {['exhibitions', 'products', 'suppliers'].map(section => (
@@ -106,20 +99,20 @@ const { searchResults, showSearchResults, isSearching, searchError, debouncedSea
             <main className="p-4 max-w-4xl mx-auto">
                 {showSearchResults ? (
                     <SearchResultsView
-    searchTerm={debouncedSearchTerm}
-    isSearching={isSearching}
-    error={searchError}
-    results={searchResults}
-    onShowProductDetails={handleShowProductDetails}
-    onShowDealDetails={handleShowDealDetails}
-    onShowSupplierDetails={handleShowSupplierDetails}
-    onAddToCart={addToCart}
-    onToggleFavorite={toggleFavorite}
-    favoriteIds={favoriteIds}
-/>
+                        searchTerm={debouncedSearchTerm}
+                        isSearching={isSearching}
+                        error={searchError}
+                        results={searchResults}
+                        onShowProductDetails={handleShowProductDetails}
+                        onShowDealDetails={handleShowDealDetails}
+                        onShowSupplierDetails={handleShowSupplierDetails}
+                        onAddToCart={addToCart}
+                        onToggleFavorite={toggleFavorite}
+                        favoriteIds={favoriteIds}
+                    />
                 ) : (
                     <>
-                        <div className="featured-container my-6">
+                        <div className="my-6">
                             <FeaturedSlider
                                 isLoading={isLoadingFeatured}
                                 items={featuredItems}
@@ -152,8 +145,6 @@ const { searchResults, showSearchResults, isSearching, searchError, debouncedSea
                     </>
                 )}
             </main>
-
-            {/* All modals have been REMOVED from here. They are now rendered globally by ModalContext. */}
         </div>
     );
 };

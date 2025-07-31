@@ -22,6 +22,7 @@ export const ModalProvider = ({ children }) => {
     });
 
     const openModal = useCallback((type, props = {}) => {
+         console.log(`[ModalContext.jsx] openModal called with type: "${type}"`, { props });
         document.body.style.overflow = 'hidden'; // Prevent background scrolling
         setModalState({ type, props });
     }, []);

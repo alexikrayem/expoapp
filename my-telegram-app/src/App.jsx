@@ -13,13 +13,13 @@ import OrdersPage from './pages/OrdersPage';
 
 function App() {
     return (
-        // FIX: Add this wrapper div. This is the element our CSS in index.css
-        // will turn into the main flexbox container for our sticky footer layout.
         <div className="App">
+            {/* These providers do NOT depend on user data, so they can live on the outside. */}
             <CurrencyProvider>
                 <ModalProvider>
                     <Router>
                         <Routes>
+                            {/* AppInitializer will now render the rest of the providers inside it */}
                             <Route element={<AppInitializer />}>
                                 <Route element={<AppLayout />}>
                                     <Route path="/" element={<HomePage />} />

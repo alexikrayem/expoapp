@@ -4,6 +4,9 @@ import { Outlet } from 'react-router-dom';
 import { userService } from './services/userService';
 import CitySelectionModal from './components/modals/CitySelectionModal';
 import { SearchProvider } from './context/SearchContext';
+import { CartProvider } from './context/CartContext';
+import { FilterProvider } from './context/FilterContext';
+import { CheckoutProvider } from './context/CheckoutContext';
 
 const AppInitializer = () => {
     const [telegramUser, setTelegramUser] = useState(null);
@@ -72,9 +75,16 @@ const AppInitializer = () => {
     
    return (
         // FIX: Wrap the Outlet in the SearchProvider and pass it the cityId
-        <SearchProvider cityId={userProfile?.selected_city_id}>
-            <Outlet context={{ telegramUser, userProfile, onProfileUpdate: fetchUserProfile }} />
-        </SearchProvider>
+       <CartProvider user={telegramUser}>
+            <SearchProvider cityId={userProfile?.selected_city_id}>
+                <FilterProvider>
+                    <CheckoutProvider>
+                        <Outlet context={{ telegramUser, userProfile, onProfileUpdate: fetchUserProfile }} />
+                    </CheckoutProvider>
+                </FilterProvider>
+            </SearchProvider>
+        </CartProvider>
+
     );
 };
 

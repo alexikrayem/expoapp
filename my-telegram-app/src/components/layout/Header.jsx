@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useModal } from '../../context/ModalContext';
-import { useCart } from '../../hooks/useCart';
+import { useCart } from '../../context/CartContext';
 import { useSearch } from '../../context/SearchContext';
 import { userService } from '../../services/userService';
 
@@ -14,7 +14,7 @@ import CityChangePopover from '../common/CityChangePopover';
 const Header = ({ children }) => {
     const { telegramUser, userProfile, onProfileUpdate } = useOutletContext();
     const { openModal } = useModal();
-    const { cartItems } = useCart(telegramUser);
+    const { cartItems } = useCart();
     const { searchTerm, handleSearchTermChange, clearSearch } = useSearch();
 
     // --- STATE FOR PROFILE MODAL ---
@@ -68,9 +68,11 @@ const Header = ({ children }) => {
         }
     };
 
-    const handleOpenCart = () => {
-        openModal('cart', { telegramUser });
-    };
+ const handleOpenCart = () => {
+    openModal('cart', { 
+
+    });
+};
 
     const handleCityChange = async (city) => {
         if (!city || isChangingCity) return;

@@ -1,6 +1,7 @@
-// src/hooks/useOrders.js
+// src/hooks/useOrders.js (DEFINITIVE FINAL VERSION)
 import { useState, useEffect, useCallback } from 'react';
 import { orderService } from '../services/orderService';
+import { emitter } from '../utils/emitter'; // Make sure you have created this file
 
 export const useOrders = (telegramUser) => {
     const [orders, setOrders] = useState([]);
@@ -27,13 +28,15 @@ export const useOrders = (telegramUser) => {
     }, [telegramUser?.id]);
 
     useEffect(() => {
-        fetchOrders();
+        fetchOrders(); // Initial fetch
+        const onOrderPlaced = () => fetchOrders(); // Define listener
+        emitter.on('order-placed', onOrderPlaced); // Subscribe
+        return () => {
+            emitter.off('order-placed', onOrderPlaced); // Unsubscribe on cleanup
+        };
     }, [fetchOrders]);
     
-    // We can add a function to manually refetch orders after a new one is placed
-    const refetchOrders = () => {
-        fetchOrders();
-    };
+    const refetchOrders = () => fetchOrders();
 
     return { orders, isLoadingOrders: isLoading, ordersError: error, refetchOrders };
 };
