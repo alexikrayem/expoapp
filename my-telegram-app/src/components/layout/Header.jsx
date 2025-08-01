@@ -14,7 +14,7 @@ import CityChangePopover from '../common/CityChangePopover';
 const Header = ({ children }) => {
     const { telegramUser, userProfile, onProfileUpdate } = useOutletContext();
     const { openModal } = useModal();
-    const { cartItems } = useCart();
+    const { getCartItemCount } = useCart();
     const { searchTerm, handleSearchTermChange, clearSearch } = useSearch();
 
     // --- STATE FOR PROFILE MODAL ---
@@ -100,6 +100,7 @@ const Header = ({ children }) => {
         }
     }, [isSavingProfile, profileError]);
 
+    const cartItemCount = getCartItemCount();
 
     return (
         <header className="sticky top-0 z-30 shadow-sm bg-white/90 backdrop-blur-lg">
@@ -133,11 +134,11 @@ const Header = ({ children }) => {
                         معرض المستلزمات
                     </h1>
                     <div className="flex items-center gap-1 sm:gap-2">
-                        {cartItems && cartItems.length > 0 && (
+                        {cartItemCount > 0 && (
                             <button onClick={handleOpenCart} className="relative p-2 text-gray-600 hover:text-blue-600">
                                 <ShoppingCart className="h-6 w-6" />
                                 <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
-                                    {cartItems.reduce((acc, item) => acc + item.quantity, 0)}
+                                    {cartItemCount}
                                 </span>
                             </button>
                         )}

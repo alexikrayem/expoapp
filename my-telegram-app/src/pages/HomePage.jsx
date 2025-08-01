@@ -25,8 +25,7 @@ const HomePage = () => {
     // --- CONTEXT & GLOBAL DATA ---
     const { telegramUser, userProfile } = useOutletContext();
     const { openModal } = useModal();
-    // FIX: Get the 'addToCart' action directly from the cart context.
-    const { actions: { addToCart } } = useCart(); 
+    const { actions: { addToCart } } = useCart();
     const { favoriteIds, toggleFavorite } = useFavorites(telegramUser);
     const { searchResults, showSearchResults, isSearching, searchError, debouncedSearchTerm } = useSearch();
     const { currentFilters, handleFiltersChange } = useFilters();
@@ -57,14 +56,13 @@ const HomePage = () => {
     }, []);
 
     // --- HANDLER FUNCTIONS ---
-    // The local 'addToCart' handler is now removed. We use the one from context directly.
     
     const handleShowProductDetails = (product) => {
         if (!product || !product.id) return;
         openModal('productDetail', {
             product: product,
             productId: product.id,
-            onAddToCart: addToCart, // Pass the context's addToCart
+            onAddToCart: addToCart,
             onToggleFavorite: { toggle: toggleFavorite, isFavorite: (id) => favoriteIds.has(id) },
         });
     };

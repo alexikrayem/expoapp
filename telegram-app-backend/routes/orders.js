@@ -3,6 +3,79 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 
+// POST /from-cart - Create a new order from frontend cart data
+router.post('/from-cart', async (req, res) => {
+    const { id: userId } = req.telegramUser;
+    const { items, total_amount } = req.body;
+    
+    if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: 'Cart items are required' });
+    }
+
+    const client = await db.pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        // Step 1: Verify all products exist and have sufficient stock
+        for (const item of items) {
+            const productQuery = 'SELECT id, name, stock_level, supplier_id FROM products WHERE id = $1';
+            const productResult = await client.query(productQuery, [item.product_id]);
+            
+            if (productResult.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: `Product with ID ${item.product_id} not found` });
+            }
+            
+            const product = productResult.rows[0];
+            if (product.stock_level < item.quantity) {
+                await client.query('ROLLBACK');
+                return res.status(409).json({ error: `Insufficient stock for product: ${product.name}` });
+            }
+        }
+        
+        // Step 2: Get user's profile for validation
+        const userResult = await client.query('SELECT * FROM user_profiles WHERE user_id = $1', [userId]);
+        if (userResult.rows.length === 0 || !userResult.rows[0].address_line1) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'User profile or address is incomplete.' });
+        }
+
+        // Step 3: Create the main order record
+        const orderQuery = `
+            INSERT INTO orders (user_id, total_amount, order_date, status, delivery_status)
+            VALUES ($1, $2, NOW(), 'pending', 'pending_pickup')
+            RETURNING id
+        `;
+        const orderResult = await client.query(orderQuery, [userId, total_amount]);
+        const orderId = orderResult.rows[0].id;
+
+        // Step 4: Create order_items records and update product stock
+        for (const item of items) {
+            const orderItemQuery = `
+                INSERT INTO order_items (
+                    order_id, product_id, quantity, price_at_time_of_order
+                ) VALUES ($1, $2, $3, $4)
+            `;
+            await client.query(orderItemQuery, [orderId, item.product_id, item.quantity, item.price_at_time_of_order]);
+            
+            // Update stock
+            const updateStockQuery = 'UPDATE products SET stock_level = stock_level - $1 WHERE id = $2';
+            await client.query(updateStockQuery, [item.quantity, item.product_id]);
+        }
+
+        await client.query('COMMIT');
+        res.status(201).json({ orderId, message: 'Order created successfully' });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error creating order from cart:', error);
+        res.status(500).json({ error: 'Failed to create order due to a server error.' });
+    } finally {
+        client.release();
+    }
+});
+
 // POST / - Create a new order for the authenticated user
 router.post('/', async (req, res) => {
     const { id: userId } = req.telegramUser;

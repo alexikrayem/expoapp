@@ -4,7 +4,7 @@ import { useOutletContext } from 'react-router-dom';
 import { useFavorites } from '../hooks/useFavorites';
 import { useFavoriteProducts } from '../hooks/useFavoriteProducts';
 import { useModal } from '../context/ModalContext';
-import { useCart } from '../hooks/useCart';
+import { useCart } from '../context/CartContext';
 import FavoritesTab from '../components/tabs/FavoritesTab';
 import ProductFilterBar from '../components/common/ProductFilterBar';
 import { motion, AnimatePresence } from 'framer-motion'; // Import motion for animation
@@ -13,7 +13,7 @@ import { Search, X } from 'lucide-react'; // Import icons
 const FavoritesPage = () => {
     const { telegramUser, userProfile } = useOutletContext();
     const { openModal } = useModal();
-    const { actions: cartActions } = useCart(telegramUser);
+    const { actions: { addToCart } } = useCart();
 
     const { favoriteIds, toggleFavorite } = useFavorites(telegramUser);
     const { favoriteProducts, isLoadingFavoritesTab, favoritesTabError } = useFavoriteProducts(favoriteIds, true);
@@ -49,8 +49,14 @@ const FavoritesPage = () => {
     }, [favoriteProducts, localFilters.category, localSearchTerm]);
 
     // --- Handlers (unchanged) ---
-    const handleShowProductDetails = (product) => { /* ... your existing logic ... */ };
-    const addToCart = (product) => { /* ... your existing logic ... */ };
+    const handleShowProductDetails = (product) => {
+        openModal('productDetail', {
+            product: product,
+            productId: product.id,
+            onAddToCart: addToCart,
+            onToggleFavorite: { toggle: toggleFavorite, isFavorite: (id) => favoriteIds.has(id) },
+        });
+    };
 
    return (
     <div className="p-4 max-w-4xl mx-auto pb-24">

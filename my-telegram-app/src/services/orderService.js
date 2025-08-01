@@ -4,8 +4,11 @@ export const orderService = {
     getUserOrders: () => {
         return apiClient('orders');
     },
-    createOrder: () => {
-        return apiClient('orders', { method: 'POST' });
+    createOrderFromCart: (orderData) => {
+        return apiClient('orders/from-cart', { 
+            method: 'POST',
+            body: orderData
+        });
     },
     // --- ADD THIS NEW FUNCTION ---
     updateOrderStatus: (orderId, status) => {
