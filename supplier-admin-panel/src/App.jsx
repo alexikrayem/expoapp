@@ -9,6 +9,25 @@ import OrdersPage from './pages/OrdersPage';
 import MyDealsPage from './pages/MyDealsPage';
 import ManageDeliveryAgentsPage from './pages/ManageDeliveryAgentsPage';
 
+// Telegram Web App initialization
+const initializeTelegramWebApp = () => {
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+        tg.ready();
+        tg.expand();
+        
+        // Set theme colors for supplier panel
+        tg.setHeaderColor('#1f2937'); // gray-800
+        tg.setBackgroundColor('#f9fafb'); // gray-50
+        
+        // Configure viewport
+        tg.viewportHeight = window.innerHeight;
+        tg.viewportStableHeight = window.innerHeight;
+        
+        console.log('Telegram Web App initialized for supplier panel');
+    }
+};
+
 
 // Helper to check authentication status
 const isAuthenticated = () => {
@@ -41,8 +60,13 @@ const ProtectedRoutes = () => {
 };
 
 function App() {
+    // Initialize Telegram Web App on mount
+    React.useEffect(() => {
+        initializeTelegramWebApp();
+    }, []);
+
     return (
-        <Router basename="/supplier-admin"> {/* Optional: if deploying to a subfolder */}
+        <Router basename="/"> {/* Updated for root deployment */}
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 
