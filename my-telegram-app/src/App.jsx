@@ -11,6 +11,7 @@ import HomePage from './pages/HomePage';
 import FavoritesPage from './pages/FavoritesPage';
 import OrdersPage from './pages/OrdersPage';
 
+
 function App() {
     return (
         <div className="App">

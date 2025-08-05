@@ -7,7 +7,7 @@ import { SearchProvider } from './context/SearchContext';
 import { CartProvider } from './context/CartContext';
 import { FilterProvider } from './context/FilterContext';
 import { CheckoutProvider } from './context/CheckoutContext';
-
+import { MiniCartProvider } from './context/MiniCartContext';
 const AppInitializer = () => {
     const [telegramUser, setTelegramUser] = useState(null);
     const [userProfile, setUserProfile] = useState(null);
@@ -74,7 +74,7 @@ const AppInitializer = () => {
     }
     
    return (
-        // FIX: Wrap the Outlet in the SearchProvider and pass it the cityId
+      <MiniCartProvider>  
        <CartProvider user={telegramUser}>
             <SearchProvider cityId={userProfile?.selected_city_id}>
                 <FilterProvider>
@@ -84,7 +84,7 @@ const AppInitializer = () => {
                 </FilterProvider>
             </SearchProvider>
         </CartProvider>
-
+        </MiniCartProvider> 
     );
 };
 

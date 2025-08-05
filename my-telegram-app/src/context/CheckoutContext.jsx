@@ -1,10 +1,9 @@
-// src/context/CheckoutContext.jsx (SIMPLIFIED VERSION)
+// src/context/CheckoutContext.jsx (SIMPLIFIED)
 import React, { createContext, useState, useContext } from 'react';
 import { useModal } from './ModalContext';
 import { useCart } from './CartContext';
 import { userService } from '../services/userService';
 import { orderService } from '../services/orderService';
-import { emitter } from '../utils/emitter';
 
 const CheckoutContext = createContext();
 export const useCheckout = () => useContext(CheckoutContext);
@@ -12,10 +11,9 @@ export const useCheckout = () => useContext(CheckoutContext);
 export const CheckoutProvider = ({ children }) => {
     const { openModal } = useModal();
     const { cartItems, actions: cartActions, getCartTotal } = useCart();
-
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
     const [error, setError] = useState(null);
-
+    
     const startCheckout = async (userProfile, telegramUser, onProfileUpdate) => {
         if (!telegramUser?.id || cartItems.length === 0) {
             alert('سلة التسوق فارغة أو لم يتم تسجيل الدخول');
@@ -69,47 +67,27 @@ export const CheckoutProvider = ({ children }) => {
         }
     };
 
-    const placeOrder = async () => {
+ const placeOrder = async () => {
         setIsPlacingOrder(true);
-        setError(null);
-        
         try {
-            // Prepare order data from local cart
             const orderData = {
                 items: cartItems.map(item => ({
                     product_id: item.product_id,
                     quantity: item.quantity,
-                    price_at_time_of_order: item.effective_selling_price || item.price
+                    price_at_time_of_order: item.effective_selling_price
                 })),
                 total_amount: getCartTotal()
             };
-
-            // Send to backend
             const orderResult = await orderService.createOrderFromCart(orderData);
-            
-            // Clear local cart on success
             cartActions.clearCart();
-            
-            // Emit event for orders page to refresh
-            emitter.emit('order-placed');
-            
-            // Show success modal
             openModal('orderConfirmation', { orderDetails: orderResult });
-            
         } catch (err) {
-            console.error('Error placing order:', err);
-            setError(err.message || 'فشل في إنشاء الطلب');
-            alert(`فشل في إنشاء الطلب: ${err.message}`);
+            alert(`Failed to create order: ${err.message}`);
         } finally {
             setIsPlacingOrder(false);
         }
     };
 
-    const value = { 
-        isPlacingOrder, 
-        checkoutError: error, 
-        startCheckout 
-    };
-
+    const value = { isPlacingOrder, startCheckout };
     return <CheckoutContext.Provider value={value}>{children}</CheckoutContext.Provider>;
 };

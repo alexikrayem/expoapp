@@ -9,7 +9,7 @@ import SupplierDetailModal from '../components/modals/SupplierDetailModal';
 import ProfileModal from '../components/modals/ProfileModal';
 import AddressModal from '../components/cart/AddressModal';
 import OrderConfirmationModal from '../components/modals/OrderConfirmationModal';
-import CartSidebar from '../components/cart/CartSidebar';
+
 
 const ModalContext = createContext();
 
