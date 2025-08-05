@@ -1,213 +1,248 @@
-// src/pages/ProductsPage.jsx
-import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios'; // Or your preferred HTTP client
-import { PlusCircle, Edit, Trash2 } from 'lucide-react'; // Icons for actions
-import ProductFormModal from '../components/ProductFormModal'; // Adjust path if needed
-// Helper function to get the auth token (could be in a separate authService.js)
-const getAuthToken = () => localStorage.getItem('supplierToken');
-
-// Axios instance with auth header (could also be in a separate apiService.js)
-const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_SUPPLIER_API_BASE_URL || 'http://localhost:3001',
-});
-
-apiClient.interceptors.request.use(config => {
-    const token = getAuthToken();
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-}, error => {
-    return Promise.reject(error);
-});
-
+// src/pages/ProductsPage.jsx - Enhanced with quick actions and better UX
+import React, { useState } from 'react';
+import { PlusCircle, Search, Filter, Package, TrendingUp, AlertCircle } from 'lucide-react';
+import { useSupplierProducts } from '../hooks/useSupplierData';
+import { supplierService } from '../services/supplierService';
+import ProductFormModal from '../components/ProductFormModal';
+import ProductsGrid from '../components/ProductsGrid';
 
 const ProductsPage = () => {
-    const [products, setProducts] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-// Inside ProductsPage component
-const [showProductModal, setShowProductModal] = useState(false);
-const [editingProduct, setEditingProduct] = useState(null); // null for Add, product object for Edit
-const [isSubmitting, setIsSubmitting] = useState(false); // Loading state for save operation
-    // TODO: State for Add/Edit Product Modal
-    // const [showProductModal, setShowProductModal] = useState(false);
-    // const [editingProduct, setEditingProduct] = useState(null); // null for Add, product object for Edit
+    const [filters, setFilters] = useState({
+        search: '',
+        category: '',
+        status: 'all' // all, in_stock, out_of_stock, on_sale
+    });
+    
+    const { products, isLoading, error, refetchProducts } = useSupplierProducts(filters);
+    const [showProductModal, setShowProductModal] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const fetchSupplierProducts = useCallback(async () => {
-        setIsLoading(true);
-        setError('');
-        try {
-            const response = await apiClient.get('/api/supplier/products');
-            setProducts(response.data);
-        } catch (err) {
-            setError(err.response?.data?.error || 'Failed to fetch products.');
-            console.error("Fetch products error:", err);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchSupplierProducts();
-    }, [fetchSupplierProducts]);
-
-    // Placeholder functions for actions
-    const handleAddProduct = () => {
-         setEditingProduct(null); // Ensure it's for adding new
-    setShowProductModal(true);  
+    // Stats derived from products
+    const stats = {
+        total: products.length,
+        inStock: products.filter(p => p.stock_level > 0).length,
+        outOfStock: products.filter(p => p.stock_level === 0).length,
+        onSale: products.filter(p => p.is_on_sale).length,
     };
 
-   const handleEditProduct = (product) => {
-    console.log("Edit button clicked for product:", product); // <<< ADD THIS LOG
-    setEditingProduct(product); // Pass the product to be edited
-    setShowProductModal(true);  // Set state to show the modal
-};
+    const handleAddProduct = () => {
+        setEditingProduct(null);
+        setShowProductModal(true);
+    };
 
-   const handleDeleteProduct = async (productId, productName) => { // Added productName for better confirm message
-    // Use a more descriptive confirmation message
-    if (window.confirm(`Are you sure you want to delete the product "${productName}"? This action cannot be undone.`)) {
-        try {
-            setIsLoading(true); // Optional: set a general loading state or specific deleting state
-            await apiClient.delete(`/api/supplier/products/${productId}`);
-            // alert('Product deleted successfully!'); // Optional success message
-            fetchSupplierProducts(); // Refresh the product list
-        } catch (err) {
-            alert(err.response?.data?.error || 'Failed to delete product.');
-            console.error("Delete product error:", err.response || err.message);
-        } finally {
-            setIsLoading(false);
+    const handleEditProduct = (product) => {
+        setEditingProduct(product);
+        setShowProductModal(true);
+    };
+
+    const handleDeleteProduct = async (productId, productName) => {
+        if (window.confirm(`هل أنت متأكد من حذف المنتج "${productName}"؟ هذا الإجراء لا يمكن التراجع عنه.`)) {
+            try {
+                await supplierService.deleteProduct(productId);
+                refetchProducts();
+                
+                // Show success notification
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                notification.textContent = 'تم حذف المنتج بنجاح';
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+                
+            } catch (err) {
+                alert(`فشل في حذف المنتج: ${err.message}`);
+            }
         }
-    }
-};
+    };
 
+    const handleSaveProduct = async (productData, productIdToEdit) => {
+        setIsSubmitting(true);
+        try {
+            if (productIdToEdit) {
+                await supplierService.updateProduct(productIdToEdit, productData);
+            } else {
+                await supplierService.createProduct(productData);
+            }
+            setShowProductModal(false);
+            refetchProducts();
+        } catch (err) {
+            throw new Error(err.message || 'فشل في حفظ المنتج');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+    };
 
-    if (isLoading) {
-        return <div className="text-center p-10">Loading products...</div>;
+    // Filter products based on current filters
+    const filteredProducts = products.filter(product => {
+        if (filters.search && !product.name.toLowerCase().includes(filters.search.toLowerCase())) {
+            return false;
+        }
+        if (filters.category && product.category !== filters.category) {
+            return false;
+        }
+        if (filters.status === 'in_stock' && product.stock_level === 0) {
+            return false;
+        }
+        if (filters.status === 'out_of_stock' && product.stock_level > 0) {
+            return false;
+        }
+        if (filters.status === 'on_sale' && !product.is_on_sale) {
+            return false;
+        }
+        return true;
+    });
+
+    // Get unique categories for filter
+    const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
+
+    if (isLoading && products.length === 0) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">جاري تحميل المنتجات...</p>
+                </div>
+            </div>
+        );
     }
 
     if (error) {
-        return <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative m-4" role="alert">
-            <strong className="font-bold">Error!</strong>
-            <span className="block sm:inline"> {error}</span>
-        </div>;
-    }
-// Inside ProductsPage component
-const handleSaveProduct = async (productData, productIdToEdit) => {
-    setIsSubmitting(true);
-    // setError(''); // Clear page-level error, modal handles its own error
-
-    try {
-        if (productIdToEdit) {
-            // Editing existing product
-            await apiClient.put(`/api/supplier/products/${productIdToEdit}`, productData);
-            // alert('Product updated successfully!'); // Or a more subtle notification
-        } else {
-            // Adding new product
-            await apiClient.post('/api/supplier/products', productData);
-            // alert('Product added successfully!');
-        }
-        setShowProductModal(false); // Close modal on success
-        fetchSupplierProducts();    // Refresh product list
-    } catch (err) {
-        console.error("Save product error:", err.response || err.message);
-        // The modal itself will display the error using its 'setError' passed from onSave
-        // We re-throw so the modal's catch block can handle it.
-        throw new Error(err.response?.data?.error || 'Failed to save product.');
-    } finally {
-        setIsSubmitting(false);
-    }
-};
-    return (
-        <div className="container mx-auto px-4 py-6">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold text-gray-800">My Products</h2>
-                <button
-                    onClick={handleAddProduct}
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md flex items-center transition-colors"
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-red-800 mb-2">حدث خطأ</h3>
+                <p className="text-red-600 mb-4">{error}</p>
+                <button 
+                    onClick={refetchProducts}
+                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
                 >
-                    <PlusCircle size={20} className="mr-2" /> {/* ml-2 for RTL */}
-                    Add New Product
+                    إعادة المحاولة
                 </button>
             </div>
+        );
+    }
 
-            {products.length === 0 && !isLoading ? (
-                <p className="text-gray-600 text-center py-10">You haven't added any products yet.</p>
-            ) : (
-                <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {products.map((product) => (
-                                <tr key={product.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            {product.image_url && (
-                                                 <div className="flex-shrink-0 h-10 w-10">
-                                                    <img 
-                                                        className="h-10 w-10 rounded-md object-cover" 
-                                                        src={product.image_url.startsWith('linear-gradient') ? 'https://via.placeholder.com/40' : product.image_url} 
-                                                        alt={product.name} 
-                                                        style={product.image_url.startsWith('linear-gradient') ? { background: product.image_url} : {}}
-                                                    />
-                                                </div>
-                                            )}
-                                            <div className={product.image_url ? "ml-4" : ""}> {/* mr-4 for RTL */}
-                                                <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {product.discount_price && product.is_on_sale ? (
-                                            <>
-                                                <span className="line-through text-gray-400">{parseFloat(product.price).toFixed(2)}</span>
-                                                <span className="ml-2 text-green-600 font-semibold">{parseFloat(product.discount_price).toFixed(2)} د.إ</span>
-                                            </>
-                                        ) : (
-                                            `${parseFloat(product.price).toFixed(2)} د.إ`
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.stock_level}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 space-x-reverse"> {/* space-x-reverse for RTL */}
-                                        <button onClick={() => handleEditProduct(product)} className="text-indigo-600 hover:text-indigo-900 transition-colors p-1">
-                                            <Edit size={18} />
-                                        </button>
-                                        <button onClick={() => handleDeleteProduct(product.id, product.name)} className="text-red-600 hover:text-red-900 transition-colors p-1">
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+    return (
+        <div className="space-y-6">
+            {/* Header with stats */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">إدارة المنتجات</h2>
+                        <div className="flex flex-wrap gap-4 text-sm">
+                            <span className="flex items-center gap-1">
+                                <Package className="h-4 w-4 text-blue-500" />
+                                المجموع: <strong>{stats.total}</strong>
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <TrendingUp className="h-4 w-4 text-green-500" />
+                                متوفر: <strong>{stats.inStock}</strong>
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <PackageX className="h-4 w-4 text-red-500" />
+                                نفد المخزون: <strong>{stats.outOfStock}</strong>
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <Tag className="h-4 w-4 text-orange-500" />
+                                عليه تخفيض: <strong>{stats.onSale}</strong>
+                            </span>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleAddProduct}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center gap-2 transition-colors shadow-md"
+                    >
+                        <PlusCircle className="h-5 w-5" />
+                        إضافة منتج جديد
+                    </button>
                 </div>
+
+                {/* Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="relative">
+                        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="البحث في المنتجات..."
+                            value={filters.search}
+                            onChange={(e) => handleFilterChange('search', e.target.value)}
+                            className="w-full pr-10 pl-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                    </div>
+                    
+                    <select
+                        value={filters.category}
+                        onChange={(e) => handleFilterChange('category', e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                        <option value="">جميع الفئات</option>
+                        {categories.map(category => (
+                            <option key={category} value={category}>{category}</option>
+                        ))}
+                    </select>
+                    
+                    <select
+                        value={filters.status}
+                        onChange={(e) => handleFilterChange('status', e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                        <option value="all">جميع الحالات</option>
+                        <option value="in_stock">متوفر</option>
+                        <option value="out_of_stock">نفد المخزون</option>
+                        <option value="on_sale">عليه تخفيض</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Products grid */}
+            {filteredProducts.length === 0 ? (
+                <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+                    <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                        {products.length === 0 ? 'لم تقم بإضافة أي منتجات بعد' : 'لا توجد منتجات تطابق الفلاتر'}
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                        {products.length === 0 
+                            ? 'ابدأ بإضافة منتجك الأول لعرضه للعملاء'
+                            : 'جرب تعديل الفلاتر أو البحث عن شيء آخر'
+                        }
+                    </p>
+                    {products.length === 0 && (
+                        <button
+                            onClick={handleAddProduct}
+                            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 inline-flex items-center gap-2"
+                        >
+                            <PlusCircle className="h-5 w-5" />
+                            إضافة منتج جديد
+                        </button>
+                    )}
+                </div>
+            ) : (
+                <ProductsGrid
+                    products={filteredProducts}
+                    onEdit={handleEditProduct}
+                    onDelete={handleDeleteProduct}
+                    onRefresh={refetchProducts}
+                />
             )}
 
-            {/* TODO: Add/Edit Product Modal will go here */}
-            
+            {/* Product form modal */}
             {showProductModal && (
-            <ProductFormModal
-                isOpen={showProductModal}
-                onClose={() => {
-                    setShowProductModal(false);
-                    setEditingProduct(null); // Clear editing state when closing
-                }}
-                onSave={handleSaveProduct}
-                productToEdit={editingProduct}
-                isLoading={isSubmitting} // Pass submitting state to modal for its buttons
-            />
-        )}
-        {/* {showProductModal && <ProductFormModal product={editingProduct} onClose={() => setShowProductModal(false)} onSave={fetchSupplierProducts} />} */}
+                <ProductFormModal
+                    isOpen={showProductModal}
+                    onClose={() => {
+                        setShowProductModal(false);
+                        setEditingProduct(null);
+                    }}
+                    onSave={handleSaveProduct}
+                    productToEdit={editingProduct}
+                    isLoading={isSubmitting}
+                />
+            )}
         </div>
     );
 };
