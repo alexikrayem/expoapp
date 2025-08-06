@@ -21,6 +21,9 @@ const featuredItemsRoutes = require('./routes/featuredItems');
 const deliveryRoutes = require('./routes/delivery');
 const adminRoutes = require('./routes/admin'); 
 
+// Import Telegram Bot Service
+const telegramBotService = require('./services/telegramBot');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 

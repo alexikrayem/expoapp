@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const telegramBotService = require('../services/telegramBot');
 
 // POST /from-cart - Create a new order from frontend cart data
 router.post('/from-cart', async (req, res) => {
@@ -65,6 +66,53 @@ router.post('/from-cart', async (req, res) => {
         }
 
         await client.query('COMMIT');
+        
+        // Send notification to delivery agent
+        try {
+            // Get supplier info for the first item (assuming all items are from same supplier for now)
+            const supplierQuery = `
+                SELECT DISTINCT s.id, s.name
+                FROM suppliers s
+                JOIN products p ON s.id = p.supplier_id
+                WHERE p.id = ANY($1::int[])
+            `;
+            const productIds = items.map(item => item.product_id);
+            const supplierResult = await client.query(supplierQuery, [productIds]);
+            
+            if (supplierResult.rows.length > 0) {
+                const supplier = supplierResult.rows[0];
+                
+                // Get customer info
+                const customerQuery = 'SELECT * FROM user_profiles WHERE user_id = $1';
+                const customerResult = await client.query(customerQuery, [userId]);
+                const customer = customerResult.rows[0];
+                
+                const orderNotificationData = {
+                    orderId,
+                    supplierId: supplier.id,
+                    total_amount,
+                    items: items.map(item => ({
+                        product_name: item.name || 'Unknown Product',
+                        quantity: item.quantity,
+                        price_at_time_of_order: item.price_at_time_of_order
+                    })),
+                    customerInfo: {
+                        name: customer?.full_name || 'غير محدد',
+                        phone: customer?.phone_number || 'غير محدد',
+                        address1: customer?.address_line1 || 'غير محدد',
+                        address2: customer?.address_line2,
+                        city: customer?.city || 'غير محدد'
+                    },
+                    orderDate: new Date().toISOString()
+                };
+                
+                await telegramBotService.sendOrderNotificationToDeliveryAgent(orderNotificationData);
+            }
+        } catch (notificationError) {
+            console.error('Failed to send order notification:', notificationError);
+            // Don't fail the order creation if notification fails
+        }
+        
         res.status(201).json({ orderId, message: 'Order created successfully' });
 
     } catch (error) {

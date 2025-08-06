@@ -4,6 +4,7 @@ const router = express.Router();
 const db = require('../config/db');
 const authAdmin = require('../middleware/authAdmin');
 const bcrypt = require('bcrypt');
+const telegramBotService = require('../services/telegramBot');
 
 // Get all suppliers (admin only)
 router.get('/suppliers', authAdmin, async (req, res) => {
@@ -417,6 +418,40 @@ router.delete('/featured-items-definitions/:id', authAdmin, async (req, res) => 
     } catch (error) {
         console.error('Error deleting featured item:', error);
         res.status(500).json({ error: 'Failed to delete featured item' });
+    }
+});
+
+// Send broadcast message (admin only)
+router.post('/broadcast', authAdmin, async (req, res) => {
+    try {
+        const { message } = req.body;
+        
+        if (!message || !message.trim()) {
+            return res.status(400).json({ error: 'Message content is required' });
+        }
+        
+        const result = await telegramBotService.broadcastToAllUsers(message.trim(), req.admin.adminId);
+        
+        res.json({
+            message: 'Broadcast sent successfully',
+            successCount: result.successCount,
+            failCount: result.failCount
+        });
+        
+    } catch (error) {
+        console.error('Error sending broadcast:', error);
+        res.status(500).json({ error: 'Failed to send broadcast message' });
+    }
+});
+
+// Get platform statistics (admin only)
+router.get('/stats', authAdmin, async (req, res) => {
+    try {
+        const stats = await telegramBotService.getPlatformStats();
+        res.json(stats);
+    } catch (error) {
+        console.error('Error fetching platform stats:', error);
+        res.status(500).json({ error: 'Failed to fetch platform statistics' });
     }
 });
 
