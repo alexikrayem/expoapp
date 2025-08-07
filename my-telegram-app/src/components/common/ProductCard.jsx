@@ -81,7 +81,7 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite, onShowDetails, is
                     className="absolute top-2 right-2 p-2 bg-white/90 hover:bg-white rounded-full shadow-lg z-10 backdrop-blur-sm"
                 >
                     <Heart className={`h-5 w-5 transition-colors ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'}`}/>
-                </button>
+                </motion.button>
             </div>
             
             <div className="p-3 flex flex-col flex-grow">
