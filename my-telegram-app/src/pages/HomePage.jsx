@@ -12,6 +12,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useCart } from '../context/CartContext';
 import { useFilters } from '../context/FilterContext';
 import { productService } from '../services/productService';
+import { useCache } from '../context/CacheContext';
 
 // Components
 import Header from '../components/layout/Header';
@@ -20,6 +21,7 @@ import ProductsTab from '../components/tabs/ProductsTab';
 import DealsTab from '../components/tabs/DealsTab';
 import SuppliersTab from '../components/tabs/SuppliersTab';
 import SearchResultsView from '../components/search/SearchResultsView';
+import { HeaderSkeleton } from '../components/common/SkeletonLoader';
 
 const HomePage = () => {
     // --- CONTEXT & GLOBAL DATA ---
@@ -29,12 +31,13 @@ const HomePage = () => {
     const { favoriteIds, toggleFavorite } = useFavorites(telegramUser);
     const { searchResults, showSearchResults, isSearching, searchError, debouncedSearchTerm } = useSearch();
     const { currentFilters, handleFiltersChange } = useFilters();
+    const { cachedApiCall } = useCache();
 
     // --- LOCAL UI STATE ---
     const [activeSection, setActiveSection] = useState('products'); // Default to products
 
     // --- DATA FETCHING HOOKS ---
-    const { products, isLoadingProducts, productError, loadMoreProducts, hasMorePages, isLoadingMore } = useProducts(userProfile?.selected_city_id);
+    const { products, isLoadingProducts, productError, loadMoreProducts, hasMorePages, isLoadingMore, refreshProducts } = useProducts(userProfile?.selected_city_id);
     const { deals, isLoadingDeals, dealError } = useDeals(activeSection === 'exhibitions' ? userProfile?.selected_city_id : null);
     const { suppliers, isLoadingSuppliers, supplierError } = useSuppliers(activeSection === 'suppliers' ? userProfile?.selected_city_id : null);
     const [featuredItems, setFeaturedItems] = useState([]);
@@ -44,7 +47,11 @@ const HomePage = () => {
         const fetchFeatured = async () => {
             setIsLoadingFeatured(true);
             try {
-                const data = await productService.getFeaturedItems();
+                const data = await cachedApiCall(
+                    'featured_items',
+                    () => productService.getFeaturedItems(),
+                    10 * 60 * 1000 // 10 minutes cache for featured items
+                );
                 setFeaturedItems(data || []);
             } catch (err) {
                 console.error("Failed to fetch featured items:", err);
@@ -53,12 +60,14 @@ const HomePage = () => {
             }
         };
         fetchFeatured();
-    }, []);
+    }, [cachedApiCall]);
 
     // --- HANDLER FUNCTIONS ---
     
     const handleShowProductDetails = (product) => {
         if (!product || !product.id) return;
+        // Telegram haptic feedback
+        window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
         openModal('productDetail', {
             product: product,
             productId: product.id,
@@ -69,12 +78,19 @@ const HomePage = () => {
 
     const handleShowDealDetails = (dealId) => {
         if (!dealId) return;
+        window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
         openModal('dealDetail', { dealId });
     };
 
     const handleShowSupplierDetails = (supplierId) => {
         if (!supplierId) return;
+        window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
         openModal('supplierDetail', { supplierId, onAddToCart: addToCart, onToggleFavorite: toggleFavorite, favoriteIds });
+    };
+
+    const handleSectionChange = (section) => {
+        setActiveSection(section);
+        window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
     };
 
     // --- RENDER METHOD ---
@@ -82,19 +98,41 @@ const HomePage = () => {
         <div className='pb-24'>
             <Header>
                 {!showSearchResults && (
-                    <nav className="flex gap-2 border-b border-gray-200">
+                    <nav className="flex gap-1 border-b border-gray-200 bg-white rounded-t-xl overflow-hidden">
                         {['exhibitions', 'products', 'suppliers'].map(section => (
-                            <button key={section} onClick={() => setActiveSection(section)} className={`flex-1 py-3 text-sm font-medium transition-colors ${activeSection === section ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                            <motion.button 
+                                key={section} 
+                                onClick={() => handleSectionChange(section)}
+                                className={`flex-1 py-3 text-sm font-medium transition-all duration-200 relative ${
+                                    activeSection === section 
+                                        ? 'text-blue-600 bg-blue-50' 
+                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                }`}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                {activeSection === section && (
+                                    <motion.div
+                                        layoutId="activeSection"
+                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500"
+                                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                    />
+                                )}
                                 {section === 'exhibitions' && 'العروض'}
                                 {section === 'products' && 'المنتجات'}
                                 {section === 'suppliers' && 'الموردون'}
-                            </button>
+                            </motion.button>
                         ))}
                     </nav>
                 )}
             </Header>
 
-            <main className="p-4 max-w-4xl mx-auto">
+            <motion.main 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="p-4 max-w-4xl mx-auto"
+            >
                 {showSearchResults ? (
                     <SearchResultsView
                         searchTerm={debouncedSearchTerm}
@@ -110,7 +148,12 @@ const HomePage = () => {
                     />
                 ) : (
                     <>
-                        <div className="my-6">
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="my-6"
+                        >
                             <FeaturedSlider
                                 isLoading={isLoadingFeatured}
                                 items={featuredItems}
@@ -120,10 +163,35 @@ const HomePage = () => {
                                     if (item.type === 'supplier') handleShowSupplierDetails(item.id);
                                 }}
                             />
-                        </div>
-                        {activeSection === 'exhibitions' && <DealsTab deals={deals} isLoading={isLoadingDeals} error={dealError} onShowDetails={handleShowDealDetails} />}
-                        {activeSection === 'products' && (
-                          <ProductsTab 
+                        </motion.div>
+                        
+                        <AnimatePresence mode="wait">
+                            {activeSection === 'exhibitions' && (
+                                <motion.div
+                                    key="exhibitions"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <DealsTab 
+                                        deals={deals} 
+                                        isLoading={isLoadingDeals} 
+                                        error={dealError} 
+                                        onShowDetails={handleShowDealDetails} 
+                                    />
+                                </motion.div>
+                            )}
+                            
+                            {activeSection === 'products' && (
+                                <motion.div
+                                    key="products"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <ProductsTab 
                                 products={products}
                                 isLoading={isLoadingProducts} 
                                 error={productError} 
@@ -137,12 +205,31 @@ const HomePage = () => {
                                 onFiltersChange={handleFiltersChange}
                                 currentFilters={currentFilters}
                                 selectedCityId={userProfile?.selected_city_id}
+                                        refreshProducts={refreshProducts}
                             />
-                        )}
-                        {activeSection === 'suppliers' && <SuppliersTab suppliers={suppliers} isLoading={isLoadingSuppliers} error={supplierError} onShowDetails={handleShowSupplierDetails} />}
+                                </motion.div>
+                            )}
+                            
+                            {activeSection === 'suppliers' && (
+                                <motion.div
+                                    key="suppliers"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <SuppliersTab 
+                                        suppliers={suppliers} 
+                                        isLoading={isLoadingSuppliers} 
+                                        error={supplierError} 
+                                        onShowDetails={handleShowSupplierDetails} 
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </>
                 )}
-            </main>
+            </motion.main>
         </div>
     );
 };

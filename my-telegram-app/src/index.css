@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities; 
 
+/* Shimmer animation for skeleton loading */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 layer base {
   html {
     @apply h-full bg-gray-50 font-sans;
@@ -21,6 +31,10 @@ layer base {
   }
 }
 @layer utilities {
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+  }
+  
   .highlight-order {
     animation: highlight 2.5s ease-out;
   }

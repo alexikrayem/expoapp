@@ -1,6 +1,7 @@
 // src/components/layout/AppLayout.jsx (DEFINITIVE CORRECTED VERSION)
 import React from 'react';
 import { Outlet, useOutletContext } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import Footer from './Footer';
 import FloatingUI from './FloatingUI'; // FIX: Import the new wrapper component
 
@@ -8,8 +9,12 @@ const AppLayout = () => {
     const context = useOutletContext();
 
     return (
-        <>
-            <main className="flex-grow">
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+        >
+            <main className="flex-grow min-h-screen">
                 <Outlet context={context} />
             </main>
             
@@ -20,7 +25,7 @@ const AppLayout = () => {
             <FloatingUI />
             
             <Footer />
-        </>
+        </motion.div>
     );
 };
 

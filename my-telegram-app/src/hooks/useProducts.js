@@ -1,6 +1,7 @@
-// src/hooks/useProducts.js
+// src/hooks/useProducts.js - Enhanced with caching
 import { useState, useEffect, useCallback } from 'react';
 import { productService } from '../services/productService';
+import { useCache } from '../context/CacheContext';
 import { PAGINATION } from '../utils/constants';
 
 export const useProducts = (cityId) => {
@@ -19,8 +20,17 @@ export const useProducts = (cityId) => {
         onSale: false,
     });
 
+    const { cachedApiCall, invalidateCache } = useCache();
+
     const fetchProducts = useCallback(async (pageToFetch, appliedFilters) => {
-        if (!cityId) return;
+        if (!cityId) {
+            setProducts([]);
+            setIsLoading(false);
+            return;
+        }
+
+        // Create cache key based on parameters
+        const cacheKey = `products_${cityId}_${pageToFetch}_${JSON.stringify(appliedFilters)}`;
 
         // Set loading states
         if (pageToFetch === 1) {
@@ -45,7 +55,12 @@ export const useProducts = (cityId) => {
                 }
             });
 
-            const data = await productService.getProducts(params);
+            // Use cached API call
+            const data = await cachedApiCall(
+                cacheKey,
+                () => productService.getProducts(params),
+                3 * 60 * 1000 // 3 minutes cache for products
+            );
             
             if (pageToFetch === 1) {
                 setProducts(data.items);
@@ -63,7 +78,7 @@ export const useProducts = (cityId) => {
             setIsLoading(false);
             setIsLoadingMore(false);
         }
-    }, [cityId]);
+    }, [cityId, cachedApiCall]);
 
     // Effect to refetch products when cityId or filters change
     useEffect(() => {
@@ -73,8 +88,9 @@ export const useProducts = (cityId) => {
     }, [cityId, filters, fetchProducts]);
 
     const handleFiltersChange = (newFilters) => {
+        // Invalidate cache when filters change
+        invalidateCache(`products_${cityId}`);
         setFilters(newFilters);
-        // The useEffect above will handle the refetching.
     };
     
     const loadMoreProducts = () => {
@@ -82,6 +98,12 @@ export const useProducts = (cityId) => {
         const nextPage = currentPage + 1;
         fetchProducts(nextPage, filters);
     };
+
+    const refreshProducts = useCallback(() => {
+        invalidateCache(`products_${cityId}`);
+        setCurrentPage(1);
+        fetchProducts(1, filters);
+    }, [cityId, filters, fetchProducts, invalidateCache]);
 
     return {
         products,
@@ -96,5 +118,8 @@ export const useProducts = (cityId) => {
         // Filters
         currentFilters: filters,
         handleFiltersChange,
+        
+        // Refresh
+        refreshProducts,
     };
 };

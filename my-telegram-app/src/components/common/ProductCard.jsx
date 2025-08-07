@@ -6,45 +6,112 @@ import { useCurrency } from '../../context/CurrencyContext';
 
 const ProductCard = ({ product, onAddToCart, onToggleFavorite, onShowDetails, isFavorite }) => {
     const { formatPrice } = useCurrency();
+    
     const handleImageError = (e) => {
         e.currentTarget.style.display = 'none';
         const placeholder = e.currentTarget.parentElement.querySelector('.image-placeholder-text');
         if (placeholder) placeholder.style.display = 'flex';
     };
 
+    const handleAddToCart = (e) => {
+        e.stopPropagation();
+        onAddToCart(product);
+        // Telegram haptic feedback
+        window.Telegram?.WebApp?.HapticFeedback.impactOccurred('medium');
+    };
+
+    const handleToggleFavorite = (e) => {
+        e.stopPropagation();
+        onToggleFavorite(product.id);
+        // Telegram haptic feedback
+        window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
+    };
+
+    const handleShowDetails = () => {
+        onShowDetails(product);
+        // Telegram haptic feedback
+        window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
+    };
 
     
     return (
         <motion.div
-            className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer flex flex-col z-0"
-            whileHover={{ y: -5, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)' }}
-            onClick={() => onShowDetails(product)}
+            className="bg-white rounded-xl shadow-md overflow-hidden cursor-pointer flex flex-col z-0 border border-gray-100"
+            whileHover={{ 
+                y: -8, 
+                scale: 1.02,
+                boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)' 
+            }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleShowDetails}
             layout
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         >
-            <div className="h-32 w-full flex items-center justify-center text-white relative bg-gray-100 rounded-t-xl overflow-hidden">
+            <div className="h-36 w-full flex items-center justify-center text-white relative bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-xl overflow-hidden">
                 {product.image_url && !product.image_url.startsWith('linear-gradient') ? (
-                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" onError={handleImageError} />
+                    <img 
+                        src={product.image_url} 
+                        alt={product.name} 
+                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-110" 
+                        onError={handleImageError} 
+                    />
                 ) : (
                     <div className="w-full h-full" style={product.image_url ? { background: product.image_url } : {}}>
                         {!product.image_url && <span className="text-xs text-gray-500 p-2 text-center flex items-center justify-center h-full">لا توجد صورة</span>}
                     </div>
                 )}
                 <span className="text-xs text-gray-500 p-2 text-center image-placeholder-text" style={{display: 'none', alignItems: 'center', justifyContent: 'center', height: '100%'}}>لا يمكن تحميل الصورة</span>
-                {product.is_on_sale && (<div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">تخفيض</div>)}
-                <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(product.id);}} className="absolute top-2 right-2 p-1.5 bg-white/80 hover:bg-white rounded-full shadow-sm z-10">
-                    <Heart className={`h-5 w-5 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-gray-600'}`}/>
+                
+                {/* Sale badge with animation */}
+                {product.is_on_sale && (
+                    <motion.div 
+                        initial={{ scale: 0, rotate: -12 }}
+                        animate={{ scale: 1, rotate: -12 }}
+                        className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg"
+                    >
+                        تخفيض
+                    </motion.div>
+                )}
+                
+                {/* Enhanced favorite button */}
+                <motion.button 
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={handleToggleFavorite}
+                    className="absolute top-2 right-2 p-2 bg-white/90 hover:bg-white rounded-full shadow-lg z-10 backdrop-blur-sm"
+                >
+                    <Heart className={`h-5 w-5 transition-colors ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'}`}/>
                 </button>
             </div>
+            
             <div className="p-3 flex flex-col flex-grow">
-                <h3 className="font-semibold text-sm mb-1 text-gray-800 flex-grow min-h-[2.5em] line-clamp-2">{product.name}</h3>
+                <h3 className="font-semibold text-sm mb-2 text-gray-800 flex-grow min-h-[2.5em] line-clamp-2 leading-tight">
+                    {product.name}
+                </h3>
+                
+                {/* Supplier name */}
+                <p className="text-xs text-gray-500 mb-2 truncate">{product.supplier_name}</p>
+                
                 <div className="flex items-end justify-between mt-auto">
                     <div>
-                        {product.is_on_sale && product.discount_price && (<span className="text-xs line-through text-gray-400 mr-1">{parseFloat(product.effective_selling_price)} </span>)}
-                        <div className="text-blue-600 font-bold text-base">{formatPrice(product.is_on_sale && product.discount_price ? product.discount_price : product.effective_selling_price)} </div>
+                        {product.is_on_sale && product.discount_price && (
+                            <span className="text-xs line-through text-gray-400 mr-1">
+                                {formatPrice(product.price)}
+                            </span>
+                        )}
+                        <div className="text-blue-600 font-bold text-base">
+                            {formatPrice(product.effective_selling_price)}
+                        </div>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); onAddToCart(product);}} className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-500 hover:text-white">
+                    
+                    <motion.button 
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={handleAddToCart}
+                        className="p-2.5 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-600 rounded-full hover:from-blue-500 hover:to-indigo-500 hover:text-white transition-all duration-200 shadow-sm"
+                    >
                         <ShoppingCart className="h-4 w-4" />
-                    </button>
+                    </motion.button>
                 </div>
             </div>
         </motion.div>
