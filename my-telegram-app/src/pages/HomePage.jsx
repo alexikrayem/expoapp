@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useModal } from '../context/ModalContext';
+import { Tags, Package, Factory } from 'lucide-react';
 
 // Direct, explicit imports
 import { useProducts } from '../hooks/useProducts';
@@ -13,6 +14,8 @@ import { useCart } from '../context/CartContext';
 import { useFilters } from '../context/FilterContext';
 import { productService } from '../services/productService';
 import { useCache } from '../context/CacheContext';
+
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Components
 import Header from '../components/layout/Header';
@@ -42,6 +45,14 @@ const HomePage = () => {
     const { suppliers, isLoadingSuppliers, supplierError } = useSuppliers(activeSection === 'suppliers' ? userProfile?.selected_city_id : null);
     const [featuredItems, setFeaturedItems] = useState([]);
     const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
+
+
+    const tabs = [
+  { id: 'exhibitions', label: 'العروض', icon: Tags },
+  { id: 'products', label: 'المنتجات', icon: Package },
+  { id: 'suppliers', label: 'الموردون', icon: Factory },
+];
+
 
     useEffect(() => {
         const fetchFeatured = async () => {
@@ -98,32 +109,24 @@ const HomePage = () => {
         <div className='pb-24'>
             <Header>
                 {!showSearchResults && (
-                    <nav className="flex gap-1 border-b border-gray-200 bg-white rounded-t-xl overflow-hidden">
-                        {['exhibitions', 'products', 'suppliers'].map(section => (
-                            <motion.button 
-                                key={section} 
-                                onClick={() => handleSectionChange(section)}
-                                className={`flex-1 py-3 text-sm font-medium transition-all duration-200 relative ${
-                                    activeSection === section 
-                                        ? 'text-blue-600 bg-blue-50' 
-                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                }`}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                {activeSection === section && (
-                                    <motion.div
-                                        layoutId="activeSection"
-                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500"
-                                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                                    />
-                                )}
-                                {section === 'exhibitions' && 'العروض'}
-                                {section === 'products' && 'المنتجات'}
-                                {section === 'suppliers' && 'الموردون'}
-                            </motion.button>
-                        ))}
-                    </nav>
+<nav className="w-full flex justify-between gap-2 px-4 mt-4">
+  {tabs.map(({ id, label, icon: Icon }) => (
+    <motion.button
+      key={id}
+      onClick={() => handleSectionChange(id)}
+      whileTap={{ scale: 0.97 }}
+      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+        ${
+          activeSection === id
+            ? 'bg-blue-600 text-white shadow'
+            : 'bg-white text-gray-800 border border-gray-300 hover:bg-gray-100'
+        }`}
+    >
+      <Icon size={18} />
+      <span>{label}</span>
+    </motion.button>
+  ))}
+</nav>
                 )}
             </Header>
 
