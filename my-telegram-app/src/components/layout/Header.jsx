@@ -42,8 +42,7 @@ const Header = ({ children }) => {
             tg.setBackgroundColor('#f8fafc');
             
             // Configure viewport for better mobile experience
-            tg.viewportHeight = window.innerHeight;
-            tg.viewportStableHeight = window.innerHeight;
+            
             
             // Enable closing confirmation
             tg.enableClosingConfirmation();
@@ -246,24 +245,8 @@ const Header = ({ children }) => {
                             </span>
                         </motion.button>
 
-                        {/* Cart button with enhanced badge */}
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={handleOpenCart}
-                            className="relative p-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 shadow-sm border border-blue-100"
-                        >
-                            <ShoppingCart className="h-4 w-4" />
-                            {cartItemCount > 0 && (
-                                <motion.span
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md"
-                                >
-                                    {cartItemCount > 99 ? '99+' : cartItemCount}
-                                </motion.span>
-                            )}
-                        </motion.button>
+                        
+                    
 
                         {/* Profile button with enhanced design */}
                         <motion.div
