@@ -1,6 +1,6 @@
 // src/pages/ProductsPage.jsx - Enhanced with quick actions and better UX
 import React, { useState } from 'react';
-import { PlusCircle, Search, Filter, Package, TrendingUp, AlertCircle } from 'lucide-react';
+import { PlusCircle, Search, Filter, Package, TrendingUp, AlertCircle, PackageX, Tag } from 'lucide-react';
 import { useSupplierProducts } from '../hooks/useSupplierData';
 import { supplierService } from '../services/supplierService';
 import ProductFormModal from '../components/ProductFormModal';
