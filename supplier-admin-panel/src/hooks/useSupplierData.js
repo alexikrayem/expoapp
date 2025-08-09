@@ -99,12 +99,21 @@ export const useSupplierOrders = (filters = {}) => {
         try {
             setIsLoading(true);
             const response = await supplierService.getOrders(filters);
-            setOrders(response.items || response.data || response);
+
+            const safeOrders = Array.isArray(response?.items)
+                ? response.items
+                : Array.isArray(response?.data)
+                    ? response.data
+                    : Array.isArray(response)
+                        ? response
+                        : [];
+
+            setOrders(safeOrders);
             setError(null);
         } catch (err) {
             console.error('Failed to fetch orders:', err);
             setError(err.message);
-            setOrders([]);
+            setOrders([]); // ensure array
         } finally {
             setIsLoading(false);
         }
