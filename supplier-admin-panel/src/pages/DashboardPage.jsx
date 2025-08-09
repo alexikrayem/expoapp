@@ -10,7 +10,8 @@ import {
     DollarSign,
     Clock,
     CheckCircle,
-    XCircle
+    XCircle,
+    Tag
 } from 'lucide-react';
 import { useSupplierData, useSupplierProducts, useSupplierOrders } from '../hooks/useSupplierData';
 import { supplierService } from '../services/supplierService';
@@ -97,7 +98,8 @@ const RecentOrderItem = ({ order }) => {
 const DashboardPage = () => {
     const { supplierProfile, isLoading: profileLoading } = useSupplierData();
     const { products, isLoading: productsLoading } = useSupplierProducts();
-    const { orders, isLoading: ordersLoading } = useSupplierOrders();
+ const { orders = [], isLoading: ordersLoading } = useSupplierOrders();
+
     const [stats, setStats] = useState(null);
     const [isLoadingStats, setIsLoadingStats] = useState(true);
 
