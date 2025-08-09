@@ -25,16 +25,6 @@ const TelegramIntegration = () => {
                 setIsConnected(true);
             }
 
-            // Configure main button for notifications
-            tg.MainButton.setText('📱 إعدادات الإشعارات');
-            tg.MainButton.color = '#3b82f6';
-            tg.MainButton.textColor = '#ffffff';
-            tg.MainButton.show();
-            
-            tg.onEvent('mainButtonClicked', () => {
-                handleNotificationSettings();
-            });
-
             // Handle back button
             tg.BackButton.onClick(() => {
                 if (window.history.length > 1) {
@@ -86,7 +76,8 @@ const TelegramIntegration = () => {
 
     const supplierInfo = JSON.parse(localStorage.getItem('supplierInfo') || '{}');
     const webAppUrl = `${window.location.origin}`;
-    const botUsername = process.env.VITE_TELEGRAM_BOT_USERNAME || 'your_bot_username';
+const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'your_bot_username';
+
 
     return (
         <div className="bg-white rounded-lg shadow-sm p-6">
