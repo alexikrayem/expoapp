@@ -20,9 +20,7 @@ const initializeTelegramWebApp = () => {
         tg.setHeaderColor('#1f2937'); // gray-800
         tg.setBackgroundColor('#f9fafb'); // gray-50
         
-        // Configure viewport
-        tg.viewportHeight = window.innerHeight;
-        tg.viewportStableHeight = window.innerHeight;
+        
         
         console.log('Telegram Web App initialized for supplier panel');
     }
