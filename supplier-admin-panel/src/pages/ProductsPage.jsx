@@ -1,6 +1,6 @@
 // src/pages/ProductsPage.jsx - Enhanced with quick actions and better UX
 import React, { useState } from 'react';
-import { PlusCircle, Search, Filter, Package, TrendingUp, AlertCircle, PackageX, Tag } from 'lucide-react';
+import { PlusCircle, Search, Filter, Package, TrendingUp, AlertCircle, PackageX, Tag, RefreshCw } from 'lucide-react';
 import { useSupplierProducts } from '../hooks/useSupplierData';
 import { supplierService } from '../services/supplierService';
 import ProductFormModal from '../components/ProductFormModal';
@@ -17,6 +17,7 @@ const ProductsPage = () => {
     const [showProductModal, setShowProductModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     // Stats derived from products
     const stats = {
@@ -24,6 +25,7 @@ const ProductsPage = () => {
         inStock: products.filter(p => p.stock_level > 0).length,
         outOfStock: products.filter(p => p.stock_level === 0).length,
         onSale: products.filter(p => p.is_on_sale).length,
+        lowStock: products.filter(p => p.stock_level > 0 && p.stock_level <= 5).length,
     };
 
     const handleAddProduct = () => {
@@ -76,6 +78,15 @@ const ProductsPage = () => {
         setFilters(prev => ({ ...prev, [key]: value }));
     };
 
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await refetchProducts();
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
     // Filter products based on current filters
     const filteredProducts = products.filter(product => {
         if (filters.search && !product.name.toLowerCase().includes(filters.search.toLowerCase())) {
@@ -91,6 +102,9 @@ const ProductsPage = () => {
             return false;
         }
         if (filters.status === 'on_sale' && !product.is_on_sale) {
+            return false;
+        }
+        if (filters.status === 'low_stock' && (product.stock_level === 0 || product.stock_level > 5)) {
             return false;
         }
         return true;
@@ -131,26 +145,42 @@ const ProductsPage = () => {
             {/* Header with stats */}
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">إدارة المنتجات</h2>
-                        <div className="flex flex-wrap gap-4 text-sm">
-                            <span className="flex items-center gap-1">
-                                <Package className="h-4 w-4 text-blue-500" />
-                                المجموع: <strong>{stats.total}</strong>
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <TrendingUp className="h-4 w-4 text-green-500" />
-                                متوفر: <strong>{stats.inStock}</strong>
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <PackageX className="h-4 w-4 text-red-500" />
-                                نفد المخزون: <strong>{stats.outOfStock}</strong>
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <Tag className="h-4 w-4 text-orange-500" />
-                                عليه تخفيض: <strong>{stats.onSale}</strong>
-                            </span>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">إدارة المنتجات</h2>
+                            <div className="flex flex-wrap gap-4 text-sm">
+                                <span className="flex items-center gap-1">
+                                    <Package className="h-4 w-4 text-blue-500" />
+                                    المجموع: <strong>{stats.total}</strong>
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <TrendingUp className="h-4 w-4 text-green-500" />
+                                    متوفر: <strong>{stats.inStock}</strong>
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <PackageX className="h-4 w-4 text-red-500" />
+                                    نفد المخزون: <strong>{stats.outOfStock}</strong>
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <Tag className="h-4 w-4 text-orange-500" />
+                                    عليه تخفيض: <strong>{stats.onSale}</strong>
+                                </span>
+                                {stats.lowStock > 0 && (
+                                    <span className="flex items-center gap-1">
+                                        <AlertCircle className="h-4 w-4 text-yellow-500" />
+                                        مخزون منخفض: <strong>{stats.lowStock}</strong>
+                                    </span>
+                                )}
+                            </div>
                         </div>
+                        <button
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-lg transition-colors disabled:opacity-50"
+                            title="تحديث"
+                        >
+                            <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        </button>
                     </div>
                     <button
                         onClick={handleAddProduct}
@@ -162,7 +192,7 @@ const ProductsPage = () => {
                 </div>
 
                 {/* Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="relative">
                         <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
@@ -193,8 +223,13 @@ const ProductsPage = () => {
                         <option value="all">جميع الحالات</option>
                         <option value="in_stock">متوفر</option>
                         <option value="out_of_stock">نفد المخزون</option>
+                        <option value="low_stock">مخزون منخفض</option>
                         <option value="on_sale">عليه تخفيض</option>
                     </select>
+
+                    <div className="text-sm text-gray-600 flex items-center">
+                        عرض {filteredProducts.length} من {products.length} منتج
+                    </div>
                 </div>
             </div>
 

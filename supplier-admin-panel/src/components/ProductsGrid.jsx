@@ -9,7 +9,9 @@ import {
     TrendingUp,
     Zap,
     MoreVertical,
-    Check
+    Check,
+    AlertTriangle,
+    DollarSign
 } from 'lucide-react';
 import QuickActionsPanel from './QuickActionsPanel';
 
@@ -18,6 +20,7 @@ const ProductCard = ({ product, onEdit, onDelete, onQuickAction, isSelected, onS
     
     const isOutOfStock = product.stock_level === 0;
     const isOnSale = product.is_on_sale && product.discount_price;
+    const isLowStock = product.stock_level > 0 && product.stock_level <= 5;
 
     const quickActions = [
         {
@@ -43,19 +46,22 @@ const ProductCard = ({ product, onEdit, onDelete, onQuickAction, isSelected, onS
 
     return (
         <div className={`
-            bg-white rounded-lg shadow-md overflow-hidden transition-all duration-200
+            bg-white rounded-lg shadow-md overflow-hidden transition-all duration-200 relative
             ${isSelected ? 'ring-2 ring-indigo-500 shadow-lg' : 'hover:shadow-lg'}
             ${isOutOfStock ? 'opacity-75' : ''}
         `}>
             {/* Selection checkbox */}
             <div className="absolute top-2 left-2 z-10">
                 <button
-                    onClick={() => onSelect(product)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onSelect(product);
+                    }}
                     className={`
-                        w-6 h-6 rounded-full border-2 flex items-center justify-center
+                        w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
                         ${isSelected 
-                            ? 'bg-indigo-500 border-indigo-500 text-white' 
-                            : 'bg-white border-gray-300 hover:border-indigo-400'
+                            ? 'bg-indigo-500 border-indigo-500 text-white shadow-md' 
+                            : 'bg-white border-gray-300 hover:border-indigo-400 shadow-sm'
                         }
                     `}
                 >
@@ -86,12 +92,17 @@ const ProductCard = ({ product, onEdit, onDelete, onQuickAction, isSelected, onS
                 {/* Status badges */}
                 <div className="absolute top-2 right-2 flex flex-col gap-1">
                     {isOutOfStock && (
-                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-sm">
                             نفد المخزون
                         </span>
                     )}
+                    {isLowStock && !isOutOfStock && (
+                        <span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-sm">
+                            مخزون منخفض
+                        </span>
+                    )}
                     {isOnSale && (
-                        <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                        <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-sm">
                             تخفيض {Math.round((1 - product.discount_price / product.price) * 100)}%
                         </span>
                     )}
@@ -101,24 +112,28 @@ const ProductCard = ({ product, onEdit, onDelete, onQuickAction, isSelected, onS
                 <div className="absolute bottom-2 right-2">
                     <div className="relative">
                         <button
-                            onClick={() => setShowActions(!showActions)}
-                            className="bg-black/50 text-white p-2 rounded-full hover:bg-black/70"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowActions(!showActions);
+                            }}
+                            className="bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors backdrop-blur-sm"
                         >
                             <Zap className="h-4 w-4" />
                         </button>
                         
                         {showActions && (
-                            <div className="absolute bottom-full right-0 mb-2 bg-white rounded-lg shadow-lg border p-2 min-w-[150px]">
+                            <div className="absolute bottom-full right-0 mb-2 bg-white rounded-lg shadow-lg border p-2 min-w-[150px] z-20">
                                 {quickActions.map(action => (
                                     <button
                                         key={action.id}
-                                        onClick={() => {
+                                        onClick={(e) => {
+                                            e.stopPropagation();
                                             action.action();
                                             setShowActions(false);
                                         }}
                                         className={`
                                             w-full flex items-center gap-2 p-2 rounded-md text-sm
-                                            hover:bg-gray-100 ${action.color}
+                                            hover:bg-gray-100 ${action.color} transition-colors
                                         `}
                                     >
                                         <action.icon className="h-4 w-4" />
@@ -153,7 +168,11 @@ const ProductCard = ({ product, onEdit, onDelete, onQuickAction, isSelected, onS
                             </span>
                         )}
                     </div>
-                    <span className={`text-sm font-medium ${isOutOfStock ? 'text-red-600' : 'text-green-600'}`}>
+                    <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                        isOutOfStock ? 'text-red-600 bg-red-100' : 
+                        isLowStock ? 'text-yellow-600 bg-yellow-100' : 
+                        'text-green-600 bg-green-100'
+                    }`}>
                         {product.stock_level} قطعة
                     </span>
                 </div>
@@ -161,14 +180,20 @@ const ProductCard = ({ product, onEdit, onDelete, onQuickAction, isSelected, onS
                 {/* Action buttons */}
                 <div className="flex gap-2">
                     <button
-                        onClick={() => onEdit(product)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(product);
+                        }}
                         className="flex-1 bg-indigo-100 text-indigo-700 py-2 px-3 rounded-md hover:bg-indigo-200 transition-colors flex items-center justify-center gap-1"
                     >
                         <Edit3 className="h-4 w-4" />
                         <span className="text-sm">تعديل</span>
                     </button>
                     <button
-                        onClick={() => onDelete(product.id, product.name)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(product.id, product.name);
+                        }}
                         className="bg-red-100 text-red-700 py-2 px-3 rounded-md hover:bg-red-200 transition-colors"
                     >
                         <Trash2 className="h-4 w-4" />
@@ -230,17 +255,17 @@ const ProductsGrid = ({ products, onEdit, onDelete, onRefresh }) => {
         <div className="space-y-4">
             {/* Selection controls */}
             {products.length > 0 && (
-                <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleSelectAll}
-                            className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-indigo-600"
+                            className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors"
                         >
                             <div className={`
-                                w-5 h-5 rounded border-2 flex items-center justify-center
+                                w-5 h-5 rounded border-2 flex items-center justify-center transition-all
                                 ${selectedProducts.length === products.length 
                                     ? 'bg-indigo-500 border-indigo-500 text-white' 
-                                    : 'border-gray-300'
+                                    : 'border-gray-300 hover:border-indigo-400'
                                 }
                             `}>
                                 {selectedProducts.length === products.length && <Check className="h-3 w-3" />}
@@ -249,7 +274,7 @@ const ProductsGrid = ({ products, onEdit, onDelete, onRefresh }) => {
                         </button>
                         
                         {selectedProducts.length > 0 && (
-                            <span className="text-sm text-gray-600">
+                            <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full border">
                                 {selectedProducts.length} من {products.length} محدد
                             </span>
                         )}
@@ -258,10 +283,10 @@ const ProductsGrid = ({ products, onEdit, onDelete, onRefresh }) => {
                     {selectedProducts.length > 0 && (
                         <button
                             onClick={() => setShowQuickActions(true)}
-                            className="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 flex items-center gap-2"
+                            className="bg-indigo-500 text-white px-6 py-2 rounded-lg hover:bg-indigo-600 flex items-center gap-2 font-medium transition-colors shadow-sm"
                         >
                             <Zap className="h-4 w-4" />
-                            إجراءات سريعة
+                            إجراءات سريعة ({selectedProducts.length})
                         </button>
                     )}
                 </div>
@@ -282,16 +307,14 @@ const ProductsGrid = ({ products, onEdit, onDelete, onRefresh }) => {
                 ))}
             </div>
 
-            {/* Quick actions panel */}
+            {/* Quick actions modal */}
             {showQuickActions && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="w-full max-w-md">
-                        <QuickActionsPanel
-                            selectedProducts={selectedProducts}
-                            onActionComplete={handleBulkActionComplete}
-                            onClose={() => setShowQuickActions(false)}
-                        />
-                    </div>
+                    <QuickActionsPanel
+                        selectedProducts={selectedProducts}
+                        onActionComplete={handleBulkActionComplete}
+                        onClose={() => setShowQuickActions(false)}
+                    />
                 </div>
             )}
         </div>

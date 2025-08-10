@@ -14,7 +14,12 @@ export const supplierService = {
 
     // Get supplier's products with pagination and filters
     getProducts: (params = {}) => {
-        const searchParams = new URLSearchParams(params);
+        const searchParams = new URLSearchParams();
+        Object.keys(params).forEach(key => {
+            if (params[key] !== undefined && params[key] !== '') {
+                searchParams.append(key, params[key]);
+            }
+        });
         return apiClient.get(`/api/supplier/products?${searchParams}`);
     },
 
@@ -54,9 +59,29 @@ export const supplierService = {
         return apiClient.put('/api/supplier/products/bulk-stock', { updates });
     },
 
+    bulkToggleSale: async (productIds, isOnSale, discountPercentage = 20) => {
+        const promises = productIds.map(async (productId) => {
+            // Get current product to calculate discount price
+            const product = await apiClient.get(`/api/products/${productId}`);
+            const discountPrice = isOnSale ? product.price * (1 - discountPercentage / 100) : null;
+            
+            return apiClient.put(`/api/supplier/products/${productId}`, {
+                is_on_sale: isOnSale,
+                discount_price: discountPrice
+            });
+        });
+        
+        return Promise.all(promises);
+    },
+
     // Get supplier's orders
     getOrders: (params = {}) => {
-        const searchParams = new URLSearchParams(params);
+        const searchParams = new URLSearchParams();
+        Object.keys(params).forEach(key => {
+            if (params[key] !== undefined && params[key] !== '') {
+                searchParams.append(key, params[key]);
+            }
+        });
         return apiClient.get(`/api/supplier/orders?${searchParams}`);
     },
 
@@ -67,22 +92,22 @@ export const supplierService = {
 
     // Get supplier's deals
     getDeals: () => {
-        return apiClient.get('/api/supplier/deals');
+        return apiClient.get('/api/deals/supplier/deals');
     },
 
     // Create deal
     createDeal: (dealData) => {
-        return apiClient.post('/api/supplier/deals', dealData);
+        return apiClient.post('/api/deals/supplier/deals', dealData);
     },
 
     // Update deal
     updateDeal: (dealId, dealData) => {
-        return apiClient.put(`/api/supplier/deals/${dealId}`, dealData);
+        return apiClient.put(`/api/deals/supplier/deals/${dealId}`, dealData);
     },
 
     // Delete deal
     deleteDeal: (dealId) => {
-        return apiClient.delete(`/api/supplier/deals/${dealId}`);
+        return apiClient.delete(`/api/deals/supplier/deals/${dealId}`);
     },
 
     // Get delivery agents
@@ -103,6 +128,11 @@ export const supplierService = {
     // Delete delivery agent
     deleteDeliveryAgent: (agentId) => {
         return apiClient.delete(`/api/supplier/delivery-agents/${agentId}`);
+    },
+
+    // Toggle delivery agent status
+    toggleDeliveryAgentStatus: (agentId) => {
+        return apiClient.put(`/api/supplier/delivery-agents/${agentId}/toggle-active`);
     },
 
     // Get cities (for city selection)

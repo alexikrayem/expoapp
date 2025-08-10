@@ -1,6 +1,6 @@
 // src/components/CityManagement.jsx - City management for suppliers
 import React, { useState, useEffect } from 'react';
-import { MapPin, Plus, X, Check, AlertCircle } from 'lucide-react';
+import { MapPin, Plus, X, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { supplierService } from '../services/supplierService';
 
 const CityManagement = ({ onUpdate }) => {
@@ -15,17 +15,18 @@ const CityManagement = ({ onUpdate }) => {
         const fetchData = async () => {
             try {
                 setIsLoading(true);
+                setError(null);
+                
                 const [citiesResponse, supplierCitiesResponse] = await Promise.all([
                     supplierService.getCities(),
                     supplierService.getSupplierCities()
                 ]);
                 
-                setAllCities(citiesResponse);
-                setSupplierCities(supplierCitiesResponse.map(sc => sc.city_id));
-                setError(null);
+                setAllCities(Array.isArray(citiesResponse) ? citiesResponse : []);
+                setSupplierCities((supplierCitiesResponse || []).map(sc => sc.city_id));
             } catch (err) {
                 console.error('Failed to fetch cities:', err);
-                setError(err.message);
+                setError(err.message || 'Failed to fetch cities');
             } finally {
                 setIsLoading(false);
             }
@@ -47,8 +48,13 @@ const CityManagement = ({ onUpdate }) => {
             
             // Show success notification
             const notification = document.createElement('div');
-            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-            notification.textContent = 'تم تحديث المدن بنجاح';
+            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2';
+            notification.innerHTML = `
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                تم تحديث المدن بنجاح
+            `;
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 3000);
             
@@ -66,7 +72,10 @@ const CityManagement = ({ onUpdate }) => {
         return (
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="animate-pulse space-y-4">
-                    <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="h-5 w-5 bg-gray-200 rounded"></div>
+                        <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                    </div>
                     <div className="space-y-2">
                         {[...Array(3)].map((_, i) => (
                             <div key={i} className="h-10 bg-gray-200 rounded"></div>
@@ -82,7 +91,13 @@ const CityManagement = ({ onUpdate }) => {
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="text-center">
                     <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                    <p className="text-red-600">{error}</p>
+                    <p className="text-red-600 mb-4">{error}</p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+                    >
+                        إعادة المحاولة
+                    </button>
                 </div>
             </div>
         );
@@ -98,9 +113,14 @@ const CityManagement = ({ onUpdate }) => {
                 {availableCities.length > 0 && (
                     <button
                         onClick={() => setShowAddCity(!showAddCity)}
-                        className="bg-indigo-500 text-white px-3 py-2 rounded-md hover:bg-indigo-600 flex items-center gap-2"
+                        disabled={isSaving}
+                        className="bg-indigo-500 text-white px-3 py-2 rounded-md hover:bg-indigo-600 flex items-center gap-2 disabled:opacity-50"
                     >
-                        <Plus className="h-4 w-4" />
+                        {isSaving ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <Plus className="h-4 w-4" />
+                        )}
                         إضافة مدينة
                     </button>
                 )}
@@ -120,7 +140,7 @@ const CityManagement = ({ onUpdate }) => {
                                 <button
                                     onClick={() => handleToggleCity(city.id)}
                                     disabled={isSaving}
-                                    className="text-red-600 hover:text-red-800 p-1 disabled:opacity-50"
+                                    className="text-red-600 hover:text-red-800 p-1 disabled:opacity-50 transition-colors"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
@@ -129,7 +149,7 @@ const CityManagement = ({ onUpdate }) => {
                 ) : (
                     <div className="text-center py-8 text-gray-500">
                         <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <p>لم تحدد أي مدن بعد</p>
+                        <p className="font-medium">لم تحدد أي مدن بعد</p>
                         <p className="text-sm">أضف المدن التي تقدم خدماتك فيها</p>
                     </div>
                 )}
@@ -145,7 +165,7 @@ const CityManagement = ({ onUpdate }) => {
                                 key={city.id}
                                 onClick={() => handleToggleCity(city.id)}
                                 disabled={isSaving}
-                                className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                                className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
                             >
                                 <span className="text-gray-800">{city.name}</span>
                                 <Plus className="h-4 w-4 text-gray-400" />
@@ -155,9 +175,18 @@ const CityManagement = ({ onUpdate }) => {
                 </div>
             )}
 
-            {supplierCities.length === 0 && availableCities.length === 0 && (
+            {supplierCities.length === 0 && availableCities.length === 0 && !isLoading && (
                 <div className="text-center py-4 text-gray-500">
                     <p>جميع المدن المتاحة مضافة بالفعل</p>
+                </div>
+            )}
+
+            {/* Summary */}
+            {supplierCities.length > 0 && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800 text-center">
+                        تقدم خدماتك في <strong>{supplierCities.length}</strong> مدينة
+                    </p>
                 </div>
             )}
         </div>

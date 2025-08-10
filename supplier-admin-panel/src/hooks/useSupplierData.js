@@ -10,12 +10,12 @@ export const useSupplierData = () => {
     const fetchProfile = useCallback(async () => {
         try {
             setIsLoading(true);
+            setError(null);
             const profile = await supplierService.getProfile();
             setSupplierProfile(profile);
-            setError(null);
         } catch (err) {
             console.error('Failed to fetch supplier profile:', err);
-            setError(err.message);
+            setError(err.message || 'Failed to fetch profile');
         } finally {
             setIsLoading(false);
         }
@@ -46,24 +46,27 @@ export const useSupplierProducts = (filters = {}) => {
     const fetchProducts = useCallback(async (page = 1) => {
         try {
             setIsLoading(true);
+            setError(null);
             const params = { ...filters, page, limit: 20 };
             const response = await supplierService.getProducts(params);
             
+            // Handle different response formats
+            const productsData = Array.isArray(response) ? response : (response.items || response.data || []);
+            
             if (page === 1) {
-                setProducts(response.data || response);
+                setProducts(productsData);
             } else {
-                setProducts(prev => [...prev, ...(response.data || response)]);
+                setProducts(prev => [...prev, ...productsData]);
             }
             
             setPagination({
                 currentPage: response.currentPage || page,
                 totalPages: response.totalPages || 1,
-                totalItems: response.totalItems || (response.data || response).length,
+                totalItems: response.totalItems || productsData.length,
             });
-            setError(null);
         } catch (err) {
             console.error('Failed to fetch products:', err);
-            setError(err.message);
+            setError(err.message || 'Failed to fetch products');
             if (page === 1) setProducts([]);
         } finally {
             setIsLoading(false);
@@ -75,7 +78,7 @@ export const useSupplierProducts = (filters = {}) => {
     }, [fetchProducts]);
 
     const loadMore = () => {
-        if (pagination.currentPage < pagination.totalPages) {
+        if (pagination.currentPage < pagination.totalPages && !isLoading) {
             fetchProducts(pagination.currentPage + 1);
         }
     };
@@ -98,6 +101,7 @@ export const useSupplierOrders = (filters = {}) => {
     const fetchOrders = useCallback(async () => {
         try {
             setIsLoading(true);
+            setError(null);
             const response = await supplierService.getOrders(filters);
 
             const safeOrders = Array.isArray(response?.items)
@@ -109,11 +113,10 @@ export const useSupplierOrders = (filters = {}) => {
                         : [];
 
             setOrders(safeOrders);
-            setError(null);
         } catch (err) {
             console.error('Failed to fetch orders:', err);
-            setError(err.message);
-            setOrders([]); // ensure array
+            setError(err.message || 'Failed to fetch orders');
+            setOrders([]);
         } finally {
             setIsLoading(false);
         }
@@ -128,5 +131,45 @@ export const useSupplierOrders = (filters = {}) => {
         isLoading,
         error,
         refetchOrders: fetchOrders,
+    };
+};
+
+export const useSupplierStats = () => {
+    const [stats, setStats] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const fetchStats = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            const statsData = await supplierService.getStats();
+            setStats(statsData);
+        } catch (err) {
+            console.error('Failed to fetch stats:', err);
+            setError(err.message || 'Failed to fetch statistics');
+            // Set default stats to prevent UI errors
+            setStats({
+                total_products: 0,
+                in_stock_products: 0,
+                out_of_stock_products: 0,
+                on_sale_products: 0,
+                orders_this_month: 0,
+                sales_this_month: 0
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchStats();
+    }, [fetchStats]);
+
+    return {
+        stats,
+        isLoading,
+        error,
+        refetchStats: fetchStats,
     };
 };

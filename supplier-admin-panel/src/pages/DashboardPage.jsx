@@ -11,26 +11,32 @@ import {
     Clock,
     CheckCircle,
     XCircle,
-    Tag
+    Tag,
+    RefreshCw,
+    Zap
 } from 'lucide-react';
-import { useSupplierData, useSupplierProducts, useSupplierOrders } from '../hooks/useSupplierData';
+import { useSupplierData, useSupplierProducts, useSupplierOrders, useSupplierStats } from '../hooks/useSupplierData';
 import { supplierService } from '../services/supplierService';
 import TelegramIntegration from '../components/TelegramIntegration';
 import CityManagement from '../components/CityManagement';
 
-const StatCard = ({ title, value, icon: Icon, color, trend, subtitle }) => (
-    <div className="bg-white rounded-lg shadow-sm p-6 border-l-4" style={{ borderLeftColor: color }}>
+const StatCard = ({ title, value, icon: Icon, color, trend, subtitle, isLoading }) => (
+    <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 transition-all hover:shadow-md" style={{ borderLeftColor: color }}>
         <div className="flex items-center justify-between">
             <div>
                 <p className="text-sm font-medium text-gray-600">{title}</p>
-                <p className="text-2xl font-bold text-gray-900">{value}</p>
-                {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+                {isLoading ? (
+                    <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mt-1"></div>
+                ) : (
+                    <p className="text-2xl font-bold text-gray-900">{value}</p>
+                )}
+                {subtitle && !isLoading && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
             </div>
             <div className={`p-3 rounded-full`} style={{ backgroundColor: `${color}20` }}>
                 <Icon className="h-6 w-6" style={{ color }} />
             </div>
         </div>
-        {trend && (
+        {trend && !isLoading && (
             <div className="mt-4 flex items-center">
                 <TrendingUp className={`h-4 w-4 ${trend > 0 ? 'text-green-500' : 'text-red-500'}`} />
                 <span className={`text-sm ml-1 ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -41,15 +47,15 @@ const StatCard = ({ title, value, icon: Icon, color, trend, subtitle }) => (
     </div>
 );
 
-const QuickActionCard = ({ title, description, icon: Icon, color, onClick, disabled }) => (
+const QuickActionCard = ({ title, description, icon: Icon, color, onClick, disabled, count }) => (
     <button
         onClick={onClick}
         disabled={disabled}
         className={`
-            w-full p-4 rounded-lg border-2 border-dashed transition-all duration-200
+            w-full p-4 rounded-lg border-2 border-dashed transition-all duration-200 text-right
             ${disabled 
                 ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50' 
-                : `border-gray-300 hover:border-${color}-400 hover:bg-${color}-50`
+                : `border-gray-300 hover:border-${color}-400 hover:bg-${color}-50 hover:shadow-md`
             }
         `}
     >
@@ -57,9 +63,12 @@ const QuickActionCard = ({ title, description, icon: Icon, color, onClick, disab
             <div className={`p-2 rounded-full bg-${color}-100`}>
                 <Icon className={`h-5 w-5 text-${color}-600`} />
             </div>
-            <div className="text-right">
+            <div className="flex-1">
                 <h4 className="font-semibold text-gray-800">{title}</h4>
                 <p className="text-sm text-gray-600">{description}</p>
+                {count !== undefined && (
+                    <p className="text-xs text-gray-500 mt-1">({count} منتج)</p>
+                )}
             </div>
         </div>
     </button>
@@ -77,16 +86,16 @@ const RecentOrderItem = ({ order }) => {
     };
 
     return (
-        <div className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0">
+        <div className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
             <div className="flex-1">
                 <p className="font-medium text-gray-800">طلب #{order.order_id}</p>
-                <p className="text-sm text-gray-600">{order.customer_name}</p>
+                <p className="text-sm text-gray-600">{order.customer_name || 'عميل غير محدد'}</p>
                 <p className="text-xs text-gray-500">
                     {new Date(order.order_date).toLocaleDateString('ar-EG')}
                 </p>
             </div>
             <div className="text-right">
-                <p className="font-bold text-gray-800">{order.supplier_order_value} د.إ</p>
+                <p className="font-bold text-gray-800">{parseFloat(order.supplier_order_value || 0).toFixed(2)} د.إ</p>
                 <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(order.order_status)}`}>
                     {order.order_status}
                 </span>
@@ -96,29 +105,26 @@ const RecentOrderItem = ({ order }) => {
 };
 
 const DashboardPage = () => {
-    const { supplierProfile, isLoading: profileLoading } = useSupplierData();
-    const { products, isLoading: productsLoading } = useSupplierProducts();
- const { orders = [], isLoading: ordersLoading } = useSupplierOrders();
+    const { supplierProfile, isLoading: profileLoading, error: profileError } = useSupplierData();
+    const { products, isLoading: productsLoading, refetchProducts } = useSupplierProducts();
+    const { orders, isLoading: ordersLoading } = useSupplierOrders();
+    const { stats, isLoading: statsLoading, error: statsError, refetchStats } = useSupplierStats();
 
-    const [stats, setStats] = useState(null);
-    const [isLoadingStats, setIsLoadingStats] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const statsData = await supplierService.getStats();
-                setStats(statsData);
-            } catch (err) {
-                console.error('Failed to fetch stats:', err);
-            } finally {
-                setIsLoadingStats(false);
-            }
-        };
-
-        if (!productsLoading && !ordersLoading) {
-            fetchStats();
+    const handleRefreshAll = async () => {
+        setIsRefreshing(true);
+        try {
+            await Promise.all([
+                refetchProducts(),
+                refetchStats()
+            ]);
+        } catch (error) {
+            console.error('Failed to refresh data:', error);
+        } finally {
+            setIsRefreshing(false);
         }
-    }, [productsLoading, ordersLoading]);
+    };
 
     const handleQuickAction = async (action) => {
         try {
@@ -132,7 +138,8 @@ const DashboardPage = () => {
                     if (window.confirm(`هل تريد تعيين ${outOfStockProducts.length} منتج كمتوفر؟`)) {
                         const updates = outOfStockProducts.map(p => ({ id: p.id, stock_level: 10 }));
                         await supplierService.bulkUpdateStock(updates);
-                        window.location.reload(); // Simple refresh
+                        refetchProducts();
+                        refetchStats();
                     }
                     break;
                     
@@ -143,10 +150,13 @@ const DashboardPage = () => {
                         return;
                     }
                     if (window.confirm(`هل تريد تفعيل تخفيض 15% على ${regularPriceProducts.length} منتج؟`)) {
-                        for (const product of regularPriceProducts) {
-                            await supplierService.toggleProductSale(product.id, true, product.price * 0.85);
-                        }
-                        window.location.reload();
+                        await supplierService.bulkToggleSale(
+                            regularPriceProducts.map(p => p.id), 
+                            true, 
+                            15
+                        );
+                        refetchProducts();
+                        refetchStats();
                     }
                     break;
                     
@@ -160,17 +170,48 @@ const DashboardPage = () => {
 
     const recentOrders = orders.slice(0, 5);
     const lowStockProducts = products.filter(p => p.stock_level > 0 && p.stock_level <= 5);
+    const outOfStockCount = products.filter(p => p.stock_level === 0).length;
+    const regularPriceCount = products.filter(p => !p.is_on_sale).length;
+
+    if (profileError) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                    <p className="text-red-600 mb-4">{profileError}</p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+                    >
+                        إعادة المحاولة
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
             {/* Welcome section */}
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg text-white p-6">
-                <h1 className="text-2xl font-bold mb-2">
-                    أهلاً بك، {supplierProfile?.name || 'المورد'}!
-                </h1>
-                <p className="opacity-90">
-                    إليك نظرة سريعة على أداء متجرك اليوم
-                </p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold mb-2">
+                            أهلاً بك، {supplierProfile?.name || 'المورد'}!
+                        </h1>
+                        <p className="opacity-90">
+                            إليك نظرة سريعة على أداء متجرك اليوم
+                        </p>
+                    </div>
+                    <button
+                        onClick={handleRefreshAll}
+                        disabled={isRefreshing}
+                        className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-colors disabled:opacity-50"
+                        title="تحديث البيانات"
+                    >
+                        <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
             </div>
 
             {/* Stats grid */}
@@ -181,33 +222,38 @@ const DashboardPage = () => {
                     icon={Package}
                     color="#6366f1"
                     subtitle={`${products.filter(p => p.stock_level > 0).length} متوفر`}
+                    isLoading={productsLoading}
                 />
                 <StatCard
                     title="الطلبات هذا الشهر"
-                    value={stats?.ordersThisMonth || orders.length}
+                    value={stats?.orders_this_month || 0}
                     icon={ShoppingCart}
                     color="#10b981"
-                    trend={stats?.ordersTrend}
+                    isLoading={statsLoading}
                 />
                 <StatCard
                     title="المبيعات هذا الشهر"
-                    value={`${stats?.salesThisMonth || '0'} د.إ`}
+                    value={`${parseFloat(stats?.sales_this_month || 0).toFixed(2)} د.إ`}
                     icon={DollarSign}
                     color="#f59e0b"
-                    trend={stats?.salesTrend}
+                    isLoading={statsLoading}
                 />
                 <StatCard
                     title="منتجات نفد مخزونها"
-                    value={products.filter(p => p.stock_level === 0).length}
+                    value={stats?.out_of_stock_products || 0}
                     icon={AlertTriangle}
                     color="#ef4444"
                     subtitle="تحتاج إعادة تخزين"
+                    isLoading={statsLoading}
                 />
             </div>
 
             {/* Quick actions */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">إجراءات سريعة</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-indigo-500" />
+                    إجراءات سريعة
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <QuickActionCard
                         title="تعيين الكل كمتوفر"
@@ -215,7 +261,8 @@ const DashboardPage = () => {
                         icon={Package}
                         color="green"
                         onClick={() => handleQuickAction('mark_all_in_stock')}
-                        disabled={products.filter(p => p.stock_level === 0).length === 0}
+                        disabled={outOfStockCount === 0}
+                        count={outOfStockCount}
                     />
                     <QuickActionCard
                         title="تفعيل تخفيض شامل"
@@ -223,15 +270,16 @@ const DashboardPage = () => {
                         icon={Tag}
                         color="orange"
                         onClick={() => handleQuickAction('enable_sale_all')}
-                        disabled={products.filter(p => !p.is_on_sale).length === 0}
+                        disabled={regularPriceCount === 0}
+                        count={regularPriceCount}
                     />
                     <QuickActionCard
-                        title="عرض التقارير"
-                        description="تقرير مفصل عن الأداء"
+                        title="إدارة المنتجات"
+                        description="انتقل لصفحة إدارة المنتجات"
                         icon={TrendingUp}
                         color="blue"
-                        onClick={() => window.open('/reports', '_blank')}
-                        disabled={true} // Will implement later
+                        onClick={() => window.location.href = '/products'}
+                        disabled={false}
                     />
                 </div>
             </div>
@@ -241,7 +289,7 @@ const DashboardPage = () => {
                 <TelegramIntegration />
 
                 {/* City Management */}
-                <CityManagement onUpdate={() => window.location.reload()} />
+                <CityManagement onUpdate={handleRefreshAll} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -254,6 +302,7 @@ const DashboardPage = () => {
                         {ordersLoading ? (
                             <div className="p-6 text-center">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                                <p className="text-gray-500 mt-2">جاري تحميل الطلبات...</p>
                             </div>
                         ) : recentOrders.length > 0 ? (
                             recentOrders.map(order => (
@@ -277,10 +326,11 @@ const DashboardPage = () => {
                         {productsLoading ? (
                             <div className="p-6 text-center">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                                <p className="text-gray-500 mt-2">جاري تحميل المنتجات...</p>
                             </div>
                         ) : lowStockProducts.length > 0 ? (
                             lowStockProducts.map(product => (
-                                <div key={product.id} className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0">
+                                <div key={product.id} className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <AlertTriangle className="h-5 w-5 text-orange-500" />
                                         <div>
@@ -296,12 +346,13 @@ const DashboardPage = () => {
                                             onClick={async () => {
                                                 try {
                                                     await supplierService.setProductInStock(product.id, 20);
-                                                    window.location.reload();
+                                                    refetchProducts();
+                                                    refetchStats();
                                                 } catch (error) {
                                                     alert(`فشل في إعادة التخزين: ${error.message}`);
                                                 }
                                             }}
-                                            className="block text-xs text-indigo-600 hover:text-indigo-800 mt-1"
+                                            className="block text-xs text-indigo-600 hover:text-indigo-800 mt-1 transition-colors"
                                         >
                                             إعادة تخزين
                                         </button>
@@ -317,6 +368,24 @@ const DashboardPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Error handling for stats */}
+            {statsError && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                        <p className="text-yellow-800">
+                            تعذر تحميل الإحصائيات: {statsError}
+                        </p>
+                        <button 
+                            onClick={refetchStats}
+                            className="ml-auto bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
+                        >
+                            إعادة المحاولة
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

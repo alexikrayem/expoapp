@@ -50,6 +50,9 @@ app.use('/api/deals', dealRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/featured-items', featuredItemsRoutes);
 
+// Add supplier-specific authenticated routes
+app.use('/api/supplier', supplierRoutes);
+
 // 2. TELEGRAM AUTHENTICATION MIDDLEWARE
 // Any route defined *after* this line will be protected.
 // It checks the 'X-Telegram-Init-Data' header. If valid, it adds `req.telegramUser`.

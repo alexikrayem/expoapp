@@ -5,194 +5,8 @@ const authSupplier = require('../middleware/authSupplier');
 const bcrypt = require('bcrypt');
 
 // ------------------------
-// Authenticated /products Routes First
+// Authenticated Supplier Routes (Protected)
 // ------------------------
-
-router.get('/products', authSupplier, async (req, res) => {
-    try {
-        const supplierId = req.supplier.supplierId;
-        const { page = 1, limit = 20 } = req.query;
-
-        const offset = (parseInt(page) - 1) * parseInt(limit);
-
-        const query = `
-            SELECT 
-                p.*,
-                CASE 
-                    WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL 
-                    THEN p.discount_price 
-                    ELSE p.price 
-                END as effective_selling_price
-            FROM products p
-            WHERE p.supplier_id = $1
-            ORDER BY p.created_at DESC
-            LIMIT $2 OFFSET $3
-        `;
-
-        const result = await db.query(query, [supplierId, parseInt(limit), offset]);
-        res.json(result.rows);
-
-    } catch (error) {
-        console.error('Error fetching supplier products:', error);
-        res.status(500).json({ error: 'Failed to fetch products' });
-    }
-});
-
-router.post('/products', authSupplier, async (req, res) => {
-    try {
-        const supplierId = req.supplier.supplierId;
-        const {
-            name, standardized_name_input, description, price, discount_price,
-            category, image_url, is_on_sale, stock_level
-        } = req.body;
-
-        if (!name || !standardized_name_input || !price || !category) {
-            return res.status(400).json({ error: 'Name, standardized name, price, and category are required' });
-        }
-
-        const insertQuery = `
-            INSERT INTO products (
-                name, standardized_name_input, description, price, discount_price,
-                category, image_url, is_on_sale, stock_level, supplier_id
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            RETURNING *
-        `;
-
-        const result = await db.query(insertQuery, [
-            name, standardized_name_input, description, parseFloat(price),
-            discount_price ? parseFloat(discount_price) : null,
-            category, image_url, Boolean(is_on_sale), parseInt(stock_level) || 0,
-            supplierId
-        ]);
-
-        res.status(201).json(result.rows[0]);
-
-    } catch (error) {
-        console.error('Error creating product:', error);
-        res.status(500).json({ error: 'Failed to create product' });
-    }
-});
-
-router.put('/products/:id', authSupplier, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const supplierId = req.supplier.supplierId;
-        const {
-            name, standardized_name_input, description, price, discount_price,
-            category, image_url, is_on_sale, stock_level
-        } = req.body;
-
-        const verifyQuery = 'SELECT id FROM products WHERE id = $1 AND supplier_id = $2';
-        const verifyResult = await db.query(verifyQuery, [id, supplierId]);
-
-        if (verifyResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Product not found or not owned by you' });
-        }
-
-        const updateFields = [];
-        const updateValues = [];
-        let paramIndex = 1;
-
-        if (name !== undefined) {
-            updateFields.push(`name = $${paramIndex}`);
-            updateValues.push(name);
-            paramIndex++;
-        }
-        if (standardized_name_input !== undefined) {
-            updateFields.push(`standardized_name_input = $${paramIndex}`);
-            updateValues.push(standardized_name_input);
-            paramIndex++;
-        }
-        if (description !== undefined) {
-            updateFields.push(`description = $${paramIndex}`);
-            updateValues.push(description);
-            paramIndex++;
-        }
-        if (price !== undefined) {
-            updateFields.push(`price = $${paramIndex}`);
-            updateValues.push(parseFloat(price));
-            paramIndex++;
-        }
-        if (discount_price !== undefined) {
-            updateFields.push(`discount_price = $${paramIndex}`);
-            updateValues.push(discount_price ? parseFloat(discount_price) : null);
-            paramIndex++;
-        }
-        if (category !== undefined) {
-            updateFields.push(`category = $${paramIndex}`);
-            updateValues.push(category);
-            paramIndex++;
-        }
-        if (image_url !== undefined) {
-            updateFields.push(`image_url = $${paramIndex}`);
-            updateValues.push(image_url);
-            paramIndex++;
-        }
-        if (is_on_sale !== undefined) {
-            updateFields.push(`is_on_sale = $${paramIndex}`);
-            updateValues.push(Boolean(is_on_sale));
-            paramIndex++;
-        }
-        if (stock_level !== undefined) {
-            updateFields.push(`stock_level = $${paramIndex}`);
-            updateValues.push(parseInt(stock_level) || 0);
-            paramIndex++;
-        }
-
-        if (updateFields.length === 0) {
-            return res.status(400).json({ error: 'No fields to update' });
-        }
-
-        updateFields.push(`updated_at = NOW()`);
-        updateValues.push(id);
-
-        const updateQuery = `
-            UPDATE products 
-            SET ${updateFields.join(', ')}
-            WHERE id = $${paramIndex}
-            RETURNING *
-        `;
-
-        const result = await db.query(updateQuery, updateValues);
-        res.json(result.rows[0]);
-
-    } catch (error) {
-        console.error('Error updating product:', error);
-        res.status(500).json({ error: 'Failed to update product' });
-    }
-});
-
-router.delete('/products/:id', authSupplier, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const supplierId = req.supplier.supplierId;
-
-        const verifyQuery = 'SELECT id FROM products WHERE id = $1 AND supplier_id = $2';
-        const verifyResult = await db.query(verifyQuery, [id, supplierId]);
-
-        if (verifyResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Product not found or not owned by you' });
-        }
-
-        const orderCheckQuery = 'SELECT COUNT(*) as order_count FROM order_items WHERE product_id = $1';
-        const orderCheckResult = await db.query(orderCheckQuery, [id]);
-
-        if (parseInt(orderCheckResult.rows[0].order_count) > 0) {
-            const deactivateQuery = 'UPDATE products SET is_active = false WHERE id = $1 RETURNING *';
-            const result = await db.query(deactivateQuery, [id]);
-            return res.json({ message: 'Product deactivated (has existing orders)', product: result.rows[0] });
-        }
-
-        const deleteQuery = 'DELETE FROM products WHERE id = $1';
-        await db.query(deleteQuery, [id]);
-
-        res.json({ message: 'Product deleted successfully' });
-
-    } catch (error) {
-        console.error('Error deleting product:', error);
-        res.status(500).json({ error: 'Failed to delete product' });
-    }
-});
 
 // Get supplier's own profile
 router.get('/profile', authSupplier, async (req, res) => {
@@ -297,6 +111,196 @@ router.put('/cities', authSupplier, async (req, res) => {
     }
 });
 
+// Get supplier's products with pagination
+router.get('/products', authSupplier, async (req, res) => {
+    try {
+        const supplierId = req.supplier.supplierId;
+        const { page = 1, limit = 20 } = req.query;
+
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+
+        const query = `
+            SELECT 
+                p.*,
+                CASE 
+                    WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL 
+                    THEN p.discount_price 
+                    ELSE p.price 
+                END as effective_selling_price
+            FROM products p
+            WHERE p.supplier_id = $1
+            ORDER BY p.created_at DESC
+            LIMIT $2 OFFSET $3
+        `;
+
+        const result = await db.query(query, [supplierId, parseInt(limit), offset]);
+        res.json(result.rows);
+
+    } catch (error) {
+        console.error('Error fetching supplier products:', error);
+        res.status(500).json({ error: 'Failed to fetch products' });
+    }
+});
+
+// Create new product
+router.post('/products', authSupplier, async (req, res) => {
+    try {
+        const supplierId = req.supplier.supplierId;
+        const {
+            name, standardized_name_input, description, price, discount_price,
+            category, image_url, is_on_sale, stock_level
+        } = req.body;
+
+        if (!name || !standardized_name_input || !price || !category) {
+            return res.status(400).json({ error: 'Name, standardized name, price, and category are required' });
+        }
+
+        const insertQuery = `
+            INSERT INTO products (
+                name, standardized_name_input, description, price, discount_price,
+                category, image_url, is_on_sale, stock_level, supplier_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            RETURNING *
+        `;
+
+        const result = await db.query(insertQuery, [
+            name, standardized_name_input, description, parseFloat(price),
+            discount_price ? parseFloat(discount_price) : null,
+            category, image_url, Boolean(is_on_sale), parseInt(stock_level) || 0,
+            supplierId
+        ]);
+
+        res.status(201).json(result.rows[0]);
+
+    } catch (error) {
+        console.error('Error creating product:', error);
+        res.status(500).json({ error: 'Failed to create product' });
+    }
+});
+
+// Update product
+router.put('/products/:id', authSupplier, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const supplierId = req.supplier.supplierId;
+        const {
+            name, standardized_name_input, description, price, discount_price,
+            category, image_url, is_on_sale, stock_level
+        } = req.body;
+
+        const verifyQuery = 'SELECT id FROM products WHERE id = $1 AND supplier_id = $2';
+        const verifyResult = await db.query(verifyQuery, [id, supplierId]);
+
+        if (verifyResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Product not found or not owned by you' });
+        }
+
+        const updateFields = [];
+        const updateValues = [];
+        let paramIndex = 1;
+
+        if (name !== undefined) {
+            updateFields.push(`name = $${paramIndex}`);
+            updateValues.push(name);
+            paramIndex++;
+        }
+        if (standardized_name_input !== undefined) {
+            updateFields.push(`standardized_name_input = $${paramIndex}`);
+            updateValues.push(standardized_name_input);
+            paramIndex++;
+        }
+        if (description !== undefined) {
+            updateFields.push(`description = $${paramIndex}`);
+            updateValues.push(description);
+            paramIndex++;
+        }
+        if (price !== undefined) {
+            updateFields.push(`price = $${paramIndex}`);
+            updateValues.push(parseFloat(price));
+            paramIndex++;
+        }
+        if (discount_price !== undefined) {
+            updateFields.push(`discount_price = $${paramIndex}`);
+            updateValues.push(discount_price ? parseFloat(discount_price) : null);
+            paramIndex++;
+        }
+        if (category !== undefined) {
+            updateFields.push(`category = $${paramIndex}`);
+            updateValues.push(category);
+            paramIndex++;
+        }
+        if (image_url !== undefined) {
+            updateFields.push(`image_url = $${paramIndex}`);
+            updateValues.push(image_url);
+            paramIndex++;
+        }
+        if (is_on_sale !== undefined) {
+            updateFields.push(`is_on_sale = $${paramIndex}`);
+            updateValues.push(Boolean(is_on_sale));
+            paramIndex++;
+        }
+        if (stock_level !== undefined) {
+            updateFields.push(`stock_level = $${paramIndex}`);
+            updateValues.push(parseInt(stock_level) || 0);
+            paramIndex++;
+        }
+
+        if (updateFields.length === 0) {
+            return res.status(400).json({ error: 'No fields to update' });
+        }
+
+        updateFields.push(`updated_at = NOW()`);
+        updateValues.push(id);
+
+        const updateQuery = `
+            UPDATE products 
+            SET ${updateFields.join(', ')}
+            WHERE id = $${paramIndex}
+            RETURNING *
+        `;
+
+        const result = await db.query(updateQuery, updateValues);
+        res.json(result.rows[0]);
+
+    } catch (error) {
+        console.error('Error updating product:', error);
+        res.status(500).json({ error: 'Failed to update product' });
+    }
+});
+
+// Delete product
+router.delete('/products/:id', authSupplier, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const supplierId = req.supplier.supplierId;
+
+        const verifyQuery = 'SELECT id FROM products WHERE id = $1 AND supplier_id = $2';
+        const verifyResult = await db.query(verifyQuery, [id, supplierId]);
+
+        if (verifyResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Product not found or not owned by you' });
+        }
+
+        const orderCheckQuery = 'SELECT COUNT(*) as order_count FROM order_items WHERE product_id = $1';
+        const orderCheckResult = await db.query(orderCheckQuery, [id]);
+
+        if (parseInt(orderCheckResult.rows[0].order_count) > 0) {
+            const deactivateQuery = 'UPDATE products SET is_active = false WHERE id = $1 RETURNING *';
+            const result = await db.query(deactivateQuery, [id]);
+            return res.json({ message: 'Product deactivated (has existing orders)', product: result.rows[0] });
+        }
+
+        const deleteQuery = 'DELETE FROM products WHERE id = $1';
+        await db.query(deleteQuery, [id]);
+
+        res.json({ message: 'Product deleted successfully' });
+
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        res.status(500).json({ error: 'Failed to delete product' });
+    }
+});
+
 // Bulk update product stock
 router.put('/products/bulk-stock', authSupplier, async (req, res) => {
     try {
@@ -344,6 +348,128 @@ router.put('/products/bulk-stock', authSupplier, async (req, res) => {
     } catch (error) {
         console.error('Error bulk updating stock:', error);
         res.status(500).json({ error: 'Failed to update stock levels' });
+    }
+});
+
+// Get supplier stats
+router.get('/stats', authSupplier, async (req, res) => {
+    try {
+        const supplierId = req.supplier.supplierId;
+        
+        const statsQuery = `
+            SELECT 
+                COUNT(DISTINCT p.id) as total_products,
+                COUNT(DISTINCT CASE WHEN p.stock_level > 0 THEN p.id END) as in_stock_products,
+                COUNT(DISTINCT CASE WHEN p.stock_level = 0 THEN p.id END) as out_of_stock_products,
+                COUNT(DISTINCT CASE WHEN p.is_on_sale = true THEN p.id END) as on_sale_products,
+                COUNT(DISTINCT CASE WHEN o.order_date >= CURRENT_DATE - INTERVAL '30 days' THEN o.id END) as orders_this_month,
+                COALESCE(SUM(CASE WHEN o.order_date >= CURRENT_DATE - INTERVAL '30 days' THEN oi.quantity * oi.price_at_time_of_order END), 0) as sales_this_month
+            FROM products p
+            LEFT JOIN order_items oi ON p.id = oi.product_id
+            LEFT JOIN orders o ON oi.order_id = o.id AND o.status NOT IN ('cancelled')
+            WHERE p.supplier_id = $1
+        `;
+        
+        const result = await db.query(statsQuery, [supplierId]);
+        const stats = result.rows[0];
+        
+        // Convert string numbers to integers/floats
+        Object.keys(stats).forEach(key => {
+            if (key.includes('count') || key.includes('products') || key.includes('orders')) {
+                stats[key] = parseInt(stats[key]) || 0;
+            } else if (key.includes('sales')) {
+                stats[key] = parseFloat(stats[key]) || 0;
+            }
+        });
+        
+        res.json(stats);
+        
+    } catch (error) {
+        console.error('Error fetching supplier stats:', error);
+        res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+});
+
+// Get supplier's orders with items
+router.get('/orders', authSupplier, async (req, res) => {
+    try {
+        const supplierId = req.supplier.supplierId;
+        const { page = 1, limit = 20, status } = req.query;
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+        
+        let whereClause = 'WHERE p.supplier_id = $1';
+        const queryParams = [supplierId];
+        let paramIndex = 2;
+        
+        if (status && status !== 'all') {
+            whereClause += ` AND o.status = $${paramIndex}`;
+            queryParams.push(status);
+            paramIndex++;
+        }
+        
+        const query = `
+            SELECT 
+                o.id as order_id,
+                o.user_id,
+                o.total_amount,
+                o.order_date,
+                o.status as order_status,
+                o.delivery_status,
+                up.full_name as customer_name,
+                up.phone_number as customer_phone,
+                up.address_line1 as customer_address1,
+                up.address_line2 as customer_address2,
+                up.city as customer_city,
+                json_agg(
+                    json_build_object(
+                        'order_item_id', oi.id,
+                        'product_id', oi.product_id,
+                        'product_name', p.name,
+                        'product_image_url', p.image_url,
+                        'quantity', oi.quantity,
+                        'price_at_time_of_order', oi.price_at_time_of_order,
+                        'supplier_item_status', oi.supplier_item_status,
+                        'delivery_item_status', oi.delivery_item_status
+                    )
+                ) as items_for_this_supplier,
+                SUM(oi.quantity * oi.price_at_time_of_order) as supplier_order_value
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            JOIN products p ON oi.product_id = p.id
+            LEFT JOIN user_profiles up ON o.user_id = up.user_id
+            ${whereClause}
+            GROUP BY o.id, o.user_id, o.total_amount, o.order_date, o.status, o.delivery_status,
+                     up.full_name, up.phone_number, up.address_line1, up.address_line2, up.city
+            ORDER BY o.order_date DESC
+            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+        `;
+        
+        queryParams.push(parseInt(limit), offset);
+        
+        const result = await db.query(query, queryParams);
+        
+        // Get total count
+        const countQuery = `
+            SELECT COUNT(DISTINCT o.id) as total
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            JOIN products p ON oi.product_id = p.id
+            ${whereClause}
+        `;
+        
+        const countResult = await db.query(countQuery, queryParams.slice(0, -2));
+        const totalItems = parseInt(countResult.rows[0].total);
+        
+        res.json({
+            items: result.rows,
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(totalItems / parseInt(limit)),
+            totalItems
+        });
+        
+    } catch (error) {
+        console.error('Error fetching supplier orders:', error);
+        res.status(500).json({ error: 'Failed to fetch orders' });
     }
 });
 
@@ -555,132 +681,11 @@ router.put('/delivery-agents/:id/toggle-active', authSupplier, async (req, res) 
     }
 });
 
-// Get supplier's orders with items
-router.get('/orders', authSupplier, async (req, res) => {
-    try {
-        const supplierId = req.supplier.supplierId;
-        const { page = 1, limit = 20, status } = req.query;
-        const offset = (parseInt(page) - 1) * parseInt(limit);
-        
-        let whereClause = 'WHERE p.supplier_id = $1';
-        const queryParams = [supplierId];
-        let paramIndex = 2;
-        
-        if (status && status !== 'all') {
-            whereClause += ` AND o.status = $${paramIndex}`;
-            queryParams.push(status);
-            paramIndex++;
-        }
-        
-        const query = `
-            SELECT 
-                o.id as order_id,
-                o.user_id,
-                o.total_amount,
-                o.order_date,
-                o.status as order_status,
-                o.delivery_status,
-                up.full_name as customer_name,
-                up.phone_number as customer_phone,
-                up.address_line1 as customer_address1,
-                up.address_line2 as customer_address2,
-                up.city as customer_city,
-                json_agg(
-                    json_build_object(
-                        'order_item_id', oi.id,
-                        'product_id', oi.product_id,
-                        'product_name', p.name,
-                        'product_image_url', p.image_url,
-                        'quantity', oi.quantity,
-                        'price_at_time_of_order', oi.price_at_time_of_order,
-                        'supplier_item_status', oi.supplier_item_status,
-                        'delivery_item_status', oi.delivery_item_status
-                    )
-                ) as items_for_this_supplier,
-                SUM(oi.quantity * oi.price_at_time_of_order) as supplier_order_value
-            FROM orders o
-            JOIN order_items oi ON o.id = oi.order_id
-            JOIN products p ON oi.product_id = p.id
-            LEFT JOIN user_profiles up ON o.user_id = up.user_id
-            ${whereClause}
-            GROUP BY o.id, o.user_id, o.total_amount, o.order_date, o.status, o.delivery_status,
-                     up.full_name, up.phone_number, up.address_line1, up.address_line2, up.city
-            ORDER BY o.order_date DESC
-            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-        `;
-        
-        queryParams.push(parseInt(limit), offset);
-        
-        const result = await db.query(query, queryParams);
-        
-        // Get total count
-        const countQuery = `
-            SELECT COUNT(DISTINCT o.id) as total
-            FROM orders o
-            JOIN order_items oi ON o.id = oi.order_id
-            JOIN products p ON oi.product_id = p.id
-            ${whereClause}
-        `;
-        
-        const countResult = await db.query(countQuery, queryParams.slice(0, -2));
-        const totalItems = parseInt(countResult.rows[0].total);
-        
-        res.json({
-            items: result.rows,
-            currentPage: parseInt(page),
-            totalPages: Math.ceil(totalItems / parseInt(limit)),
-            totalItems
-        });
-        
-    } catch (error) {
-        console.error('Error fetching supplier orders:', error);
-        res.status(500).json({ error: 'Failed to fetch orders' });
-    }
-});
-
-// Get supplier stats
-router.get('/stats', authSupplier, async (req, res) => {
-    try {
-        const supplierId = req.supplier.supplierId;
-        
-        const statsQuery = `
-            SELECT 
-                COUNT(DISTINCT p.id) as total_products,
-                COUNT(DISTINCT CASE WHEN p.stock_level > 0 THEN p.id END) as in_stock_products,
-                COUNT(DISTINCT CASE WHEN p.stock_level = 0 THEN p.id END) as out_of_stock_products,
-                COUNT(DISTINCT CASE WHEN p.is_on_sale = true THEN p.id END) as on_sale_products,
-                COUNT(DISTINCT CASE WHEN o.order_date >= CURRENT_DATE - INTERVAL '30 days' THEN o.id END) as orders_this_month,
-                COALESCE(SUM(CASE WHEN o.order_date >= CURRENT_DATE - INTERVAL '30 days' THEN oi.quantity * oi.price_at_time_of_order END), 0) as sales_this_month
-            FROM products p
-            LEFT JOIN order_items oi ON p.id = oi.product_id
-            LEFT JOIN orders o ON oi.order_id = o.id AND o.status NOT IN ('cancelled')
-            WHERE p.supplier_id = $1
-        `;
-        
-        const result = await db.query(statsQuery, [supplierId]);
-        const stats = result.rows[0];
-        
-        // Convert string numbers to integers/floats
-        Object.keys(stats).forEach(key => {
-            if (key.includes('count') || key.includes('products') || key.includes('orders')) {
-                stats[key] = parseInt(stats[key]) || 0;
-            } else if (key.includes('sales')) {
-                stats[key] = parseFloat(stats[key]) || 0;
-            }
-        });
-        
-        res.json(stats);
-        
-    } catch (error) {
-        console.error('Error fetching supplier stats:', error);
-        res.status(500).json({ error: 'Failed to fetch stats' });
-    }
-});
-
 // ------------------------
 // Public Supplier Routes
 // ------------------------
 
+// Get all suppliers (public)
 router.get('/', async (req, res) => {
     try {
         const { cityId } = req.query;
@@ -690,14 +695,14 @@ router.get('/', async (req, res) => {
                 s.*,
                 COUNT(p.id) as product_count
             FROM suppliers s
-            LEFT JOIN products p ON s.id = p.supplier_id AND p.is_active = true
+            LEFT JOIN products p ON s.id = p.supplier_id
             WHERE s.is_active = true
         `;
 
         const queryParams = [];
 
         if (cityId) {
-            query += ' AND s.city_id = $1';
+            query += ' AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $1)';
             queryParams.push(cityId);
         }
 
@@ -711,6 +716,7 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get supplier details (public)
 router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -731,7 +737,7 @@ router.get('/:id', async (req, res) => {
                     ELSE p.price 
                 END as effective_selling_price
             FROM products p
-            WHERE p.supplier_id = $1 AND p.is_active = true
+            WHERE p.supplier_id = $1
             ORDER BY p.created_at DESC
             LIMIT 6
         `;
