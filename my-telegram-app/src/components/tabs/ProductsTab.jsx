@@ -23,51 +23,39 @@ const ProductsTab = ({
     refreshProducts
 }) => {
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-    const [localFilters, setLocalFilters] = useState({
-        category: currentFilters.category || 'all',
+    const [localAdvancedFilters, setLocalAdvancedFilters] = useState({
         minPrice: currentFilters.minPrice || '',
         maxPrice: currentFilters.maxPrice || '',
         onSale: currentFilters.onSale || false,
-        ...currentFilters
     });
 
-    // Update local filters when current filters change
-    useEffect(() => {
-        setLocalFilters({
-            category: currentFilters.category || 'all',
-            minPrice: currentFilters.minPrice || '',
-            maxPrice: currentFilters.maxPrice || '',
-            onSale: currentFilters.onSale || false,
-            ...currentFilters
-        });
-    }, [currentFilters]);
-
-    const handleCategoryChange = (category) => {
-        const newFilters = { ...localFilters, category };
-        setLocalFilters(newFilters);
-        onFiltersChange(newFilters);
-    };
-
     const handleAdvancedFilterChange = (filterKey, value) => {
-        const newFilters = { ...localFilters, [filterKey]: value };
-        setLocalFilters(newFilters);
+        setLocalAdvancedFilters(prev => ({ ...prev, [filterKey]: value }));
     };
 
     const applyAdvancedFilters = () => {
-        onFiltersChange(localFilters);
+        const newFilters = {
+            ...currentFilters,
+            ...localAdvancedFilters
+        };
+        onFiltersChange(newFilters);
         setShowAdvancedFilters(false);
         window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
     };
 
     const clearAdvancedFilters = () => {
-        const clearedFilters = {
-            category: localFilters.category,
+        const clearedAdvancedFilters = {
             minPrice: '',
             maxPrice: '',
             onSale: false
         };
-        setLocalFilters(clearedFilters);
-        onFiltersChange(clearedFilters);
+        setLocalAdvancedFilters(clearedAdvancedFilters);
+        
+        const newFilters = {
+            ...currentFilters,
+            ...clearedAdvancedFilters
+        };
+        onFiltersChange(newFilters);
         setShowAdvancedFilters(false);
         window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
     };
@@ -77,7 +65,7 @@ const ProductsTab = ({
         window.Telegram?.WebApp?.HapticFeedback.impactOccurred('medium');
     };
 
-    const hasActiveAdvancedFilters = localFilters.minPrice || localFilters.maxPrice || localFilters.onSale;
+    const hasActiveAdvancedFilters = currentFilters.minPrice || currentFilters.maxPrice || currentFilters.onSale;
 
     if (error) {
         return (
@@ -160,7 +148,7 @@ const ProductsTab = ({
                                 <input
                                     type="number"
                                     placeholder="0"
-                                    value={localFilters.minPrice}
+                                    value={localAdvancedFilters.minPrice}
                                     onChange={(e) => handleAdvancedFilterChange('minPrice', e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
@@ -171,7 +159,7 @@ const ProductsTab = ({
                                 <input
                                     type="number"
                                     placeholder="1000"
-                                    value={localFilters.maxPrice}
+                                    value={localAdvancedFilters.maxPrice}
                                     onChange={(e) => handleAdvancedFilterChange('maxPrice', e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
@@ -182,7 +170,7 @@ const ProductsTab = ({
                                 <input
                                     type="checkbox"
                                     id="onSale"
-                                    checked={localFilters.onSale}
+                                    checked={localAdvancedFilters.onSale}
                                     onChange={(e) => handleAdvancedFilterChange('onSale', e.target.checked)}
                                     className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                 />
@@ -278,7 +266,7 @@ const ProductsTab = ({
             {isLoadingMore && (
                 <div className="flex justify-center items-center h-20 mt-4">
                     <div className="flex items-center gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
                         <p className="text-gray-600">جاري تحميل المزيد...</p>
                     </div>
                 </div>

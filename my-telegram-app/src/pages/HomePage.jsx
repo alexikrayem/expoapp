@@ -12,7 +12,6 @@ import { useSearch } from '../context/SearchContext';
 import { useFavorites } from '../hooks/useFavorites';
 import { useCart } from '../context/CartContext';
 import { useFilters } from '../context/FilterContext';
-import { productService } from '../services/productService';
 import { useCache } from '../context/CacheContext';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,18 +33,28 @@ const HomePage = () => {
     const { favoriteIds, toggleFavorite } = useFavorites(telegramUser);
     const { searchResults, showSearchResults, isSearching, searchError, debouncedSearchTerm } = useSearch();
     const { currentFilters, handleFiltersChange } = useFilters();
-    const { cachedApiCall } = useCache();
 
     // --- LOCAL UI STATE ---
     const [activeSection, setActiveSection] = useState('products'); // Default to products
+    const [currentFilters, setCurrentFilters] = useState({
+        category: 'all',
+        minPrice: '',
+        maxPrice: '',
+        onSale: false,
+    });
 
     // --- DATA FETCHING HOOKS ---
-    const { products, isLoadingProducts, productError, loadMoreProducts, hasMorePages, isLoadingMore, refreshProducts } = useProducts(userProfile?.selected_city_id);
+    const { products, isLoadingProducts, productError, loadMoreProducts, hasMorePages, isLoadingMore, refreshProducts, handleFiltersChange } = useProducts(userProfile?.selected_city_id, currentFilters);
     const { deals, isLoadingDeals, dealError } = useDeals(activeSection === 'exhibitions' ? userProfile?.selected_city_id : null);
     const { suppliers, isLoadingSuppliers, supplierError } = useSuppliers(activeSection === 'suppliers' ? userProfile?.selected_city_id : null);
     const [featuredItems, setFeaturedItems] = useState([]);
     const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
 
+    // Handle filter changes
+    const handleLocalFiltersChange = (newFilters) => {
+        setCurrentFilters(newFilters);
+        handleFiltersChange(newFilters);
+    };
 
     const tabs = [
   { id: 'exhibitions', label: 'العروض', icon: Tags },
@@ -205,7 +214,7 @@ const HomePage = () => {
                                 onToggleFavorite={toggleFavorite}
                                 onShowDetails={handleShowProductDetails} 
                                 favoriteProductIds={favoriteIds}
-                                onFiltersChange={handleFiltersChange}
+                                onFiltersChange={handleLocalFiltersChange}
                                 currentFilters={currentFilters}
                                 selectedCityId={userProfile?.selected_city_id}
                                         refreshProducts={refreshProducts}

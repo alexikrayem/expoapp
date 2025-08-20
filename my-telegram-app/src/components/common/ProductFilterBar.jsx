@@ -29,10 +29,17 @@ const ProductFilterBar = ({ currentFilters, onFiltersChange, selectedCityId }) =
         fetchCategories();
     }, [selectedCityId]);
 
-    // This is the corrected handler function.
+    // Fixed handler function that properly updates filters
     const handleCategoryClick = (category) => {
-        if (currentFilters.category === category) return; // Prevent re-clicking the same category
-        onFiltersChange({ ...currentFilters, category: category });
+        if (currentFilters?.category === category) return; // Prevent re-clicking the same category
+        
+        const newFilters = {
+            ...currentFilters,
+            category: category
+        };
+        
+        console.log('Filter change:', { from: currentFilters?.category, to: category, newFilters });
+        onFiltersChange(newFilters);
     };
 
     // --- RENDER LOGIC ---
@@ -59,7 +66,7 @@ const ProductFilterBar = ({ currentFilters, onFiltersChange, selectedCityId }) =
                 className="flex items-center gap-3 overflow-x-auto p-2 scrollbar-hide"
             >
                 {categories.map((cat) => {
-                    const isSelected = currentFilters.category === cat.category;
+                    const isSelected = currentFilters?.category === cat.category;
                     const displayName = cat.category === 'all' ? 'الكل' : cat.category;
                     const count = cat.product_count ? `(${cat.product_count})` : '';
 

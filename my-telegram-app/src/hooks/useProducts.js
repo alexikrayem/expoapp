@@ -1,10 +1,10 @@
-// src/hooks/useProducts.js - Enhanced with caching
-import { useState, useEffect, useCallback } from 'react';
+// src/hooks/useProducts.js - Fixed filtering integration
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { productService } from '../services/productService';
 import { useCache } from '../context/CacheContext';
 import { PAGINATION } from '../utils/constants';
 
-export const useProducts = (cityId) => {
+export const useProducts = (cityId, externalFilters = {}) => {
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -13,12 +13,13 @@ export const useProducts = (cityId) => {
     const [totalPages, setTotalPages] = useState(1);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-    const [filters, setFilters] = useState({
-        category: 'all',
-        minPrice: '',
-        maxPrice: '',
-        onSale: false,
-    });
+    // Use external filters passed from parent component
+    const filters = useMemo(() => ({
+        category: externalFilters.category || 'all',
+        minPrice: externalFilters.minPrice || '',
+        maxPrice: externalFilters.maxPrice || '',
+        onSale: externalFilters.onSale || false,
+    }), [externalFilters]);
 
     const { cachedApiCall, invalidateCache } = useCache();
 
@@ -87,11 +88,13 @@ export const useProducts = (cityId) => {
         fetchProducts(1, filters);
     }, [cityId, filters, fetchProducts]);
 
-    const handleFiltersChange = (newFilters) => {
+    const handleFiltersChange = useCallback((newFilters) => {
         // Invalidate cache when filters change
         invalidateCache(`products_${cityId}`);
-        setFilters(newFilters);
-    };
+        // Reset to page 1 and fetch with new filters
+        setCurrentPage(1);
+        fetchProducts(1, newFilters);
+    }, [cityId, invalidateCache, fetchProducts]);
     
     const loadMoreProducts = () => {
         if (isLoadingMore || currentPage >= totalPages) return;
@@ -116,7 +119,6 @@ export const useProducts = (cityId) => {
         isLoadingMore,
         
         // Filters
-        currentFilters: filters,
         handleFiltersChange,
         
         // Refresh
