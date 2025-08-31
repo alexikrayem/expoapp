@@ -2,6 +2,35 @@
 @tailwind components;
 @tailwind utilities; 
 
+@font-face {
+    font-family: '29tl-zawi'; /* <--- THIS IS THE NEW, UNIQUE NAME FOR YOUR LOGO FONT */
+    src: url('./assets/fonts/29tl-zawi-regular.otf') format('opentype'); /* <--- ADJUST PATH AND FORMAT FOR YOUR LOGO FONT FILE */
+    font-weight: 600;
+    font-weight: normal; /* Set to 'bold' or a numeric value like 700 if the font file is inherently bold */
+    font-style: normal;  /* Set to 'italic' if the font file is inherently italic */
+    /* If you have different files for bold/italic versions of this logo font, add more @font-face rules with the same 'AppLogoFont' family but different weight/style */
+}
+
+@font-face {
+  font-family: 'Montaserat';
+  src: url('./assets/fonts/Montserrat-Arabic Regular 400.otf') format('opentype'); /* Adjust path and format */
+  font-weight: 400; /* Regular weight */
+  font-style: normal;
+  font-display: swap; /* Important for performance: tells browser how to display text while font is loading */
+}
+
+@font-face {
+  font-family: 'Montaserat';
+  src: url('./assets/fonts/Montserrat-Arabic SemiBold 600.otf') format('opentype'); /* Adjust path and format */
+  font-weight: 600; /* Regular weight */
+  font-style: normal;
+  font-display: swap; /* Important for performance: tells browser how to display text while font is loading */
+}
+
+body {
+  font-family: 'Montaserat', sans-serif; /* Fallback to sans-serif if Cairo fails to load */
+}
+
 /* Shimmer animation for skeleton loading */
 @keyframes shimmer {
   0% {
@@ -22,14 +51,14 @@ layer base {
   .App {
     /* Set up the sticky footer layout on our main App container */
     @apply min-h-full flex flex-col;
-     padding-top: env(safe-area-inset-top, 0rem);
-     
-    /* padding-top: env(safe-area-inset-top, 1rem);
-    padding-left: env(safe-area-inset-left, 1rem);
-    padding-right: env(safe-area-inset-right, 1rem);*/
-     padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0rem));
+    padding-top: env(safe-area-inset-top, 0rem);
+    
+    /* ✅ Updated bottom padding to include footer height */
+    --footer-height: 4rem; /* adjust if your footer is taller */
+    padding-bottom: calc(var(--footer-height) + env(safe-area-inset-bottom, 0rem));
   }
 }
+
 @layer utilities {
   .animate-shimmer {
     animation: shimmer 2s infinite;

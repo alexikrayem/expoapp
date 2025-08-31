@@ -10,7 +10,11 @@ import { FilterProvider } from './context/FilterContext';
 import { CheckoutProvider } from './context/CheckoutContext'; // Corrected path (assuming CheckoutContext.jsx)
 import { MiniCartProvider } from './context/MiniCartContext';
 import { CacheProvider } from './context/CacheContext';
-import { Building, Loader2, XCircle } from 'lucide-react'; // Assuming lucide-react is installed
+import { Loader2, XCircle } from 'lucide-react'; // Assuming lucide-react is installed
+import './index.css';
+
+import myLogo from './assets/IMG_1958.JPG' // Adjust path as needed
+import myBackgroundImage from './assets/IMG_1839.JPG'; // Adjust path as needed
 
 // Famous Dentist Quotes in Arabic
 const dentistQuotes = [
@@ -154,34 +158,37 @@ const AppInitializer = () => {
         const currentQuote = dentistQuotes[currentQuoteIndex];
 
         return (
-            <div className="flex items-center justify-center min-h-screen bg-white text-gray-800 font-sans">
+              <div 
+                // *** IMPORTANT CHANGE HERE ***
+                // Changed from bg-contain to bg-cover to fill the screen
+                // bg-center is the default, but you can try others below!
+                className="relative flex items-center justify-center min-h-screen text-gray-800 font-sans bg-cover bg-center" 
+                style={{ backgroundImage: `url(${myBackgroundImage})` }}
+            >
+                {/* Background Overlay for better readability of text and card */}
+                {/* Adjusted opacity slightly to show more of the background if desired */}
+                <div className="absolute inset-0 bg-white opacity-50"></div> 
+            
                 <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="text-center p-8 max-w-sm w-full bg-white rounded-xl shadow-lg"
+                    className="relative z-10 text-center p-8 max-w-sm w-full bg-white rounded-xl shadow-lg"
                 >
-                    {/* Logo Placeholder Section */}
-                    <motion.div
-                        variants={itemVariants}
-                        className="mb-8"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.8, opacity: 0, rotate: -30 }}
-                            animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                            transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-                            className="w-24 h-24 rounded-full bg-blue-500 mx-auto flex items-center justify-center shadow-md"
-                        >
-                            <motion.div
-                                animate={{ scale: [1, 1.05, 1], rotate: [0, 2, -2, 0] }}
-                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                                className="text-white text-5xl font-extrabold"
-                            >
-                                <Building className="w-12 h-12 text-white" /> 
-                            </motion.div>
-                        </motion.div>
-                        <p className="mt-2 text-xs text-gray-500">Your Logo Here</p>
-                    </motion.div>
+                    {/* Logo Section - Now direct image */}
+                    <motion.img
+                        src={myLogo}
+                        alt="Your Company Logo" // Important for accessibility
+                        // Apply animation directly to the image
+                        initial={{ scale: 0.8, opacity: 0, rotate: 0 }}
+                        animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                        transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                        // Styling for the image itself
+                        className="mx-auto block max-w-48 h-auto mb-8 object-contain" // Centered, max width, maintain aspect ratio
+                        // You can also add the repeating animation here if desired, or remove it
+                        // animate={{ scale: [1, 1.05, 1] }}
+                        // transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    />
                     
                     {/* Application Title */}
                     <motion.h1 

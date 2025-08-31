@@ -10,6 +10,7 @@ import { ShoppingCart, Search, X, MapPin, Loader2, User, Bell, ChevronDown } fro
 import { AnimatePresence, motion } from 'framer-motion';
 import ProfileIcon from '../common/ProfileIcon';
 import CityChangePopover from '../common/CityChangePopover';
+import appLogo from '../../assets/IMG_1787.jpg';
 
 const Header = ({ children }) => {
     const { telegramUser, userProfile, onProfileUpdate } = useOutletContext();
@@ -169,56 +170,69 @@ const Header = ({ children }) => {
                 
                 {/* Top row */}
                 <div className={`flex items-center justify-between ${isCompact ? 'mb-2' : 'mb-4'}`}>
-                    
-                    {/* City selector */}
-                    <div className="relative flex-shrink-0 sm:max-w-[140px] max-w-[110px]">
-                        <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setIsCityPopoverOpen(prev => !prev)}
-                            disabled={isChangingCity}
-                            className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 p-2 sm:p-3 rounded-xl transition-all duration-200 w-full disabled:opacity-70 shadow-sm border border-blue-100"
+                   
+ <motion.div 
+                        className="flex items-center gap-2 flex-shrink-0"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.1 }}
+                    >
+                        <img 
+                            src={appLogo} 
+                            alt="App Logo" 
+                            className="w-10 h-10 rounded-full object-cover shadow-sm ring-1 ring-blue-100" // Set to w-8 h-8
+                        />
+                        <span 
+                            className="text-lg font-bold text-blue-700 whitespace-nowrap italic font-app-logo-text"
                         >
-                            {isChangingCity ? (
-                                <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
-                            ) : (
-                                <MapPin className="h-4 w-4 text-blue-500" />
-                            )}
-                            <div className="flex flex-col items-start min-w-0">
-                                <span className="text-[10px] text-gray-500 leading-none">المدينة</span>
-                                <span className="truncate text-xs font-semibold text-gray-700">
-                                    {isChangingCity ? 'جاري التغيير...' : (userProfile?.selected_city_name || 'اختر مدينة')}
-                                </span>
-                            </div>
-                            <ChevronDown className="h-3 w-3 text-gray-400" />
-                        </motion.button>
-                        <AnimatePresence>
-                            {isCityPopoverOpen && (
-                                <CityChangePopover
-                                    currentCityId={userProfile?.selected_city_id}
-                                    onCitySelect={handleCityChange}
-                                    onClose={() => setIsCityPopoverOpen(false)}
-                                />
-                            )}
-                        </AnimatePresence>
-                    </div>
+                            طبيب
+                        </span>
+                    </motion.div>
 
-                    {/* Title */}
-                    {!isCompact && (
-                        <motion.div 
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="absolute left-1/2 -translate-x-1/2 text-center"
-                        >
-                            <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                                معرض المستلزمات
-                            </h1>
-                            <div className="w-12 h-0.5 bg-gradient-to-r from-blue-400 to-indigo-400 mx-auto mt-1 rounded-full"></div>
-                        </motion.div>
-                    )}
-
+                   
                    {/* Right actions */}
 <div className="flex items-center gap-1 sm:gap-2">
+     {/* City selector - Now styled like other icons */}
+                      <div className="relative z-20"> {/* New wrapper for consistent popover positioning */}
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setIsCityPopoverOpen(prev => !prev)}
+                                disabled={isChangingCity}
+                                // Applied styling similar to Notification/Search/Profile icons
+                                className="relative flex items-center gap-1 p-2 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors shadow-sm border border-gray-100 disabled:opacity-70 flex-shrink-0"
+                            >
+                                {isChangingCity ? (
+                                    <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+                                ) : (
+                                    <MapPin className="h-4 w-4 text-gray-600" />
+                                )}
+                                {/* Text content for city, adapted for compactness */}
+                                <div className="flex flex-col items-start min-w-0 flex-1">
+                                    {/* Conditional rendering of 'المدينة' label for smaller screens */}
+                                    {(!isCompact || window.innerWidth > 640) && (
+                                        <span className="text-[9px] text-gray-500 leading-none">المدينة</span>
+                                    )}
+                                    <span className="truncate text-xs font-semibold text-gray-700 leading-none">
+                                        {isChangingCity ? 'جاري التغيير...' : (userProfile?.selected_city_name || 'اختر مدينة')}
+                                    </span>
+                                </div>
+                                <ChevronDown className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                            </motion.button>
+                            <AnimatePresence>
+                                {isCityPopoverOpen && (
+                                    <CityChangePopover
+                                        currentCityId={userProfile?.selected_city_id}
+                                        onCitySelect={handleCityChange}
+                                        onClose={() => setIsCityPopoverOpen(false)}
+                                        // Position the popover relative to its parent `div.relative.z-20`
+                                        // `w-max` allows it to size according to its content, `left-1/2 -translate-x-1/2` centers it
+                                        className="absolute z-30 mt-2 w-max left-1/2 -translate-x-1/2 min-w-[150px]" 
+                                    />
+                                )}
+                            </AnimatePresence>
+                        </div>
+
     {/* Notifications */}
     <motion.button
         whileHover={{ scale: 1.05 }}
