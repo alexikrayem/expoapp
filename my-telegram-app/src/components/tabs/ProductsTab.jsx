@@ -1,4 +1,3 @@
-// src/components/tabs/ProductsTab.jsx - Enhanced with skeleton loading
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, X, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,27 +17,40 @@ const ProductsTab = ({
     onShowDetails, 
     favoriteProductIds,
     selectedCityId,
-    onFiltersChange,
-    currentFilters = {},
+    onFiltersChange, // This is HomePage's handleLocalFiltersChange
+    currentFilters = {}, // This is HomePage's currentFilters
     refreshProducts
 }) => {
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+    
+    // localAdvancedFilters should be initialized from currentFilters and kept in sync
     const [localAdvancedFilters, setLocalAdvancedFilters] = useState({
         minPrice: currentFilters.minPrice || '',
         maxPrice: currentFilters.maxPrice || '',
         onSale: currentFilters.onSale || false,
     });
 
+    // Effect to synchronize localAdvancedFilters with currentFilters from props
+    // This ensures the advanced filter UI always reflects the global state.
+    useEffect(() => {
+        setLocalAdvancedFilters({
+            minPrice: currentFilters.minPrice || '',
+            maxPrice: currentFilters.maxPrice || '',
+            onSale: currentFilters.onSale || false,
+        });
+    }, [currentFilters]); // Rerun when currentFilters object changes
+
     const handleAdvancedFilterChange = (filterKey, value) => {
         setLocalAdvancedFilters(prev => ({ ...prev, [filterKey]: value }));
     };
 
     const applyAdvancedFilters = () => {
+        // Merge local advanced filters with the current global filters (category, etc.)
         const newFilters = {
-            ...currentFilters,
-            ...localAdvancedFilters
+            ...currentFilters, // Start with the global current filters
+            ...localAdvancedFilters // Apply local advanced filters on top
         };
-        onFiltersChange(newFilters);
+        onFiltersChange(newFilters); // Send combined filters up to HomePage
         setShowAdvancedFilters(false);
         window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
     };
@@ -51,11 +63,12 @@ const ProductsTab = ({
         };
         setLocalAdvancedFilters(clearedAdvancedFilters);
         
+        // Merge cleared advanced filters with the current global filters (category, etc.)
         const newFilters = {
-            ...currentFilters,
-            ...clearedAdvancedFilters
+            ...currentFilters, // Start with the global current filters
+            ...clearedAdvancedFilters // Apply cleared advanced filters
         };
-        onFiltersChange(newFilters);
+        onFiltersChange(newFilters); // Send combined filters up to HomePage
         setShowAdvancedFilters(false);
         window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
     };
@@ -65,6 +78,8 @@ const ProductsTab = ({
         window.Telegram?.WebApp?.HapticFeedback.impactOccurred('medium');
     };
 
+    // This check should use the `currentFilters` from props, not the local state,
+    // to accurately reflect active filters that are *actually applied*.
     const hasActiveAdvancedFilters = currentFilters.minPrice || currentFilters.maxPrice || currentFilters.onSale;
 
     if (error) {

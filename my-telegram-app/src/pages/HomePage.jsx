@@ -1,4 +1,3 @@
-// src/pages/HomePage.jsx (FINAL CORRECTED VERSION)
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useModal } from '../context/ModalContext';
@@ -13,6 +12,8 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useCart } from '../context/CartContext';
 import { useFilters } from '../context/FilterContext';
 import { useCache } from '../context/CacheContext';
+import { productService } from "../services/productService";
+
 
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -32,10 +33,11 @@ const HomePage = () => {
     const { actions: { addToCart } } = useCart();
     const { favoriteIds, toggleFavorite } = useFavorites(telegramUser);
     const { searchResults, showSearchResults, isSearching, searchError, debouncedSearchTerm } = useSearch();
-    const { currentFilters, handleFiltersChange } = useFilters();
-
+    const { currentFilters: globalFilters, handleFiltersChange: globalHandleFiltersChange } = useFilters();
+    const { cachedApiCall } = useCache(); 
+    
     // --- LOCAL UI STATE ---
-    const [activeSection, setActiveSection] = useState('products'); // Default to products
+    const [activeSection, setActiveSection] = useState('products');
     const [currentFilters, setCurrentFilters] = useState({
         category: 'all',
         minPrice: '',
@@ -44,24 +46,30 @@ const HomePage = () => {
     });
 
     // --- DATA FETCHING HOOKS ---
-    const { products, isLoadingProducts, productError, loadMoreProducts, hasMorePages, isLoadingMore, refreshProducts, handleFiltersChange } = useProducts(userProfile?.selected_city_id, currentFilters);
+    // Pass currentFilters directly. useProducts will react to changes in this object.
+    const { 
+        products, isLoadingProducts, productError, loadMoreProducts, hasMorePages, 
+        isLoadingMore, refreshProducts 
+    } = useProducts(userProfile?.selected_city_id, currentFilters); // No `handleFiltersChange` from useProducts here
+
     const { deals, isLoadingDeals, dealError } = useDeals(activeSection === 'exhibitions' ? userProfile?.selected_city_id : null);
     const { suppliers, isLoadingSuppliers, supplierError } = useSuppliers(activeSection === 'suppliers' ? userProfile?.selected_city_id : null);
     const [featuredItems, setFeaturedItems] = useState([]);
     const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
 
-    // Handle filter changes
+    // Handle filter changes: This is the ONLY place in HomePage where currentFilters is updated.
+    // This change will automatically trigger a refetch in useProducts via its useEffect.
     const handleLocalFiltersChange = (newFilters) => {
         setCurrentFilters(newFilters);
-        handleFiltersChange(newFilters);
+        // If you need to update a global FilterContext, keep this:
+        globalHandleFiltersChange(newFilters); 
     };
 
     const tabs = [
-  { id: 'exhibitions', label: 'العروض', icon: Tags },
-  { id: 'products', label: 'المنتجات', icon: Package },
-  { id: 'suppliers', label: 'الموردون', icon: Factory },
-];
-
+        { id: 'exhibitions', label: 'العروض', icon: Tags },
+        { id: 'products', label: 'المنتجات', icon: Package },
+        { id: 'suppliers', label: 'الموردون', icon: Factory },
+    ];
 
     useEffect(() => {
         const fetchFeatured = async () => {
@@ -86,7 +94,6 @@ const HomePage = () => {
     
     const handleShowProductDetails = (product) => {
         if (!product || !product.id) return;
-        // Telegram haptic feedback
         window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
         openModal('productDetail', {
             product: product,
@@ -118,24 +125,24 @@ const HomePage = () => {
         <div className='pb-24'>
             <Header>
                 {!showSearchResults && (
-<nav className="w-full flex justify-between gap-2 px-4 mt-4">
-  {tabs.map(({ id, label, icon: Icon }) => (
-    <motion.button
-      key={id}
-      onClick={() => handleSectionChange(id)}
-      whileTap={{ scale: 0.97 }}
-      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
-        ${
-          activeSection === id
-            ? 'bg-blue-600 text-white shadow'
-            : 'bg-white text-gray-800 border border-gray-300 hover:bg-gray-100'
-        }`}
-    >
-      <Icon size={18} />
-      <span>{label}</span>
-    </motion.button>
-  ))}
-</nav>
+                    <nav className="w-full flex justify-between gap-2 px-4 mt-4">
+                        {tabs.map(({ id, label, icon: Icon }) => (
+                            <motion.button
+                                key={id}
+                                onClick={() => handleSectionChange(id)}
+                                whileTap={{ scale: 0.97 }}
+                                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+                                    ${
+                                    activeSection === id
+                                        ? 'bg-blue-600 text-white shadow'
+                                        : 'bg-white text-gray-800 border border-gray-300 hover:bg-gray-100'
+                                    }`}
+                            >
+                                <Icon size={18} />
+                                <span>{label}</span>
+                            </motion.button>
+                        ))}
+                    </nav>
                 )}
             </Header>
 
@@ -204,21 +211,21 @@ const HomePage = () => {
                                     transition={{ duration: 0.2 }}
                                 >
                                     <ProductsTab 
-                                products={products}
-                                isLoading={isLoadingProducts} 
-                                error={productError} 
-                                onLoadMore={loadMoreProducts} 
-                                hasMorePages={hasMorePages} 
-                                isLoadingMore={isLoadingMore} 
-                                onAddToCart={addToCart} 
-                                onToggleFavorite={toggleFavorite}
-                                onShowDetails={handleShowProductDetails} 
-                                favoriteProductIds={favoriteIds}
-                                onFiltersChange={handleLocalFiltersChange}
-                                currentFilters={currentFilters}
-                                selectedCityId={userProfile?.selected_city_id}
+                                        products={products}
+                                        isLoading={isLoadingProducts} 
+                                        error={productError} 
+                                        onLoadMore={loadMoreProducts} 
+                                        hasMorePages={hasMorePages} 
+                                        isLoadingMore={isLoadingMore} 
+                                        onAddToCart={addToCart} 
+                                        onToggleFavorite={toggleFavorite}
+                                        onShowDetails={handleShowProductDetails} 
+                                        favoriteProductIds={favoriteIds}
+                                        onFiltersChange={handleLocalFiltersChange} // Pass the single filter handler
+                                        currentFilters={currentFilters} // Pass currentFilters as prop
+                                        selectedCityId={userProfile?.selected_city_id}
                                         refreshProducts={refreshProducts}
-                            />
+                                    />
                                 </motion.div>
                             )}
                             

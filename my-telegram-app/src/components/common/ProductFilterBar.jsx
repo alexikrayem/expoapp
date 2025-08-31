@@ -1,4 +1,3 @@
-// src/components/common/ProductFilterBar.jsx (CORRECTED LOGIC + ENHANCED DESIGN)
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { productService } from '../../services/productService';
@@ -12,7 +11,11 @@ const ProductFilterBar = ({ currentFilters, onFiltersChange, selectedCityId }) =
     // This useEffect fetches the categories data, same as before.
     useEffect(() => {
         const fetchCategories = async () => {
-            if (!selectedCityId) return;
+            if (!selectedCityId) {
+                setCategories([{ category: 'all', product_count: null }]); // Ensure 'all' is always an option even without categories
+                setIsLoading(false);
+                return;
+            }
             setIsLoading(true);
             setError(null);
             try {
@@ -34,12 +37,13 @@ const ProductFilterBar = ({ currentFilters, onFiltersChange, selectedCityId }) =
         if (currentFilters?.category === category) return; // Prevent re-clicking the same category
         
         const newFilters = {
-            ...currentFilters,
+            ...currentFilters, // Preserve other filters (minPrice, maxPrice, onSale)
             category: category
         };
         
         console.log('Filter change:', { from: currentFilters?.category, to: category, newFilters });
         onFiltersChange(newFilters);
+        window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light'); // Added haptic feedback
     };
 
     // --- RENDER LOGIC ---
