@@ -45,6 +45,8 @@ export const ModalProvider = ({ children }) => {
                 return <ProfileModal show={true} onClose={closeModal} {...props} />;
             case 'address':
                 return <AddressModal show={true} onClose={closeModal} {...props} />;
+            case 'addressConfirmation':
+                return <AddressConfirmationModal show={true} onClose={closeModal} {...props} />;
             case 'orderConfirmation':
                 return <OrderConfirmationModal show={true} onClose={closeModal} {...props} />;
             case 'cart':

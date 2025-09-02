@@ -1,26 +1,92 @@
-// src/components/cart/AddressModal.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, User, Phone, MapPin, Building, AlertCircle } from 'lucide-react';
-
-// A simple spinner component for the button
-const Spinner = () => (
-    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-);
+import { X, User, Phone, MapPin, Building, AlertCircle, Loader2 } from 'lucide-react';
 
 const AddressModal = ({
     show,
     onClose,
-    formData,
-    onFormChange,
-    onFormSubmit,
+    initialData = {},
+    onSaveAndProceed,
     error,
     isSaving,
-    availableCities = [] // Expects an array of city names, e.g., ['Dubai', 'Abu Dhabi']
+    availableCities = []
 }) => {
+    const [formData, setFormData] = useState({
+        fullName: '',
+        phoneNumber: '',
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        ...initialData
+    });
+
+    const [validationErrors, setValidationErrors] = useState({});
+
+    // Update form data when initialData changes
+    useEffect(() => {
+        if (initialData && Object.keys(initialData).length > 0) {
+            setFormData(prev => ({
+                ...prev,
+                ...initialData
+            }));
+        }
+    }, [initialData]);
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+        
+        // Clear validation error for this field
+        if (validationErrors[name]) {
+            setValidationErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+    };
+
+    const validateForm = () => {
+        const errors = {};
+        
+        if (!formData.fullName.trim()) {
+            errors.fullName = 'الاسم الكامل مطلوب';
+        }
+        
+        if (!formData.phoneNumber.trim()) {
+            errors.phoneNumber = 'رقم الهاتف مطلوب';
+        } else if (!/^[0-9+\-\s()]{10,}$/.test(formData.phoneNumber.trim())) {
+            errors.phoneNumber = 'رقم الهاتف غير صحيح';
+        }
+        
+        if (!formData.addressLine1.trim()) {
+            errors.addressLine1 = 'العنوان مطلوب';
+        }
+        
+        if (!formData.city.trim()) {
+            errors.city = 'المدينة مطلوبة';
+        }
+        
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (!validateForm()) {
+            return;
+        }
+        
+        try {
+            await onSaveAndProceed(formData);
+        } catch (err) {
+            console.error('Address save error:', err);
+        }
+    };
+
     if (!show) return null;
 
     return (
@@ -35,78 +101,164 @@ const AddressModal = ({
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-lg"
+                className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             >
-                <div className="flex justify-between items-center mb-6 pb-4 border-b">
+                <div className="flex justify-between items-center p-6 border-b border-gray-200">
                     <h2 className="text-xl font-bold text-gray-800">تفاصيل التوصيل</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded-full">
+                    <button 
+                        onClick={onClose} 
+                        className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
+                        disabled={isSaving}
+                    >
                         <X className="h-6 w-6" />
                     </button>
                 </div>
 
                 {error && (
-                    <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 flex items-center gap-3">
-                        <AlertCircle className="h-5 w-5" />
+                    <div className="mx-6 mt-4 bg-red-50 text-red-700 p-4 rounded-lg flex items-center gap-3 border border-red-200">
+                        <AlertCircle className="h-5 w-5 flex-shrink-0" />
                         <span className="text-sm font-medium">{error}</span>
                     </div>
                 )}
 
-                <form onSubmit={onFormSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     {/* Full Name */}
                     <div>
-                        <label htmlFor="fullName" className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="fullName" className="flex items-center text-sm font-medium text-gray-700 mb-2">
                             <User className="h-4 w-4 ml-2 text-gray-400" />
                             الاسم الكامل
                         </label>
-                        <input type="text" name="fullName" id="fullName" required value={formData.fullName} onChange={onFormChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-transparent transition" />
+                        <input 
+                            type="text" 
+                            name="fullName" 
+                            id="fullName" 
+                            value={formData.fullName}
+                            onChange={handleInputChange}
+                            className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                                validationErrors.fullName ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                            }`}
+                            placeholder="أدخل اسمك الكامل"
+                            disabled={isSaving}
+                        />
+                        {validationErrors.fullName && (
+                            <p className="text-red-600 text-xs mt-1">{validationErrors.fullName}</p>
+                        )}
                     </div>
 
                     {/* Phone Number */}
                     <div>
-                        <label htmlFor="phoneNumber" className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="phoneNumber" className="flex items-center text-sm font-medium text-gray-700 mb-2">
                             <Phone className="h-4 w-4 ml-2 text-gray-400" />
                             رقم الهاتف
                         </label>
-                        <input type="tel" name="phoneNumber" id="phoneNumber" required value={formData.phoneNumber} onChange={onFormChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-transparent transition" />
+                        <input 
+                            type="tel" 
+                            name="phoneNumber" 
+                            id="phoneNumber" 
+                            value={formData.phoneNumber}
+                            onChange={handleInputChange}
+                            className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                                validationErrors.phoneNumber ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                            }`}
+                            placeholder="05xxxxxxxx"
+                            disabled={isSaving}
+                        />
+                        {validationErrors.phoneNumber && (
+                            <p className="text-red-600 text-xs mt-1">{validationErrors.phoneNumber}</p>
+                        )}
                     </div>
 
-                    {/* City Dropdown */}
+                    {/* City */}
                     <div>
-                        <label htmlFor="city" className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="city" className="flex items-center text-sm font-medium text-gray-700 mb-2">
                             <MapPin className="h-4 w-4 ml-2 text-gray-400" />
                             المدينة
                         </label>
-                        <select name="city" id="city" required value={formData.city} onChange={onFormChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-transparent transition bg-white">
-                            <option value="" disabled>اختر المدينة...</option>
+                        <select 
+                            name="city" 
+                            id="city" 
+                            value={formData.city}
+                            onChange={handleInputChange}
+                            className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white ${
+                                validationErrors.city ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                            }`}
+                            disabled={isSaving}
+                        >
+                            <option value="">اختر المدينة...</option>
                             {availableCities.map(city => (
                                 <option key={city} value={city}>{city}</option>
                             ))}
                         </select>
+                        {validationErrors.city && (
+                            <p className="text-red-600 text-xs mt-1">{validationErrors.city}</p>
+                        )}
                     </div>
 
                     {/* Address Line 1 */}
                     <div>
-                        <label htmlFor="addressLine1" className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="addressLine1" className="flex items-center text-sm font-medium text-gray-700 mb-2">
                             <Building className="h-4 w-4 ml-2 text-gray-400" />
-                            المنطقة / الشارع / رقم المبنى
+                            العنوان الأساسي
                         </label>
-                        <input type="text" name="addressLine1" id="addressLine1" required value={formData.addressLine1} onChange={onFormChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-transparent transition" />
+                        <input 
+                            type="text" 
+                            name="addressLine1" 
+                            id="addressLine1" 
+                            value={formData.addressLine1}
+                            onChange={handleInputChange}
+                            className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                                validationErrors.addressLine1 ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                            }`}
+                            placeholder="الشارع، رقم المبنى، المنطقة"
+                            disabled={isSaving}
+                        />
+                        {validationErrors.addressLine1 && (
+                            <p className="text-red-600 text-xs mt-1">{validationErrors.addressLine1}</p>
+                        )}
                     </div>
 
                     {/* Address Line 2 (Optional) */}
                     <div>
-                        <label htmlFor="addressLine2" className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                            تفاصيل إضافية للعنوان (اختياري)
+                        <label htmlFor="addressLine2" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                            <Building className="h-4 w-4 ml-2 text-gray-400" />
+                            تفاصيل إضافية (اختياري)
                         </label>
-                        <textarea name="addressLine2" id="addressLine2" value={formData.addressLine2} onChange={onFormChange} placeholder="مثال: رقم الشقة، علامة مميزة، إلخ." rows="2" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-transparent transition" />
+                        <textarea 
+                            name="addressLine2" 
+                            id="addressLine2" 
+                            value={formData.addressLine2}
+                            onChange={handleInputChange}
+                            placeholder="رقم الشقة، علامة مميزة، تعليمات التوصيل..."
+                            rows="2" 
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                            disabled={isSaving}
+                        />
                     </div>
                     
                     {/* Submit Button */}
-                    <button type="submit" disabled={isSaving} className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center font-semibold text-base">
-                        {isSaving ? <Spinner /> : null}
-                        {isSaving ? "جار الحفظ..." : "حفظ ومتابعة"}
-                    </button>
+                    <div className="pt-4">
+                        <button 
+                            type="submit" 
+                            disabled={isSaving}
+                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 transition-all duration-200"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                    جاري الحفظ والمتابعة...
+                                </>
+                            ) : (
+                                "حفظ ومتابعة الطلب"
+                            )}
+                        </button>
+                    </div>
                 </form>
+
+                <div className="px-6 pb-6">
+                    <p className="text-xs text-gray-500 text-center">
+                        سيتم حفظ هذه المعلومات لتسهيل الطلبات المستقبلية
+                    </p>
+                </div>
             </motion.div>
         </motion.div>
     );
