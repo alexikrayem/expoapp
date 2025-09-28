@@ -1,7 +1,7 @@
 // src/components/modals/SupplierDetailModal.jsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, MapPin, Star, Package, Phone, Mail, Globe, Loader2 } from 'lucide-react';
+import { X, MapPin, Star, Package, Phone, Mail, Globe, Loader as Loader2 } from 'lucide-react';
 import ProductCard from '../common/ProductCard';
 import { cityService } from '../../services/cityService';
 

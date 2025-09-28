@@ -1,7 +1,7 @@
 // src/components/modals/DealDetailModal.jsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Tag, Clock, Package, MapPin, Percent, Loader2, Gift } from 'lucide-react';
+import { X, Tag, Clock, Package, MapPin, Percent, Loader as Loader2, Gift } from 'lucide-react';
 import { cityService } from '../../services/cityService';
 import { useCurrency } from '../../context/CurrencyContext';
 

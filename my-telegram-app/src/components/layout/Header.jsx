@@ -5,7 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useSearch } from '../../context/SearchContext';
 import { userService } from '../../services/userService';
 
-import { ShoppingCart, Search, X, MapPin, Loader2, User, Bell, ChevronDown, Sparkles } from 'lucide-react';
+import { ShoppingCart, Search, X, MapPin, Loader as Loader2, User, Bell, ChevronDown, Sparkles } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import ProfileIcon from '../common/ProfileIcon';
 import CityChangePopover from '../common/CityChangePopover';

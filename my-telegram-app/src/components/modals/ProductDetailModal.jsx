@@ -1,7 +1,7 @@
 // src/components/modals/ProductDetailModal.jsx (CORRECTED)
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ShoppingCart, Heart, AlertTriangle, ChevronsRight, Loader2 } from 'lucide-react';
+import { X, ShoppingCart, Heart, TriangleAlert as AlertTriangle, ChevronsRight, Loader as Loader2 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import { productService } from '../../services/productService';
 
