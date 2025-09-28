@@ -78,8 +78,23 @@ const ProductDetailModal = ({ show, onClose, product: initialProduct, productId:
 
     const handleAddToCart = () => {
         if (isAvailable && originalProduct) {
+            window.Telegram?.WebApp?.HapticFeedback.impactOccurred('medium');
             onAddToCart(originalProduct);
         }
+    };
+
+    const handleToggleFavorite = () => {
+        if (originalProduct) {
+            window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
+            onToggleFavorite.toggle(originalProduct.id);
+        }
+    };
+
+    const handleSelectAlternative = (alternativeId) => {
+        if (onSelectAlternative) {
+            onSelectAlternative(alternativeId);
+        }
+        onClose();
     };
 
     return (
@@ -136,7 +151,7 @@ const ProductDetailModal = ({ show, onClose, product: initialProduct, productId:
                             <button onClick={handleAddToCart} disabled={!isAvailable} className="flex-grow bg-blue-500 text-white py-3.5 px-6 rounded-lg font-semibold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg">
                                 <ShoppingCart className="h-5 w-5" /> {isAvailable ? 'إضافة للسلة' : 'غير متوفر'}
                             </button>
-                            <button onClick={() => onToggleFavorite.toggle(originalProduct.id)} className="p-3.5 border border-gray-300 rounded-lg text-gray-600 hover:border-red-500 hover:text-red-500">
+                            <button onClick={handleToggleFavorite} className="p-3.5 border border-gray-300 rounded-lg text-gray-600 hover:border-red-500 hover:text-red-500">
                                 <Heart className={`h-6 w-6 ${isFavorite ? 'text-red-500 fill-red-500' : ''}`} />
                             </button>
                         </div>
@@ -145,7 +160,7 @@ const ProductDetailModal = ({ show, onClose, product: initialProduct, productId:
                                 <h4 className="text-lg font-bold text-green-700 mb-3">متوفر لدى موردين آخرين:</h4>
                                 <div className="space-y-3">
                                     {alternatives.map(alt => (
-                                        <AlternativeProductCard key={alt.id} product={alt} onSelect={onSelectAlternative} />
+                                        <AlternativeProductCard key={alt.id} product={alt} onSelect={handleSelectAlternative} />
                                     ))}
                                 </div>
                             </div>

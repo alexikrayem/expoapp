@@ -100,19 +100,32 @@ const HomePage = () => {
             productId: product.id,
             onAddToCart: addToCart,
             onToggleFavorite: { toggle: toggleFavorite, isFavorite: (id) => favoriteIds.has(id) },
+            onSelectAlternative: (alternativeId) => {
+                // Close current modal and open alternative product
+                handleShowProductDetails({ id: alternativeId });
+            }
         });
     };
 
     const handleShowDealDetails = (dealId) => {
         if (!dealId) return;
         window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
-        openModal('dealDetail', { dealId });
+        openModal('dealDetail', { 
+            dealId,
+            onProductClick: (productId) => handleShowProductDetails({ id: productId }),
+            onSupplierClick: (supplierId) => handleShowSupplierDetails(supplierId)
+        });
     };
 
     const handleShowSupplierDetails = (supplierId) => {
         if (!supplierId) return;
         window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
-        openModal('supplierDetail', { supplierId, onAddToCart: addToCart, onToggleFavorite: toggleFavorite, favoriteIds });
+        openModal('supplierDetail', { 
+            supplierId, 
+            onAddToCart: addToCart, 
+            onToggleFavorite: toggleFavorite, 
+            favoriteIds 
+        });
     };
 
     const handleSectionChange = (section) => {

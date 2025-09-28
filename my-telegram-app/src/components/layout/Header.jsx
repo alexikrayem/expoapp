@@ -157,40 +157,40 @@ const Header = ({ children }) => {
                     : 'bg-gradient-to-r from-blue-50 via-white to-indigo-50 py-4'
             }`}
         >
-            <div className="px-4 max-w-4xl mx-auto">
+            <div className="px-3 sm:px-4 max-w-4xl mx-auto">
                 
                 {/* Top row */}
-                <div className={`flex items-center justify-between ${isCompact ? 'mb-2' : 'mb-4'}`}>
+                <div className={`flex items-center justify-between gap-2 ${isCompact ? 'mb-2' : 'mb-4'}`}>
                     
                     {/* Logo and Brand */}
                     <motion.div 
-                        className="flex items-center gap-3 flex-shrink-0"
+                        className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.3, delay: 0.1 }}
                     >
                         <div className="relative">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <Sparkles className="h-5 w-5 text-white" />
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                             </div>
                             <motion.div
                                 animate={{ scale: [1, 1.2, 1] }}
                                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full"
+                                className="absolute -top-0.5 -right-0.5 w-2 h-2 sm:w-3 sm:h-3 bg-green-400 border-2 border-white rounded-full"
                             />
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-lg font-bold text-gray-800 leading-tight">
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-sm sm:text-lg font-bold text-gray-800 leading-tight truncate">
                                 معرض طبيب
                             </span>
-                            <span className="text-xs text-gray-500 leading-tight">
+                            <span className="text-xs text-gray-500 leading-tight truncate">
                                 المستلزمات الطبية
                             </span>
                         </div>
                     </motion.div>
 
                     {/* Right actions */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                         
                         {/* City selector */}
                         <div className="relative">
@@ -199,20 +199,23 @@ const Header = ({ children }) => {
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => setIsCityPopoverOpen(prev => !prev)}
                                 disabled={isChangingCity}
-                                className="flex items-center gap-2 px-3 py-2 bg-white/80 backdrop-blur-sm text-gray-700 rounded-xl hover:bg-white transition-all shadow-sm border border-gray-200 disabled:opacity-70"
+                                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-white/80 backdrop-blur-sm text-gray-700 rounded-xl hover:bg-white transition-all shadow-sm border border-gray-200 disabled:opacity-70"
                             >
                                 {isChangingCity ? (
-                                    <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+                                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500 animate-spin" />
                                 ) : (
-                                    <MapPin className="h-4 w-4 text-blue-500" />
+                                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
                                 )}
-                                <div className="flex flex-col items-start min-w-0">
+                                <div className="hidden sm:flex flex-col items-start min-w-0">
                                     <span className="text-[10px] text-gray-500 leading-none">المدينة</span>
-                                    <span className="text-xs font-semibold text-gray-800 leading-none truncate max-w-20">
+                                    <span className="text-xs font-semibold text-gray-800 leading-none truncate max-w-16">
                                         {isChangingCity ? 'جاري...' : (userProfile?.selected_city_name || 'اختر')}
                                     </span>
                                 </div>
-                                <ChevronDown className="h-3 w-3 text-gray-400" />
+                                <span className="sm:hidden text-xs font-semibold text-gray-800 truncate max-w-12">
+                                    {isChangingCity ? '...' : (userProfile?.selected_city_name || 'مدينة')}
+                                </span>
+                                <ChevronDown className="h-3 w-3 text-gray-400 hidden sm:block" />
                             </motion.button>
                             
                             <AnimatePresence>
@@ -230,16 +233,16 @@ const Header = ({ children }) => {
                         <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className="relative p-2 bg-white/80 backdrop-blur-sm text-gray-600 rounded-xl hover:bg-white transition-all shadow-sm border border-gray-200"
+                            className="relative p-1.5 sm:p-2 bg-white/80 backdrop-blur-sm text-gray-600 rounded-xl hover:bg-white transition-all shadow-sm border border-gray-200"
                             title="الإشعارات"
                         >
-                            <Bell className="h-4 w-4" />
+                            <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
                             <motion.span 
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
-                                className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold shadow-md"
+                                className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full h-3 w-3 sm:h-4 sm:w-4 flex items-center justify-center font-bold shadow-md"
                             >
-                                3
+                                <span className="text-[8px] sm:text-xs">3</span>
                             </motion.span>
                         </motion.button>
 
@@ -249,17 +252,17 @@ const Header = ({ children }) => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => openModal('cart')}
-                                className="relative p-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg"
+                                className="relative p-1.5 sm:p-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg"
                                 title="السلة"
                             >
-                                <ShoppingCart className="h-4 w-4" />
+                                <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
                                 <motion.span 
                                     key={cartItemCount}
                                     initial={{ scale: 1.5 }}
                                     animate={{ scale: 1 }}
-                                    className="absolute -top-1 -right-1 bg-yellow-400 text-blue-900 text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md"
+                                    className="absolute -top-0.5 -right-0.5 bg-yellow-400 text-blue-900 text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center font-bold shadow-md"
                                 >
-                                    {cartItemCount}
+                                    <span className="text-[8px] sm:text-xs">{cartItemCount}</span>
                                 </motion.span>
                             </motion.button>
                         )}
@@ -270,9 +273,9 @@ const Header = ({ children }) => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => setIsSearchExpanded(true)}
-                                className="p-2 bg-white/80 backdrop-blur-sm rounded-xl hover:bg-white transition-all border border-gray-200 shadow-sm"
+                                className="p-1.5 sm:p-2 bg-white/80 backdrop-blur-sm rounded-xl hover:bg-white transition-all border border-gray-200 shadow-sm"
                             >
-                                <Search className="h-4 w-4 text-gray-500" />
+                                <Search className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
                             </motion.button>
                         )}
 
@@ -300,7 +303,7 @@ const Header = ({ children }) => {
                             }}
                             transition={{ duration: 0.3 }}
                         >
-                            <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+                            <Search className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 z-10" />
                             <motion.input
                                 type="text"
                                 placeholder="ابحث عن المنتجات، الموردين، العروض..."
@@ -308,7 +311,7 @@ const Header = ({ children }) => {
                                 onChange={(e) => handleSearchTermChange(e.target.value)}
                                 onFocus={handleSearchFocus}
                                 onBlur={handleSearchBlur}
-                                className="w-full pl-4 pr-12 py-3 border-0 bg-white/90 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-300 text-sm placeholder-gray-500 shadow-sm"
+                                className="w-full pl-3 sm:pl-4 pr-10 sm:pr-12 py-2.5 sm:py-3 border-0 bg-white/90 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-300 text-sm placeholder-gray-500 shadow-sm"
                             />
                             <AnimatePresence>
                                 {searchTerm && (
@@ -317,9 +320,9 @@ const Header = ({ children }) => {
                                         animate={{ opacity: 1, scale: 1, x: 0 }}
                                         exit={{ opacity: 0, scale: 0.8, x: 10 }}
                                         onClick={clearSearch}
-                                        className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors"
+                                        className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 p-1 sm:p-1.5 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors"
                                     >
-                                        <X className="h-4 w-4" />
+                                        <X className="h-3 w-3 sm:h-4 sm:w-4" />
                                     </motion.button>
                                 )}
                             </AnimatePresence>
