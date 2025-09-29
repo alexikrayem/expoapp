@@ -80,6 +80,10 @@ const ProductDetailModal = ({ show, onClose, product: initialProduct, productId:
         if (isAvailable && originalProduct) {
             window.Telegram?.WebApp?.HapticFeedback.impactOccurred('medium');
             onAddToCart(originalProduct);
+            // Close modal after adding to cart
+            setTimeout(() => {
+                onClose();
+            }, 300);
         }
     };
 

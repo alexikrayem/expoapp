@@ -48,18 +48,8 @@ const Header = ({ children }) => {
             // Enable closing confirmation
             tg.enableClosingConfirmation();
             
-            // Configure main button for cart
-            const cartCount = getCartItemCount();
-            if (cartCount > 0) {
-                tg.MainButton.setText(`🛒 عرض السلة (${cartCount})`);
-                tg.MainButton.show();
-                tg.MainButton.onClick(() => {
-                    openModal('cart');
-                    tg.HapticFeedback.impactOccurred('medium');
-                });
-            } else {
-                tg.MainButton.hide();
-            }
+            // Hide main button to avoid confusion
+            tg.MainButton.hide();
 
             // Configure back button
             tg.BackButton.onClick(() => {
@@ -72,7 +62,7 @@ const Header = ({ children }) => {
 
             console.log('✅ Enhanced Telegram Web App initialized');
         }
-    }, [getCartItemCount, openModal]);
+    }, []);
 
     const handleOpenProfileModal = () => {
         const formData = {
