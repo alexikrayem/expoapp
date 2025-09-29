@@ -10,7 +10,7 @@ import { FilterProvider } from './context/FilterContext';
 import { CheckoutProvider } from './context/CheckoutContext'; // Corrected path (assuming CheckoutContext.jsx)
 import { MiniCartProvider } from './context/MiniCartContext';
 import { CacheProvider } from './context/CacheContext';
-import { Loader2, XCircle } from 'lucide-react'; // Assuming lucide-react is installed
+import { Loader as Loader2, Circle as XCircle } from 'lucide-react'; // Assuming lucide-react is installed
 import './index.css';
 
 import myLogo from './assets/IMG_1958.JPG' // Adjust path as needed
@@ -84,9 +84,7 @@ const AppInitializer = () => {
                 tg.setBackgroundColor('#f8fafc');
                 
                 tg.enableClosingConfirmation();
-                
-                // Hide main button to avoid confusion with app flow
-                tg.MainButton.hide();
+                tg.HapticFeedback.impactOccurred('light');
                 
                 console.log('✅ Enhanced Telegram Web App initialized');
             }

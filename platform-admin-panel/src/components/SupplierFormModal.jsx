@@ -1,6 +1,6 @@
 // src/components/SupplierFormModal.jsx - Enhanced with image upload
 import React, { useState, useEffect, useRef } from 'react';
-import { X, UploadCloud, Image as ImageIcon, AlertTriangle, User, Mail, MapPin, Tag } from 'lucide-react';
+import { X, CloudUpload as UploadCloud, Image as ImageIcon, TriangleAlert as AlertTriangle, User, Mail, MapPin, Tag } from 'lucide-react';
 
 const SupplierFormModal = ({ isOpen, onClose, onSave, supplierToEdit, isLoading }) => {
     const initialFormState = {
