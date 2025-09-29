@@ -84,7 +84,9 @@ const AppInitializer = () => {
                 tg.setBackgroundColor('#f8fafc');
                 
                 tg.enableClosingConfirmation();
-                tg.HapticFeedback.impactOccurred('light');
+                
+                // Hide main button to avoid confusion with app flow
+                tg.MainButton.hide();
                 
                 console.log('✅ Enhanced Telegram Web App initialized');
             }
