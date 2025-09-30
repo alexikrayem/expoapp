@@ -1,6 +1,6 @@
 // src/components/ProductFormModal.jsx - Enhanced with better validation and UX
 import React, { useState, useEffect, useRef } from 'react';
-import { X, UploadCloud, Image as ImageIcon, AlertTriangle, Package, DollarSign, Tag, Hash } from 'lucide-react';
+import { X, CloudUpload as UploadCloud, Image as ImageIcon, TriangleAlert as AlertTriangle, Package, DollarSign, Tag, Hash } from 'lucide-react';
 
 const ProductFormModal = ({ isOpen, onClose, onSave, productToEdit, isLoading: isSavingProduct }) => {
     const initialFormState = {

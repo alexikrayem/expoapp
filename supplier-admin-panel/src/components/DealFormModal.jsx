@@ -1,6 +1,6 @@
 // src/components/DealFormModal.jsx - Enhanced deal form with better validation
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Tag, Calendar, Percent, Package, UploadCloud, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { X, Tag, Calendar, Percent, Package, CloudUpload as UploadCloud, Image as ImageIcon, TriangleAlert as AlertTriangle } from 'lucide-react';
 
 const DealFormModal = ({ isOpen, onClose, onSave, dealToEdit, supplierProducts = [], isLoading }) => {
     const initialFormState = {

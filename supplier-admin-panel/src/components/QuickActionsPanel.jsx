@@ -1,19 +1,6 @@
 // src/components/QuickActionsPanel.jsx - Fixed with proper error handling
 import React, { useState } from 'react';
-import { 
-    Package, 
-    PackageX, 
-    Tag, 
-    TrendingUp, 
-    TrendingDown, 
-    RotateCcw,
-    Zap,
-    AlertTriangle,
-    CheckCircle, 
-    X,
-    Percent,
-    DollarSign
-} from 'lucide-react';
+import { Package, PackageX, Tag, TrendingUp, TrendingDown, RotateCcw, Zap, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, X, Percent, DollarSign } from 'lucide-react';
 import { supplierService } from '../services/supplierService';
 
 const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
