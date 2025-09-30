@@ -1,4 +1,4 @@
-// src/components/QuickActionsPanel.jsx - Enhanced quick actions for products
+// src/components/QuickActionsPanel.jsx - Fixed with proper error handling
 import React, { useState } from 'react';
 import { 
     Package, 
@@ -29,7 +29,10 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
             color: 'bg-red-500 hover:bg-red-600',
             description: 'تعيين المخزون إلى صفر',
             action: async () => {
-                const updates = selectedProducts.map(p => ({ id: p.id, stock_level: 0 }));
+                const updates = selectedProducts.map(p => ({ 
+                    id: p.id, 
+                    stock_level: 0 
+                }));
                 await supplierService.bulkUpdateStock(updates);
             }
         },
@@ -40,7 +43,10 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
             color: 'bg-green-500 hover:bg-green-600',
             description: 'تعيين المخزون إلى 10 قطع',
             action: async () => {
-                const updates = selectedProducts.map(p => ({ id: p.id, stock_level: 10 }));
+                const updates = selectedProducts.map(p => ({ 
+                    id: p.id, 
+                    stock_level: 10 
+                }));
                 await supplierService.bulkUpdateStock(updates);
             }
         },
@@ -51,7 +57,10 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
             color: 'bg-green-600 hover:bg-green-700',
             description: 'تعيين المخزون إلى 50 قطعة',
             action: async () => {
-                const updates = selectedProducts.map(p => ({ id: p.id, stock_level: 50 }));
+                const updates = selectedProducts.map(p => ({ 
+                    id: p.id, 
+                    stock_level: 50 
+                }));
                 await supplierService.bulkUpdateStock(updates);
             }
         },
@@ -117,7 +126,10 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
             color: 'bg-purple-500 hover:bg-purple-600',
             description: 'تعيين المخزون إلى 100 قطعة',
             action: async () => {
-                const updates = selectedProducts.map(p => ({ id: p.id, stock_level: 100 }));
+                const updates = selectedProducts.map(p => ({ 
+                    id: p.id, 
+                    stock_level: 100 
+                }));
                 await supplierService.bulkUpdateStock(updates);
             }
         }
@@ -134,8 +146,6 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
 
         try {
             await actionConfig.action();
-            onActionComplete?.();
-            onClose?.();
             
             // Show success notification
             const notification = document.createElement('div');
@@ -149,9 +159,24 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 4000);
             
+            onActionComplete?.();
+            onClose?.();
+            
         } catch (error) {
             console.error('Quick action failed:', error);
-            alert(`فشل في تطبيق ${actionConfig.label}: ${error.message}`);
+            
+            // Show error notification
+            const errorNotification = document.createElement('div');
+            errorNotification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+            errorNotification.innerHTML = `
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                فشل في تطبيق ${actionConfig.label}: ${error.message}
+            `;
+            document.body.appendChild(errorNotification);
+            setTimeout(() => errorNotification.remove(), 5000);
+            
         } finally {
             setIsProcessing(false);
             setProcessingAction(null);
@@ -162,10 +187,10 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
         return (
             <div className="bg-white rounded-lg shadow-lg p-6 text-center">
                 <AlertTriangle className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-600">يرجى تحديد منتج واحد على الأقل لتطبيق الإجراءات السريعة</p>
+                <p className="text-gray-600 mb-4">يرجى تحديد منتج واحد على الأقل لتطبيق الإجراءات السريعة</p>
                 <button 
                     onClick={onClose}
-                    className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                    className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                 >
                     إغلاق
                 </button>
@@ -174,12 +199,15 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
     }
 
     return (
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden max-w-2xl mx-auto">
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden max-w-4xl mx-auto">
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="text-lg font-semibold">الإجراءات السريعة</h3>
-                        <p className="text-sm opacity-90">
+                        <h3 className="text-xl font-semibold flex items-center gap-2">
+                            <Zap className="h-6 w-6" />
+                            الإجراءات السريعة
+                        </h3>
+                        <p className="text-sm opacity-90 mt-1">
                             {selectedProducts.length} منتج محدد
                         </p>
                     </div>
@@ -187,7 +215,7 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
                         onClick={onClose}
                         className="text-white hover:bg-white/20 p-2 rounded-full transition-colors"
                     >
-                        <X className="h-5 w-5" />
+                        <X className="h-6 w-6" />
                     </button>
                 </div>
             </div>
@@ -195,19 +223,19 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
             <div className="p-6">
                 {/* Custom discount percentage input */}
                 <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                    <label className="block text-sm font-medium text-orange-800 mb-2">
+                    <label className="block text-sm font-medium text-orange-800 mb-3">
                         نسبة التخفيض المخصصة
                     </label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         <input
                             type="number"
                             min="1"
                             max="90"
                             value={customDiscountPercentage}
                             onChange={(e) => setCustomDiscountPercentage(parseInt(e.target.value) || 20)}
-                            className="w-20 px-3 py-2 border border-orange-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            className="w-24 px-3 py-2 border border-orange-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-center font-semibold"
                         />
-                        <Percent className="h-4 w-4 text-orange-600" />
+                        <Percent className="h-5 w-5 text-orange-600" />
                         <span className="text-sm text-orange-700">
                             سيتم تطبيق خصم {customDiscountPercentage}% على المنتجات المحددة
                         </span>
@@ -215,7 +243,7 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
                 </div>
 
                 {/* Action buttons grid */}
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     {quickActions.map((action) => (
                         <button
                             key={action.id}
@@ -225,23 +253,25 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
                                 ${action.color} text-white p-4 rounded-lg transition-all duration-200
                                 disabled:opacity-50 disabled:cursor-not-allowed
                                 transform hover:scale-105 active:scale-95
-                                flex flex-col items-center gap-2 min-h-[100px]
+                                flex flex-col items-center gap-3 min-h-[120px]
                                 shadow-md hover:shadow-lg
                             `}
                         >
                             {processingAction === action.id ? (
                                 <div className="animate-spin">
-                                    <RotateCcw className="h-6 w-6" />
+                                    <RotateCcw className="h-8 w-8" />
                                 </div>
                             ) : (
-                                <action.icon className="h-6 w-6" />
+                                <action.icon className="h-8 w-8" />
                             )}
-                            <span className="text-sm font-medium text-center leading-tight">
-                                {action.label}
-                            </span>
-                            <span className="text-xs opacity-80 text-center leading-tight">
-                                {action.description}
-                            </span>
+                            <div className="text-center">
+                                <span className="text-sm font-medium block leading-tight">
+                                    {action.label}
+                                </span>
+                                <span className="text-xs opacity-80 block mt-1 leading-tight">
+                                    {action.description}
+                                </span>
+                            </div>
                         </button>
                     ))}
                 </div>
@@ -250,18 +280,22 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
                 <div className="bg-gray-50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
-                        المنتجات المحددة:
+                        المنتجات المحددة ({selectedProducts.length}):
                     </h4>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
                         {selectedProducts.map(product => (
-                            <div key={product.id} className="flex items-center justify-between text-sm bg-white p-2 rounded border">
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
-                                    <span className="truncate font-medium">{product.name}</span>
+                            <div key={product.id} className="flex items-center justify-between text-sm bg-white p-3 rounded-lg border shadow-sm">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                    <span className="truncate font-medium text-gray-800">{product.name}</span>
                                 </div>
-                                <div className="flex items-center gap-3 text-xs text-gray-500 flex-shrink-0">
-                                    <span>مخزون: {product.stock_level}</span>
-                                    <span>سعر: {parseFloat(product.price).toFixed(2)} د.إ</span>
+                                <div className="flex items-center gap-4 text-xs text-gray-500 flex-shrink-0">
+                                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                        مخزون: {product.stock_level}
+                                    </span>
+                                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                        {parseFloat(product.price).toFixed(2)} د.إ
+                                    </span>
                                     {product.is_on_sale && (
                                         <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
                                             تخفيض
@@ -274,7 +308,7 @@ const QuickActionsPanel = ({ selectedProducts, onActionComplete, onClose }) => {
                 </div>
 
                 {/* Action summary */}
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800 text-center">
                         <strong>تذكير:</strong> ستؤثر هذه الإجراءات على {selectedProducts.length} منتج. 
                         تأكد من اختيارك قبل المتابعة.

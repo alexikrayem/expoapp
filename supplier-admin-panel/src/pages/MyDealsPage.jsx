@@ -1,59 +1,18 @@
-// src/pages/MyDealsPage.jsx
+// src/pages/MyDealsPage.jsx - Enhanced with better error handling and UX
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-import { Tag, PlusCircle, Edit3, Trash2, AlertCircle, PackageOpen } from 'lucide-react';
-import DealFormModal from '../components/DealFormModal'; // Import the modal
-
-// apiClient setup (same as in ProductsPage)
-const getAuthToken = () => localStorage.getItem('supplierToken');
-const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_SUPPLIER_API_BASE_URL || 'http://localhost:3001',
-});
-apiClient.interceptors.request.use(config => {
-    const token = getAuthToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-}, error => Promise.reject(error));
+import { Tag, PlusCircle, Edit3, Trash2, AlertCircle, PackageOpen, Calendar, Percent, Eye, EyeOff } from 'lucide-react';
+import DealFormModal from '../components/DealFormModal';
+import { useSupplierDeals, useSupplierProducts } from '../hooks/useSupplierData';
+import { supplierService } from '../services/supplierService';
 
 const MyDealsPage = () => {
-    const [deals, setDeals] = useState([]);
-    const [supplierProducts, setSupplierProducts] = useState([]); // For the modal dropdown
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
+    const { deals, isLoading, error, refetchDeals } = useSupplierDeals();
+    const { products: supplierProducts } = useSupplierProducts();
     
     const [showDealModal, setShowDealModal] = useState(false);
     const [editingDeal, setEditingDeal] = useState(null);
     const [isSubmittingDeal, setIsSubmittingDeal] = useState(false);
-
-    const fetchSupplierDeals = useCallback(async () => {
-        setIsLoading(true);
-        setError('');
-        try {
-            const dealsResponse = await apiClient.get('/api/supplier/deals');
-            setDeals(dealsResponse.data || []);
-        } catch (err) {
-            setError(err.response?.data?.error || 'Failed to fetch deals.');
-            setDeals([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    const fetchSupplierOwnedProducts = useCallback(async () => {
-        // This fetches products for the "Product Associated" dropdown in the modal
-        try {
-            const productsResponse = await apiClient.get('/api/supplier/products'); // Your existing endpoint
-            setSupplierProducts(productsResponse.data || []);
-        } catch (err) {
-            console.error("Failed to fetch supplier products for deal form:", err);
-            setSupplierProducts([]); // Set to empty if fetch fails
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchSupplierDeals();
-        fetchSupplierOwnedProducts(); // Fetch products when page loads
-    }, [fetchSupplierDeals, fetchSupplierOwnedProducts]);
+    const [deletingDealId, setDeletingDealId] = useState(null);
 
     const handleAddDeal = () => {
         setEditingDeal(null);
@@ -69,107 +28,290 @@ const MyDealsPage = () => {
         setIsSubmittingDeal(true);
         try {
             if (dealIdToEdit) {
-                // TODO: Implement PUT /api/supplier/deals/:dealId backend endpoint
-                await apiClient.put(`/api/supplier/deals/${dealIdToEdit}`, dealData);
+                await supplierService.updateDeal(dealIdToEdit, dealData);
             } else {
-                await apiClient.post('/api/supplier/deals', dealData);
+                await supplierService.createDeal(dealData);
             }
             setShowDealModal(false);
-            fetchSupplierDeals();
+            refetchDeals();
+            
+            // Show success notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+            notification.innerHTML = `
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                تم ${dealIdToEdit ? 'تحديث' : 'إضافة'} العرض بنجاح
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+            
         } catch (err) {
-            throw new Error(err.response?.data?.error || 'Failed to save deal.');
+            throw new Error(err.message || 'Failed to save deal.');
         } finally {
             setIsSubmittingDeal(false);
         }
     };
 
     const handleDeleteDeal = async (dealId, dealTitle) => {
-    if (window.confirm(`Are you sure you want to delete the deal "${dealTitle}"? This action cannot be undone.`)) {
-        setIsLoading(true); // Or a specific deleting state
-        try {
-            await apiClient.delete(`/api/supplier/deals/${dealId}`);
-            // alert('Deal deleted successfully!');
-            fetchSupplierDeals(); // Refresh the list
-        } catch (err) {
-            alert(err.response?.data?.error || 'Failed to delete deal.');
-            console.error("Delete deal error:", err.response || err.message);
-        } finally {
-            setIsLoading(false);
+        if (window.confirm(`هل أنت متأكد من حذف العرض "${dealTitle}"؟ هذا الإجراء لا يمكن التراجع عنه.`)) {
+            setDeletingDealId(dealId);
+            try {
+                await supplierService.deleteDeal(dealId);
+                refetchDeals();
+                
+                // Show success notification
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+                notification.innerHTML = `
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    تم حذف العرض بنجاح
+                `;
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+                
+            } catch (err) {
+                alert(`فشل في حذف العرض: ${err.message}`);
+                console.error("Delete deal error:", err);
+            } finally {
+                setDeletingDealId(null);
+            }
         }
-    }
-};
+    };
 
-    if (isLoading && deals.length === 0) return <div className="text-center p-10">جاري تحميل العروض...</div>;
-    if (error) return <div className="bg-red-100 text-red-700 p-4 m-4 rounded text-center">{error}</div>;
+    const formatDate = (dateString) => {
+        if (!dateString) return null;
+        return new Date(dateString).toLocaleDateString('ar-EG', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    const isDateActive = (startDate, endDate) => {
+        const now = new Date();
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+        
+        if (start && now < start) return false;
+        if (end && now > end) return false;
+        return true;
+    };
+
+    if (isLoading && deals.length === 0) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">جاري تحميل العروض...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-red-800 mb-2">حدث خطأ</h3>
+                <p className="text-red-600 mb-4">{error}</p>
+                <button 
+                    onClick={refetchDeals}
+                    className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                >
+                    إعادة المحاولة
+                </button>
+            </div>
+        );
+    }
 
     return (
-        <div className="container mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
-                    <Tag size={28} className="mr-3 text-green-600" /> {/* ml-3 for RTL */}
-                    عروضي الخاصة
-                </h2>
-                <button onClick={handleAddDeal} className="btn-primary flex items-center">
-                    <PlusCircle size={20} className="mr-2" /> إضافة عرض جديد {/* ml-2 for RTL */}
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-3">
+                        <Tag size={28} className="text-orange-600" />
+                        عروضي الخاصة
+                    </h2>
+                    <p className="text-gray-600 mt-1">إدارة العروض والخصومات الخاصة بمنتجاتك</p>
+                </div>
+                <button 
+                    onClick={handleAddDeal} 
+                    className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center gap-2 transition-colors shadow-md hover:shadow-lg"
+                >
+                    <PlusCircle size={20} />
+                    إضافة عرض جديد
                 </button>
             </div>
 
             {deals.length === 0 && !isLoading ? (
-                 <div className="text-center py-16 bg-white rounded-lg shadow">
+                <div className="text-center py-16 bg-white rounded-lg shadow-sm">
                     <PackageOpen className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                    <p className="text-xl text-gray-600">لم تقم بإضافة أي عروض بعد.</p>
-                    <p className="text-sm text-gray-500 mt-1">ابدأ بإضافة عرض جديد لمنتجاتك أو لمتجرك بشكل عام.</p>
+                    <h3 className="text-xl font-semibold text-gray-600 mb-2">لم تقم بإضافة أي عروض بعد</h3>
+                    <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                        ابدأ بإضافة عرض جديد لمنتجاتك أو لمتجرك بشكل عام لجذب المزيد من العملاء
+                    </p>
+                    <button 
+                        onClick={handleAddDeal}
+                        className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 inline-flex items-center gap-2 transition-colors"
+                    >
+                        <PlusCircle className="h-5 w-5" />
+                        إضافة عرض جديد
+                    </button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {deals.map(deal => (
-                        <div key={deal.id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
-                            {deal.image_url && (
-                                <div className="h-40 w-full bg-cover bg-center" style={{ backgroundImage: `url(${deal.image_url})` }}></div>
-                            )}
-                            {!deal.image_url && (
-                                 <div className="h-40 w-full bg-gray-200 flex items-center justify-center text-gray-400">
-                                    <Tag size={48} />
+                    {deals.map(deal => {
+                        const isActive = deal.is_active && isDateActive(deal.start_date, deal.end_date);
+                        const isBeingDeleted = deletingDealId === deal.id;
+                        
+                        return (
+                            <div 
+                                key={deal.id} 
+                                className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-200 ${
+                                    isBeingDeleted ? 'opacity-50 scale-95' : 'hover:shadow-lg'
+                                } ${isActive ? 'ring-2 ring-orange-200' : ''}`}
+                            >
+                                {/* Deal Image */}
+                                <div className="relative h-48 bg-gradient-to-br from-orange-400 to-red-500">
+                                    {deal.image_url ? (
+                                        <img 
+                                            src={deal.image_url} 
+                                            alt={deal.title}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                e.target.nextSibling.style.display = 'flex';
+                                            }}
+                                        />
+                                    ) : null}
+                                    <div 
+                                        className="w-full h-full flex items-center justify-center text-white"
+                                        style={{ display: deal.image_url ? 'none' : 'flex' }}
+                                    >
+                                        <div className="text-center">
+                                            <Tag className="h-12 w-12 mx-auto mb-3 opacity-80" />
+                                            <div className="text-2xl font-bold">
+                                                {deal.discount_percentage ? `خصم ${deal.discount_percentage}%` : 'عرض خاص'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Status badges */}
+                                    <div className="absolute top-3 right-3 flex flex-col gap-2">
+                                        {isActive ? (
+                                            <span className="bg-green-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-sm flex items-center gap-1">
+                                                <Eye size={12} />
+                                                نشط
+                                            </span>
+                                        ) : (
+                                            <span className="bg-gray-500 text-white text-xs px-3 py-1 rounded-full font-medium shadow-sm flex items-center gap-1">
+                                                <EyeOff size={12} />
+                                                غير نشط
+                                            </span>
+                                        )}
+                                        
+                                        {deal.discount_percentage && (
+                                            <span className="bg-red-500 text-white text-xs px-3 py-1 rounded-full font-bold shadow-sm">
+                                                {deal.discount_percentage}% خصم
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                            )}
-                            <div className="p-4 flex-grow flex flex-col">
-                                <h3 className="text-lg font-semibold text-gray-800 mb-1">{deal.title}</h3>
-                                {deal.product_name && <p className="text-xs text-blue-600 mb-1">مرتبط بالمنتج: {deal.product_name}</p>}
-                                <p className="text-sm text-gray-600 mb-2 flex-grow line-clamp-3">{deal.description || "لا يوجد وصف."}</p>
-                                {deal.discount_percentage && <p className="text-md font-bold text-red-600 mb-2">خصم {deal.discount_percentage}%</p>}
-                                <div className="text-xs text-gray-500 space-y-0.5">
-                                    {deal.start_date && <p>يبدأ: {new Date(deal.start_date).toLocaleDateString('ar-EG')}</p>}
-                                    {deal.end_date && <p>ينتهي: {new Date(deal.end_date).toLocaleDateString('ar-EG')}</p>}
+
+                                {/* Deal Content */}
+                                <div className="p-4 flex-grow flex flex-col">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
+                                        {deal.title}
+                                    </h3>
+                                    
+                                    {deal.product_name && (
+                                        <div className="mb-2">
+                                            <span className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                                <Package size={12} />
+                                                {deal.product_name}
+                                            </span>
+                                        </div>
+                                    )}
+                                    
+                                    <p className="text-sm text-gray-600 mb-3 flex-grow line-clamp-3">
+                                        {deal.description || "لا يوجد وصف للعرض."}
+                                    </p>
+                                    
+                                    {/* Deal timing */}
+                                    <div className="text-xs text-gray-500 space-y-1 mb-4">
+                                        {deal.start_date && (
+                                            <div className="flex items-center gap-1">
+                                                <Calendar size={12} />
+                                                <span>يبدأ: {formatDate(deal.start_date)}</span>
+                                            </div>
+                                        )}
+                                        {deal.end_date && (
+                                            <div className="flex items-center gap-1">
+                                                <Calendar size={12} />
+                                                <span>ينتهي: {formatDate(deal.end_date)}</span>
+                                            </div>
+                                        )}
+                                        {!deal.start_date && !deal.end_date && (
+                                            <span className="text-green-600 font-medium">عرض مفتوح</span>
+                                        )}
+                                    </div>
                                 </div>
-                                <p className={`mt-2 text-xs font-semibold ${deal.is_active ? 'text-green-600' : 'text-red-600'}`}>
-                                    {deal.is_active ? 'فعال' : 'غير فعال'}
-                                </p>
+
+                                {/* Actions */}
+                                <div className="p-4 bg-gray-50 border-t flex justify-between items-center">
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => handleEditDeal(deal)} 
+                                            disabled={isBeingDeleted}
+                                            className="text-indigo-600 hover:text-indigo-800 p-2 rounded-full hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                                            title="تعديل العرض"
+                                        >
+                                            <Edit3 size={16}/>
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDeleteDeal(deal.id, deal.title)} 
+                                            disabled={isBeingDeleted}
+                                            className="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-100 transition-colors disabled:opacity-50"
+                                            title="حذف العرض"
+                                        >
+                                            {isBeingDeleted ? (
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                            ) : (
+                                                <Trash2 size={16}/>
+                                            )}
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="text-xs text-gray-500">
+                                        تم الإنشاء: {formatDate(deal.created_at)}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="p-3 bg-gray-50 border-t flex justify-end space-x-2 space-x-reverse">
-                                <button onClick={() => handleEditDeal(deal)} className="text-sm text-indigo-600 hover:text-indigo-800 p-1"><Edit3 size={16}/></button>
-                                <button onClick={() => handleDeleteDeal(deal.id, deal.title)} className="text-sm text-red-600 hover:text-red-800 p-1"><Trash2 size={16}/></button>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
+
+            {/* Deal Form Modal */}
             {showDealModal && (
                 <DealFormModal
                     isOpen={showDealModal}
-                    onClose={() => { setShowDealModal(false); setEditingDeal(null); }}
+                    onClose={() => { 
+                        setShowDealModal(false); 
+                        setEditingDeal(null); 
+                    }}
                     onSave={handleSaveDeal}
                     dealToEdit={editingDeal}
                     supplierProducts={supplierProducts}
                     isLoading={isSubmittingDeal}
                 />
             )}
-             {/* Basic button styling (can be expanded or put in index.css) */}
-             <style jsx>{`
-                .btn-primary { background-color: #4f46e5; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; }
-                .btn-primary:hover { background-color: #4338ca; }
-                .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-            `}</style>
         </div>
     );
 };
+
 export default MyDealsPage;

@@ -1,4 +1,4 @@
-// src/hooks/useSupplierData.js - Custom hook for supplier data management
+// src/hooks/useSupplierData.js - Enhanced with better error handling and caching
 import { useState, useEffect, useCallback } from 'react';
 import { supplierService } from '../services/supplierService';
 
@@ -50,8 +50,7 @@ export const useSupplierProducts = (filters = {}) => {
             const params = { ...filters, page, limit: 20 };
             const response = await supplierService.getProducts(params);
             
-            // Handle different response formats
-            const productsData = Array.isArray(response) ? response : (response.items || response.data || []);
+            const productsData = response.items || response.data || response || [];
             
             if (page === 1) {
                 setProducts(productsData);
@@ -104,15 +103,8 @@ export const useSupplierOrders = (filters = {}) => {
             setError(null);
             const response = await supplierService.getOrders(filters);
 
-            const safeOrders = Array.isArray(response?.items)
-                ? response.items
-                : Array.isArray(response?.data)
-                    ? response.data
-                    : Array.isArray(response)
-                        ? response
-                        : [];
-
-            setOrders(safeOrders);
+            const safeOrders = response?.items || response?.data || response || [];
+            setOrders(Array.isArray(safeOrders) ? safeOrders : []);
         } catch (err) {
             console.error('Failed to fetch orders:', err);
             setError(err.message || 'Failed to fetch orders');
@@ -171,5 +163,38 @@ export const useSupplierStats = () => {
         isLoading,
         error,
         refetchStats: fetchStats,
+    };
+};
+
+export const useSupplierDeals = () => {
+    const [deals, setDeals] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const fetchDeals = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            const response = await supplierService.getDeals();
+            const dealsData = response || [];
+            setDeals(Array.isArray(dealsData) ? dealsData : []);
+        } catch (err) {
+            console.error('Failed to fetch deals:', err);
+            setError(err.message || 'Failed to fetch deals');
+            setDeals([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchDeals();
+    }, [fetchDeals]);
+
+    return {
+        deals,
+        isLoading,
+        error,
+        refetchDeals: fetchDeals,
     };
 };

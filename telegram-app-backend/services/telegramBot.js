@@ -225,6 +225,35 @@ class TelegramBotService {
         }
     }
 
+    // Test delivery notification function
+    async testDeliveryNotification() {
+        const testOrderData = {
+            orderId: 999,
+            supplierId: 1,
+            total_amount: 150.00,
+            items: [
+                {
+                    product_name: 'Test Medicine',
+                    quantity: 2,
+                    price_at_time_of_order: 75.00
+                }
+            ],
+            customerInfo: {
+                name: 'Test Customer',
+                phone: '0501234567',
+                address1: 'Test Address Line 1',
+                address2: 'Test Address Line 2',
+                city: 'Dubai'
+            },
+            orderDate: new Date().toISOString()
+        };
+
+        console.log('🧪 Testing delivery notification system...');
+        const result = await this.sendOrderNotificationToDeliveryAgent(testOrderData);
+        console.log(`🧪 Test result: ${result ? 'SUCCESS' : 'FAILED'}`);
+        return result;
+    }
+
     formatOrderMessage(orderData, supplierName) {
         const items = orderData.items.map(item => 
             `• ${item.product_name} × ${item.quantity} (${item.price_at_time_of_order} د.إ)`

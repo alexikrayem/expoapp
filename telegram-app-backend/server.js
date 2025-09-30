@@ -89,6 +89,15 @@ app.use((error, req, res, next) => {
 // --- SERVER STARTUP ---
 const server = app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
+// Test Telegram delivery system on startup
+setTimeout(() => {
+    const telegramBotService = require('./services/telegramBot');
+    if (process.env.NODE_ENV === 'development') {
+        console.log('🧪 Testing Telegram delivery system...');
+        telegramBotService.testDeliveryNotification();
+    }
+}, 5000); // Wait 5 seconds for bot to initialize
+
 // Graceful shutdown logic
 process.on('SIGTERM', () => {
     console.log('🛑 SIGTERM received, shutting down gracefully...');
