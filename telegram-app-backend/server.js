@@ -89,8 +89,6 @@ app.use((error, req, res, next) => {
 // --- SERVER STARTUP ---
 const server = app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
-// Initialize Telegram Bot Service
-const telegramBotService = require('./services/telegramBot');
 
 // Initialize bot on startup
 setTimeout(async () => {
