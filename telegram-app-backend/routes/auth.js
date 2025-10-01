@@ -14,11 +14,14 @@ router.post('/supplier/login', async (req, res) => {
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
+        console.log(`🔐 Supplier login attempt for email: ${email}`);
+
         // Find supplier by email
         const supplierQuery = 'SELECT * FROM suppliers WHERE email = $1 AND is_active = true';
         const supplierResult = await db.query(supplierQuery, [email.toLowerCase()]);
 
         if (supplierResult.rows.length === 0) {
+            console.log(`❌ Supplier not found or inactive: ${email}`);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -27,8 +30,11 @@ router.post('/supplier/login', async (req, res) => {
         // Check password
         const isValidPassword = await bcrypt.compare(password, supplier.password_hash);
         if (!isValidPassword) {
+            console.log(`❌ Invalid password for supplier: ${email}`);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+
+        console.log(`✅ Supplier login successful: ${supplier.name} (${email})`);
 
         // Generate JWT token
         const token = jwt.sign(

@@ -89,18 +89,28 @@ app.use((error, req, res, next) => {
 // --- SERVER STARTUP ---
 const server = app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
-// Test Telegram delivery system on startup
-setTimeout(() => {
-    const telegramBotService = require('./services/telegramBot');
-    if (process.env.NODE_ENV === 'development') {
-        console.log('🧪 Testing Telegram delivery system...');
-        telegramBotService.testDeliveryNotification();
+// Initialize Telegram Bot Service
+const telegramBotService = require('./services/telegramBot');
+
+// Initialize bot on startup
+setTimeout(async () => {
+    try {
+        await telegramBotService.initializeBot();
+        
+        // Test delivery system only in development
+        if (process.env.NODE_ENV === 'development') {
+            console.log('🧪 Testing Telegram delivery system...');
+            await telegramBotService.testDeliveryNotification();
+        }
+    } catch (error) {
+        console.error('❌ Failed to initialize Telegram Bot on startup:', error.message);
     }
-}, 5000); // Wait 5 seconds for bot to initialize
+}, 3000); // Wait 3 seconds for server to be ready
 
 // Graceful shutdown logic
 process.on('SIGTERM', () => {
     console.log('🛑 SIGTERM received, shutting down gracefully...');
+    telegramBotService.shutdown();
     server.close(() => {
         console.log('✅ Process terminated');
         process.exit(0);
@@ -109,6 +119,7 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
     console.log('🛑 SIGINT received, shutting down gracefully...');
+    telegramBotService.shutdown();
     server.close(() => {
         console.log('✅ Process terminated');
         process.exit(0);

@@ -23,12 +23,19 @@ const LoginPage = () => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
+        
+        console.log('🔐 Attempting supplier login...');
+        
         try {
             const apiBaseUrl = import.meta.env.VITE_SUPPLIER_API_BASE_URL || 'http://localhost:3001'; // Ensure .env is set up
+            console.log('📡 API Base URL:', apiBaseUrl);
+            
             const response = await axios.post(`${apiBaseUrl}/api/auth/supplier/login`, {
                 email: email.toLowerCase().trim(), // Normalize email
                 password,
             });
+            
+            console.log('✅ Login successful, storing tokens...');
             
             localStorage.setItem('supplierToken', response.data.token);
             localStorage.setItem('supplierInfo', JSON.stringify(response.data.supplier));
@@ -46,12 +53,13 @@ const LoginPage = () => {
                 }
             }
             
+            console.log('🔄 Redirecting to:', redirectTo);
             navigate(redirectTo, { replace: true });
 
 
         } catch (err) {
+            console.error('❌ Login error:', err.response?.data || err.message);
             setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
-            console.error("Login error:", err.response || err.message);
         } finally {
             setIsLoading(false);
         }

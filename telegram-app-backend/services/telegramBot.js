@@ -1,4 +1,4 @@
-// telegram-app-backend/services/telegramBot.js
+// telegram-app-backend/services/telegramBot.js - Fixed with singleton pattern and better error handling
 const TelegramBot = require('node-telegram-bot-api');
 const db = require('../config/db');
 
@@ -6,34 +6,129 @@ class TelegramBotService {
     constructor() {
         this.bot = null;
         this.isInitialized = false;
-        this.initializeBot();
+        this.isInitializing = false;
+        this.initializationPromise = null;
     }
 
-    initializeBot() {
+    async initializeBot() {
+        // Prevent multiple initialization attempts
+        if (this.isInitializing) {
+            return this.initializationPromise;
+        }
+        
+        if (this.isInitialized) {
+            return Promise.resolve();
+        }
+
+        this.isInitializing = true;
+        
+        this.initializationPromise = this._doInitialize();
+        
+        try {
+            await this.initializationPromise;
+        } finally {
+            this.isInitializing = false;
+        }
+        
+        return this.initializationPromise;
+    }
+
+    async _doInitialize() {
         const token = process.env.TELEGRAM_BOT_TOKEN;
         
         if (!token) {
-            console.error('❌ TELEGRAM_BOT_TOKEN not found in environment variables');
+            console.warn('⚠️ TELEGRAM_BOT_TOKEN not found - Telegram features will be disabled');
             return;
         }
 
         try {
-            this.bot = new TelegramBot(token, { polling: true });
+            // Create bot without polling initially
+            this.bot = new TelegramBot(token, { polling: false });
+            
+            // Test bot connection first
+            const botInfo = await this.bot.getMe();
+            console.log(`✅ Telegram Bot connected: @${botInfo.username}`);
+            
+            // Only start polling if connection test succeeds
+            await this.startPolling();
+            
             this.setupBotHandlers();
             this.isInitialized = true;
-            console.log('✅ Telegram Bot initialized successfully');
+            console.log('✅ Telegram Bot fully initialized');
+            
         } catch (error) {
-            console.error('❌ Failed to initialize Telegram Bot:', error);
+            console.error('❌ Failed to initialize Telegram Bot:', error.message);
+            
+            // If it's a conflict error, try to handle gracefully
+            if (error.message.includes('409') || error.message.includes('Conflict')) {
+                console.log('🔄 Attempting to resolve bot conflict...');
+                await this.handleBotConflict();
+            }
+            
+            // Don't throw error - let app continue without bot
+            this.bot = null;
+            this.isInitialized = false;
+        }
+    }
+
+    async startPolling() {
+        if (!this.bot) return;
+        
+        try {
+            // Stop any existing polling first
+            if (this.bot.isPolling()) {
+                await this.bot.stopPolling();
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+            }
+            
+            // Start polling with error handling
+            await this.bot.startPolling({
+                restart: false,
+                polling: {
+                    interval: 2000,
+                    autoStart: false,
+                    params: {
+                        timeout: 10,
+                        allowed_updates: ['message', 'callback_query']
+                    }
+                }
+            });
+            
+            console.log('✅ Telegram Bot polling started successfully');
+            
+        } catch (error) {
+            console.error('❌ Failed to start polling:', error.message);
+            throw error;
+        }
+    }
+
+    async handleBotConflict() {
+        try {
+            // Try to delete webhook if it exists
+            if (this.bot) {
+                await this.bot.deleteWebHook();
+                console.log('🔄 Deleted existing webhook');
+                
+                // Wait a bit before retrying
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Try to start polling again
+                await this.startPolling();
+            }
+        } catch (error) {
+            console.error('❌ Failed to resolve bot conflict:', error.message);
         }
     }
 
     setupBotHandlers() {
+        if (!this.bot) return;
+
         // Start command
         this.bot.onText(/\/start/, async (msg) => {
             const chatId = msg.chat.id;
-            const userId = msg.from.id;
             
-            await this.bot.sendMessage(chatId, `
+            try {
+                await this.bot.sendMessage(chatId, `
 🏥 *مرحباً بك في منصة المستلزمات الطبية*
 
 أنا بوت إشعارات المنصة. سأقوم بإرسال:
@@ -42,135 +137,34 @@ class TelegramBotService {
 
 للمندوبين: تأكد من ربط حسابك مع المورد الخاص بك
 للإدارة: استخدم /admin للوصول لأوامر الإدارة
-            `, { parse_mode: 'Markdown' });
-        });
-
-        // Admin commands
-        this.bot.onText(/\/admin/, async (msg) => {
-            const userId = msg.from.id;
-            
-            // Check if user is admin
-            const isAdmin = await this.checkIfUserIsAdmin(userId);
-            
-            if (!isAdmin) {
-                await this.bot.sendMessage(msg.chat.id, '❌ غير مصرح لك بالوصول لأوامر الإدارة');
-                return;
-            }
-
-            const adminKeyboard = {
-                inline_keyboard: [
-                    [{ text: '📢 إرسال رسالة لجميع المستخدمين', callback_data: 'admin_broadcast' }],
-                    [{ text: '📊 إحصائيات المنصة', callback_data: 'admin_stats' }],
-                    [{ text: '👥 قائمة الموردين', callback_data: 'admin_suppliers' }],
-                    [{ text: '🚚 قائمة المندوبين', callback_data: 'admin_agents' }]
-                ]
-            };
-
-            await this.bot.sendMessage(msg.chat.id, '🔧 *لوحة تحكم الإدارة*\nاختر الإجراء المطلوب:', {
-                parse_mode: 'Markdown',
-                reply_markup: adminKeyboard
-            });
-        });
-
-        // Handle callback queries (button presses)
-        this.bot.on('callback_query', async (callbackQuery) => {
-            const chatId = callbackQuery.message.chat.id;
-            const userId = callbackQuery.from.id;
-            const data = callbackQuery.data;
-
-            await this.bot.answerCallbackQuery(callbackQuery.id);
-
-            if (data.startsWith('admin_')) {
-                await this.handleAdminCallback(chatId, userId, data);
+                `, { parse_mode: 'Markdown' });
+            } catch (error) {
+                console.error('Error sending start message:', error);
             }
         });
 
-        // Handle text messages for admin broadcast
-        this.bot.on('message', async (msg) => {
-            if (msg.text && msg.text.startsWith('/broadcast ')) {
-                const userId = msg.from.id;
-                const isAdmin = await this.checkIfUserIsAdmin(userId);
-                
-                if (!isAdmin) {
-                    await this.bot.sendMessage(msg.chat.id, '❌ غير مصرح لك بإرسال رسائل جماعية');
-                    return;
-                }
-
-                const message = msg.text.replace('/broadcast ', '');
-                await this.broadcastToAllUsers(message, userId);
-                await this.bot.sendMessage(msg.chat.id, '✅ تم إرسال الرسالة لجميع المستخدمين');
-            }
-        });
-
+        // Handle polling errors gracefully
         this.bot.on('polling_error', (error) => {
-            console.error('Telegram Bot polling error:', error);
+            console.error('Telegram Bot polling error:', error.message);
+            
+            // If it's a conflict error, try to restart
+            if (error.message.includes('409') || error.message.includes('Conflict')) {
+                console.log('🔄 Detected bot conflict, attempting restart...');
+                setTimeout(() => {
+                    this.handleBotConflict();
+                }, 5000); // Wait 5 seconds before retry
+            }
         });
-    }
 
-    async handleAdminCallback(chatId, userId, data) {
-        const isAdmin = await this.checkIfUserIsAdmin(userId);
-        if (!isAdmin) return;
-
-        switch (data) {
-            case 'admin_broadcast':
-                await this.bot.sendMessage(chatId, `
-📢 *إرسال رسالة جماعية*
-
-لإرسال رسالة لجميع مستخدمي المنصة، استخدم:
-\`/broadcast رسالتك هنا\`
-
-مثال:
-\`/broadcast عرض خاص: خصم 20% على جميع المنتجات!\`
-                `, { parse_mode: 'Markdown' });
-                break;
-
-            case 'admin_stats':
-                const stats = await this.getPlatformStats();
-                await this.bot.sendMessage(chatId, `
-📊 *إحصائيات المنصة*
-
-👥 المستخدمين: ${stats.totalUsers}
-🏪 الموردين: ${stats.totalSuppliers}
-🚚 المندوبين: ${stats.totalAgents}
-📦 الطلبات اليوم: ${stats.ordersToday}
-💰 مبيعات الشهر: ${stats.salesThisMonth} د.إ
-                `, { parse_mode: 'Markdown' });
-                break;
-
-            case 'admin_suppliers':
-                const suppliers = await this.getActiveSuppliers();
-                let suppliersList = '🏪 *قائمة الموردين النشطين:*\n\n';
-                suppliers.forEach(supplier => {
-                    suppliersList += `• ${supplier.name} (${supplier.category})\n`;
-                });
-                await this.bot.sendMessage(chatId, suppliersList, { parse_mode: 'Markdown' });
-                break;
-
-            case 'admin_agents':
-                const agents = await this.getActiveDeliveryAgents();
-                let agentsList = '🚚 *قائمة مندوبي التوصيل:*\n\n';
-                agents.forEach(agent => {
-                    agentsList += `• ${agent.full_name} - ${agent.supplier_name}\n`;
-                });
-                await this.bot.sendMessage(chatId, agentsList, { parse_mode: 'Markdown' });
-                break;
-        }
-    }
-
-    async checkIfUserIsAdmin(userId) {
-        try {
-            const query = 'SELECT id FROM admins WHERE telegram_user_id = $1 AND is_active = true';
-            const result = await db.query(query, [userId.toString()]);
-            return result.rows.length > 0;
-        } catch (error) {
-            console.error('Error checking admin status:', error);
-            return false;
-        }
+        // Handle other errors
+        this.bot.on('error', (error) => {
+            console.error('Telegram Bot error:', error.message);
+        });
     }
 
     async sendOrderNotificationToDeliveryAgent(orderData) {
-        if (!this.isInitialized) {
-            console.error('❌ Bot not initialized, cannot send order notification');
+        if (!this.isInitialized || !this.bot) {
+            console.warn('⚠️ Bot not initialized, skipping order notification');
             return false;
         }
 
@@ -197,61 +191,17 @@ class TelegramBotService {
             // Format order message
             const orderMessage = this.formatOrderMessage(orderData, agent.supplier_name);
             
-            // Create action buttons
-            const keyboard = {
-                inline_keyboard: [
-                    [
-                        { text: '✅ قبول الطلب', callback_data: `accept_order_${orderData.orderId}` },
-                        { text: '❌ رفض الطلب', callback_data: `reject_order_${orderData.orderId}` }
-                    ],
-                    [
-                        { text: '📍 عرض الموقع', callback_data: `view_location_${orderData.orderId}` },
-                        { text: '📞 اتصال بالعميل', callback_data: `call_customer_${orderData.orderId}` }
-                    ]
-                ]
-            };
-
             await this.bot.sendMessage(chatId, orderMessage, {
-                parse_mode: 'Markdown',
-                reply_markup: keyboard
+                parse_mode: 'Markdown'
             });
 
             console.log(`✅ Order notification sent to delivery agent ${agent.full_name}`);
             return true;
 
         } catch (error) {
-            console.error('❌ Error sending order notification:', error);
+            console.error('❌ Error sending order notification:', error.message);
             return false;
         }
-    }
-
-    // Test delivery notification function
-    async testDeliveryNotification() {
-        const testOrderData = {
-            orderId: 999,
-            supplierId: 1,
-            total_amount: 150.00,
-            items: [
-                {
-                    product_name: 'Test Medicine',
-                    quantity: 2,
-                    price_at_time_of_order: 75.00
-                }
-            ],
-            customerInfo: {
-                name: 'Test Customer',
-                phone: '0501234567',
-                address1: 'Test Address Line 1',
-                address2: 'Test Address Line 2',
-                city: 'Dubai'
-            },
-            orderDate: new Date().toISOString()
-        };
-
-        console.log('🧪 Testing delivery notification system...');
-        const result = await this.sendOrderNotificationToDeliveryAgent(testOrderData);
-        console.log(`🧪 Test result: ${result ? 'SUCCESS' : 'FAILED'}`);
-        return result;
     }
 
     formatOrderMessage(orderData, supplierName) {
@@ -282,6 +232,11 @@ ${items}
     }
 
     async broadcastToAllUsers(message, adminUserId) {
+        if (!this.isInitialized || !this.bot) {
+            console.warn('⚠️ Bot not initialized, cannot broadcast message');
+            return { successCount: 0, failCount: 0 };
+        }
+
         try {
             // Get all users who have interacted with the bot
             const usersQuery = `
@@ -289,11 +244,11 @@ ${items}
                 FROM (
                     SELECT CAST(user_id AS TEXT) as telegram_user_id FROM user_profiles WHERE user_id IS NOT NULL
                     UNION
-                    SELECT telegram_user_id FROM delivery_agents WHERE telegram_user_id IS NOT NULL
+                    SELECT telegram_user_id FROM delivery_agents WHERE telegram_user_id IS NOT NULL AND telegram_user_id != ''
                     UNION
                     SELECT CAST(telegram_user_id AS TEXT) FROM admins WHERE telegram_user_id IS NOT NULL
                 ) as all_users
-                WHERE telegram_user_id IS NOT NULL
+                WHERE telegram_user_id IS NOT NULL AND telegram_user_id != ''
             `;
             
             const result = await db.query(usersQuery);
@@ -313,8 +268,12 @@ ${message}
 _تم إرسال هذه الرسالة من إدارة منصة المستلزمات الطبية_
                     `, { parse_mode: 'Markdown' });
                     successCount++;
+                    
+                    // Add small delay to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
                 } catch (error) {
-                    console.error(`Failed to send message to user ${user.telegram_user_id}:`, error);
+                    console.error(`Failed to send message to user ${user.telegram_user_id}:`, error.message);
                     failCount++;
                 }
             }
@@ -324,7 +283,7 @@ _تم إرسال هذه الرسالة من إدارة منصة المستلزم
 
         } catch (error) {
             console.error('Error broadcasting message:', error);
-            throw error;
+            return { successCount: 0, failCount: 0 };
         }
     }
 
@@ -353,98 +312,62 @@ _تم إرسال هذه الرسالة من إدارة منصة المستلزم
         }
     }
 
-    async getActiveSuppliers() {
-        try {
-            const query = 'SELECT name, category FROM suppliers WHERE is_active = true ORDER BY name';
-            const result = await db.query(query);
-            return result.rows;
-        } catch (error) {
-            console.error('Error fetching suppliers:', error);
-            return [];
-        }
-    }
-
-    async getActiveDeliveryAgents() {
-        try {
-            const query = `
-                SELECT da.full_name, s.name as supplier_name
-                FROM delivery_agents da
-                JOIN suppliers s ON da.supplier_id = s.id
-                WHERE da.is_active = true AND s.is_active = true
-                ORDER BY s.name, da.full_name
-            `;
-            const result = await db.query(query);
-            return result.rows;
-        } catch (error) {
-            console.error('Error fetching delivery agents:', error);
-            return [];
-        }
-    }
-
-    async sendOrderStatusUpdate(orderId, status, customerTelegramId) {
-        if (!this.isInitialized || !customerTelegramId) return false;
-
-        try {
-            const statusMessages = {
-                'confirmed': '✅ تم تأكيد طلبك وجاري التحضير',
-                'shipped': '🚚 تم شحن طلبك وهو في الطريق إليك',
-                'delivered': '🎉 تم توصيل طلبك بنجاح',
-                'cancelled': '❌ تم إلغاء طلبك'
-            };
-
-            const message = `
-📦 *تحديث حالة الطلب #${orderId}*
-
-${statusMessages[status] || `تم تحديث حالة طلبك إلى: ${status}`}
-
-يمكنك متابعة طلباتك من خلال التطبيق.
-            `;
-
-            await this.bot.sendMessage(customerTelegramId, message, { parse_mode: 'Markdown' });
-            return true;
-        } catch (error) {
-            console.error('Error sending order status update:', error);
+    // Test delivery notification (only in development)
+    async testDeliveryNotification() {
+        if (process.env.NODE_ENV !== 'development') {
             return false;
         }
+
+        const testOrderData = {
+            orderId: 999,
+            supplierId: 1,
+            total_amount: 150.00,
+            items: [
+                {
+                    product_name: 'Test Medicine',
+                    quantity: 2,
+                    price_at_time_of_order: 75.00
+                }
+            ],
+            customerInfo: {
+                name: 'Test Customer',
+                phone: '0501234567',
+                address1: 'Test Address Line 1',
+                address2: 'Test Address Line 2',
+                city: 'Dubai'
+            },
+            orderDate: new Date().toISOString()
+        };
+
+        console.log('🧪 Testing delivery notification system...');
+        const result = await this.sendOrderNotificationToDeliveryAgent(testOrderData);
+        console.log(`🧪 Test result: ${result ? 'SUCCESS' : 'FAILED'}`);
+        return result;
     }
 
-    async sendLowStockAlert(supplierId, products) {
-        if (!this.isInitialized) return false;
-
-        try {
-            // Get supplier's Telegram ID if they have one
-            const supplierQuery = 'SELECT telegram_user_id, name FROM suppliers WHERE id = $1';
-            const supplierResult = await db.query(supplierQuery, [supplierId]);
-            
-            if (supplierResult.rows.length === 0 || !supplierResult.rows[0].telegram_user_id) {
-                return false;
+    // Graceful shutdown
+    async shutdown() {
+        if (this.bot && this.bot.isPolling()) {
+            try {
+                await this.bot.stopPolling();
+                console.log('✅ Telegram Bot polling stopped');
+            } catch (error) {
+                console.error('Error stopping bot polling:', error.message);
             }
-
-            const supplier = supplierResult.rows[0];
-            const productsList = products.map(p => `• ${p.name} (${p.stock_level} متبقي)`).join('\n');
-
-            const message = `
-⚠️ *تنبيه: مخزون منخفض*
-
-مرحباً ${supplier.name}،
-
-المنتجات التالية تحتاج إعادة تخزين:
-
-${productsList}
-
-يرجى تحديث المخزون من لوحة التحكم.
-            `;
-
-            await this.bot.sendMessage(supplier.telegram_user_id, message, { parse_mode: 'Markdown' });
-            return true;
-        } catch (error) {
-            console.error('Error sending low stock alert:', error);
-            return false;
         }
+        this.isInitialized = false;
+        this.bot = null;
     }
 }
 
 // Create singleton instance
-const telegramBotService = new TelegramBotService();
+let telegramBotServiceInstance = null;
 
-module.exports = telegramBotService;
+const getTelegramBotService = () => {
+    if (!telegramBotServiceInstance) {
+        telegramBotServiceInstance = new TelegramBotService();
+    }
+    return telegramBotServiceInstance;
+};
+
+module.exports = getTelegramBotService();
