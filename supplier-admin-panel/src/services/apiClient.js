@@ -1,7 +1,7 @@
 // src/services/apiClient.js - Enhanced API client with better error handling
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_SUPPLIER_API_BASE_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_SUPPLIER_API_BASE_URL || 'http://localhost:3001/api';
 
 // Create axios instance
 const apiClient = axios.create({
