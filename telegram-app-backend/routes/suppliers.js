@@ -42,6 +42,30 @@ router.get('/profile', authSupplier, async (req, res) => {
     }
 });
 
+// Get all cities (for supplier use)
+router.get('/cities', async (req, res) => {
+    try {
+        const query = 'SELECT * FROM cities WHERE is_active = true ORDER BY name ASC';
+        const result = await db.query(query);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching cities for supplier:', error);
+        res.status(500).json({ error: 'Failed to fetch cities' });
+    }
+});
+
+// Get all cities (alternative endpoint for supplier use)
+router.get('/cities-list', async (req, res) => {
+    try {
+        const query = 'SELECT * FROM cities WHERE is_active = true ORDER BY name ASC';
+        const result = await db.query(query);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching cities list for supplier:', error);
+        res.status(500).json({ error: 'Failed to fetch cities' });
+    }
+});
+
 // Update supplier's own profile
 router.put('/profile', authSupplier, async (req, res) => {
     try {

@@ -218,7 +218,7 @@ export const supplierService = {
     // Get cities (for city selection)
     getCities: async () => {
         try {
-            const response = await apiClient.get('/api/cities');
+            const response = await apiClient.get('/api/supplier/cities-list');
             return response.data;
         } catch (error) {
             console.error('Service: Failed to fetch cities:', error);

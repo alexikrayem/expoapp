@@ -1,4 +1,4 @@
-// telegram-app-backend/services/telegramBot.js - Fixed with singleton pattern and better error handling
+// telegram-app-backend/services/telegramBot.js - Production-ready webhook implementation
 const TelegramBot = require('node-telegram-bot-api');
 const db = require('../config/db');
 
@@ -8,6 +8,9 @@ class TelegramBotService {
         this.isInitialized = false;
         this.isInitializing = false;
         this.initializationPromise = null;
+        this.useWebhook = process.env.NODE_ENV === 'production';
+        this.webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
+        this.webhookPath = '/api/telegram/webhook';
     }
 
     async initializeBot() {
@@ -42,19 +45,26 @@ class TelegramBotService {
         }
 
         try {
-            // Create bot without polling initially
-            this.bot = new TelegramBot(token, { polling: false });
+            // Create bot instance
+            this.bot = new TelegramBot(token, { 
+                polling: false, // Never use polling initially
+                webHook: false 
+            });
             
             // Test bot connection first
             const botInfo = await this.bot.getMe();
             console.log(`✅ Telegram Bot connected: @${botInfo.username}`);
             
-            // Only start polling if connection test succeeds
-            await this.startPolling();
+            // Choose initialization method based on environment
+            if (this.useWebhook && this.webhookUrl) {
+                await this.initializeWebhook();
+            } else {
+                await this.initializePolling();
+            }
             
             this.setupBotHandlers();
             this.isInitialized = true;
-            console.log('✅ Telegram Bot fully initialized');
+            console.log(`✅ Telegram Bot fully initialized (${this.useWebhook ? 'webhook' : 'polling'} mode)`);
             
         } catch (error) {
             console.error('❌ Failed to initialize Telegram Bot:', error.message);
@@ -71,17 +81,54 @@ class TelegramBotService {
         }
     }
 
-    async startPolling() {
+    async initializeWebhook() {
+        if (!this.bot || !this.webhookUrl) {
+            throw new Error('Bot or webhook URL not available');
+        }
+
+        try {
+            // Delete any existing webhook first
+            await this.bot.deleteWebHook();
+            console.log('🔄 Cleared existing webhook');
+            
+            // Wait a moment
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Set new webhook
+            const webhookFullUrl = `${this.webhookUrl}${this.webhookPath}`;
+            await this.bot.setWebHook(webhookFullUrl, {
+                allowed_updates: ['message', 'callback_query'],
+                drop_pending_updates: true
+            });
+            
+            console.log(`✅ Webhook set successfully: ${webhookFullUrl}`);
+            
+            // Verify webhook
+            const webhookInfo = await this.bot.getWebHookInfo();
+            console.log('📡 Webhook info:', {
+                url: webhookInfo.url,
+                pending_update_count: webhookInfo.pending_update_count,
+                last_error_date: webhookInfo.last_error_date
+            });
+            
+        } catch (error) {
+            console.error('❌ Failed to set webhook:', error.message);
+            throw error;
+        }
+    }
+
+    async initializePolling() {
         if (!this.bot) return;
         
         try {
-            // Stop any existing polling first
-            if (this.bot.isPolling()) {
-                await this.bot.stopPolling();
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-            }
+            // Ensure no webhook is set
+            await this.bot.deleteWebHook();
+            console.log('🔄 Cleared webhook for polling mode');
             
-            // Start polling with error handling
+            // Wait a moment
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Start polling with better configuration
             await this.bot.startPolling({
                 restart: false,
                 polling: {
@@ -98,25 +145,59 @@ class TelegramBotService {
             
         } catch (error) {
             console.error('❌ Failed to start polling:', error.message);
-            throw error;
+            
+            // If conflict, try to resolve
+            if (error.message.includes('409') || error.message.includes('Conflict')) {
+                await this.handleBotConflict();
+            } else {
+                throw error;
+            }
         }
     }
 
     async handleBotConflict() {
         try {
-            // Try to delete webhook if it exists
+            console.log('🔄 Resolving bot conflict...');
+            
             if (this.bot) {
+                // Stop any existing polling
+                if (this.bot.isPolling()) {
+                    await this.bot.stopPolling();
+                    console.log('🛑 Stopped existing polling');
+                }
+                
+                // Delete webhook to clear any conflicts
                 await this.bot.deleteWebHook();
-                console.log('🔄 Deleted existing webhook');
+                console.log('🗑️ Deleted webhook');
                 
-                // Wait a bit before retrying
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // Wait longer to ensure cleanup
+                await new Promise(resolve => setTimeout(resolve, 5000));
                 
-                // Try to start polling again
-                await this.startPolling();
+                // Try to reinitialize based on environment
+                if (this.useWebhook && this.webhookUrl) {
+                    await this.initializeWebhook();
+                } else {
+                    await this.initializePolling();
+                }
             }
         } catch (error) {
             console.error('❌ Failed to resolve bot conflict:', error.message);
+            // Don't throw - let app continue without bot
+        }
+    }
+
+    // Webhook handler for production
+    handleWebhookUpdate(req, res) {
+        if (!this.bot) {
+            return res.status(503).json({ error: 'Bot not initialized' });
+        }
+
+        try {
+            this.bot.processUpdate(req.body);
+            res.status(200).json({ ok: true });
+        } catch (error) {
+            console.error('Webhook processing error:', error);
+            res.status(500).json({ error: 'Webhook processing failed' });
         }
     }
 
@@ -143,18 +224,38 @@ class TelegramBotService {
             }
         });
 
-        // Handle polling errors gracefully
-        this.bot.on('polling_error', (error) => {
-            console.error('Telegram Bot polling error:', error.message);
+        // Admin command
+        this.bot.onText(/\/admin/, async (msg) => {
+            const chatId = msg.chat.id;
             
-            // If it's a conflict error, try to restart
-            if (error.message.includes('409') || error.message.includes('Conflict')) {
-                console.log('🔄 Detected bot conflict, attempting restart...');
-                setTimeout(() => {
-                    this.handleBotConflict();
-                }, 5000); // Wait 5 seconds before retry
+            try {
+                // Check if user is admin (you can implement this check)
+                await this.bot.sendMessage(chatId, `
+🔧 *أوامر الإدارة*
+
+/broadcast <message> - إرسال رسالة جماعية
+/stats - إحصائيات المنصة
+/help - المساعدة
+                `, { parse_mode: 'Markdown' });
+            } catch (error) {
+                console.error('Error sending admin message:', error);
             }
         });
+
+        // Handle polling errors gracefully (only in polling mode)
+        if (!this.useWebhook) {
+            this.bot.on('polling_error', (error) => {
+                console.error('Telegram Bot polling error:', error.message);
+                
+                // If it's a conflict error, try to restart
+                if (error.message.includes('409') || error.message.includes('Conflict')) {
+                    console.log('🔄 Detected bot conflict, attempting restart...');
+                    setTimeout(() => {
+                        this.handleBotConflict();
+                    }, 10000); // Wait 10 seconds before retry
+                }
+            });
+        }
 
         // Handle other errors
         this.bot.on('error', (error) => {
@@ -191,8 +292,22 @@ class TelegramBotService {
             // Format order message
             const orderMessage = this.formatOrderMessage(orderData, agent.supplier_name);
             
+            // Create inline keyboard for order actions
+            const keyboard = {
+                inline_keyboard: [
+                    [
+                        { text: '✅ قبول الطلب', callback_data: `accept_order_${orderData.orderId}` },
+                        { text: '❌ رفض الطلب', callback_data: `reject_order_${orderData.orderId}` }
+                    ],
+                    [
+                        { text: '📍 عرض الموقع', callback_data: `view_location_${orderData.orderId}` }
+                    ]
+                ]
+            };
+            
             await this.bot.sendMessage(chatId, orderMessage, {
-                parse_mode: 'Markdown'
+                parse_mode: 'Markdown',
+                reply_markup: keyboard
             });
 
             console.log(`✅ Order notification sent to delivery agent ${agent.full_name}`);
@@ -296,7 +411,7 @@ _تم إرسال هذه الرسالة من إدارة منصة المستلزم
                     (SELECT COUNT(*) FROM delivery_agents WHERE is_active = true) as total_agents,
                     (SELECT COUNT(*) FROM orders WHERE DATE(order_date) = CURRENT_DATE) as orders_today,
                     (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(order_date) >= DATE_TRUNC('month', CURRENT_DATE)) as sales_this_month
-            `;
+                `;
             
             const result = await db.query(statsQuery);
             return result.rows[0];
@@ -345,18 +460,31 @@ _تم إرسال هذه الرسالة من إدارة منصة المستلزم
         return result;
     }
 
+    // Get webhook path for Express route setup
+    getWebhookPath() {
+        return this.webhookPath;
+    }
+
     // Graceful shutdown
     async shutdown() {
-        if (this.bot && this.bot.isPolling()) {
-            try {
-                await this.bot.stopPolling();
-                console.log('✅ Telegram Bot polling stopped');
-            } catch (error) {
-                console.error('Error stopping bot polling:', error.message);
+        try {
+            if (this.bot) {
+                if (this.bot.isPolling()) {
+                    await this.bot.stopPolling();
+                    console.log('✅ Telegram Bot polling stopped');
+                }
+                
+                if (this.useWebhook) {
+                    await this.bot.deleteWebHook();
+                    console.log('✅ Telegram webhook deleted');
+                }
             }
+        } catch (error) {
+            console.error('Error during bot shutdown:', error.message);
+        } finally {
+            this.isInitialized = false;
+            this.bot = null;
         }
-        this.isInitialized = false;
-        this.bot = null;
     }
 }
 

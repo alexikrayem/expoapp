@@ -24,6 +24,9 @@ const adminRoutes = require('./routes/admin');
 // Import Telegram Bot Service
 const telegramBotService = require('./services/telegramBot');
 
+// Import rate limiting middleware
+const createRateLimiter = require('./src/middleware/rateLimiter');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -36,6 +39,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Add rate limiting
+app.use('/api', createRateLimiter({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 1000, // Generous limit for development
+    message: 'Too many requests, please try again later'
+}));
 
 // --- ROUTE DEFINITIONS ---
 
@@ -50,7 +60,18 @@ app.use('/api/deals', dealRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/featured-items', featuredItemsRoutes);
 
-// Add supplier-specific authenticated routes
+// Add authentication routes (no auth required)
+app.use('/api/auth', authRoutes);
+
+// Add webhook route for Telegram (production)
+if (process.env.NODE_ENV === 'production' && process.env.TELEGRAM_WEBHOOK_URL) {
+    app.post('/api/telegram/webhook', (req, res) => {
+        telegramBotService.handleWebhookUpdate(req, res);
+    });
+    console.log('✅ Telegram webhook route configured');
+}
+
+// Add supplier-specific routes (these need auth)
 app.use('/api/supplier', supplierRoutes);
 
 // 2. TELEGRAM AUTHENTICATION MIDDLEWARE
