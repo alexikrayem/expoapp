@@ -1,6 +1,6 @@
 // src/pages/ManageDeliveryAgentsPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, PlusCircle, Edit3, Trash2, ToggleLeft, ToggleRight, AlertCircle } from 'lucide-react';
+import { Users, CirclePlus as PlusCircle, CreditCard as Edit3, Trash2, ToggleLeft, ToggleRight, CircleAlert as AlertCircle } from 'lucide-react';
 import DeliveryAgentFormModal from '../components/DeliveryAgentFormModal';
 import { supplierService } from '../services/supplierService';
 

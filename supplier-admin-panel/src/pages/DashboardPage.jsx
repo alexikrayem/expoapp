@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import {
-    Package,
-    ShoppingCart,
-    DollarSign,
-    AlertTriangle,
-    CheckCircle,
-    Tag,
-    RefreshCw,
-    Zap,
-    TrendingUp
-} from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Tag, RefreshCw, Zap, TrendingUp } from 'lucide-react';
 import { useSupplierData, useSupplierProducts, useSupplierOrders, useSupplierStats } from '../hooks/useSupplierData';
 import { supplierService } from '../services/supplierService';
 import TelegramIntegration from '../components/TelegramIntegration';
