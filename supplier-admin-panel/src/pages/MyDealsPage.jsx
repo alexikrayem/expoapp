@@ -1,6 +1,6 @@
 // src/pages/MyDealsPage.jsx - Enhanced with better error handling and UX
 import React, { useState, useEffect, useCallback } from 'react';
-import { Tag, CirclePlus as PlusCircle, CreditCard as Edit3, Trash2, CircleAlert as AlertCircle, PackageOpen, Calendar, Percent, Eye, EyeOff } from 'lucide-react';
+import { Tag, CirclePlus as PlusCircle, CreditCard as Edit3, Trash2, CircleAlert as AlertCircle, PackageOpen, Package, Calendar, Percent, Eye, EyeOff } from 'lucide-react';
 import DealFormModal from '../components/DealFormModal';
 import { useSupplierDeals, useSupplierProducts } from '../hooks/useSupplierData';
 import { supplierService } from '../services/supplierService';
