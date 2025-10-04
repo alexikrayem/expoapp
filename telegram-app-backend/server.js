@@ -22,7 +22,7 @@ const deliveryRoutes = require('./routes/delivery');
 const adminRoutes = require('./routes/admin'); 
 
 // Import Telegram Bot Service
-const telegramBotService = require('./services/telegramBot');
+const { initializeTelegramBot } = require('./services/telegramBotService');
 
 // Import rate limiting middleware
 const createRateLimiter = require('./src/middleware/rateLimiter');
@@ -111,25 +111,18 @@ app.use((error, req, res, next) => {
 const server = app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
 
-// Initialize bot on startup
-setTimeout(async () => {
-    try {
-        await telegramBotService.initializeBot();
-        
-        // Test delivery system only in development
-        if (process.env.NODE_ENV === 'development') {
-            console.log('🧪 Testing Telegram delivery system...');
-            await telegramBotService.testDeliveryNotification();
-        }
-    } catch (error) {
-        console.error('❌ Failed to initialize Telegram Bot on startup:', error.message);
-    }
-}, 3000); // Wait 3 seconds for server to be ready
+// Initialize Telegram bot (optional)
+const telegramBot = initializeTelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+if (telegramBot.isReady()) {
+    console.log('✅ Telegram bot is ready for notifications');
+} else {
+    console.log('⚠️ Telegram bot is disabled (no token provided)');
+}
 
 // Graceful shutdown logic
 process.on('SIGTERM', () => {
     console.log('🛑 SIGTERM received, shutting down gracefully...');
-    telegramBotService.shutdown();
+    if (telegramBot) telegramBot.stop();
     server.close(() => {
         console.log('✅ Process terminated');
         process.exit(0);
@@ -138,7 +131,7 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
     console.log('🛑 SIGINT received, shutting down gracefully...');
-    telegramBotService.shutdown();
+    if (telegramBot) telegramBot.stop();
     server.close(() => {
         console.log('✅ Process terminated');
         process.exit(0);
