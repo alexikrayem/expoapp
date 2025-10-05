@@ -18,6 +18,8 @@ export const useProducts = (cityId, externalFilters = {}) => {
         minPrice: externalFilters.minPrice || '',
         maxPrice: externalFilters.maxPrice || '',
         onSale: externalFilters.onSale || false,
+        supplier: externalFilters.supplier || '',
+        searchQuery: externalFilters.searchQuery || '',
     }), [externalFilters]); // Re-evaluates only when the externalFilters object reference changes
 
     const { cachedApiCall, invalidateCache } = useCache();

@@ -42,6 +42,7 @@ export const useSupplierProducts = (filters = {}) => {
         totalPages: 1,
         totalItems: 0,
     });
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     const fetchProducts = useCallback(async (page = 1) => {
         try {
@@ -49,15 +50,15 @@ export const useSupplierProducts = (filters = {}) => {
             setError(null);
             const params = { ...filters, page, limit: 20 };
             const response = await supplierService.getProducts(params);
-            
+
             const productsData = response.items || response.data || response || [];
-            
+
             if (page === 1) {
                 setProducts(productsData);
             } else {
                 setProducts(prev => [...prev, ...productsData]);
             }
-            
+
             setPagination({
                 currentPage: response.currentPage || page,
                 totalPages: response.totalPages || 1,
@@ -70,11 +71,11 @@ export const useSupplierProducts = (filters = {}) => {
         } finally {
             setIsLoading(false);
         }
-    }, [filters]);
+    }, []);
 
     useEffect(() => {
         fetchProducts(1);
-    }, [fetchProducts]);
+    }, [refreshTrigger]);
 
     const loadMore = () => {
         if (pagination.currentPage < pagination.totalPages && !isLoading) {
@@ -88,7 +89,7 @@ export const useSupplierProducts = (filters = {}) => {
         error,
         pagination,
         loadMore,
-        refetchProducts: () => fetchProducts(1),
+        refetchProducts: () => setRefreshTrigger(prev => prev + 1),
     };
 };
 
@@ -96,6 +97,7 @@ export const useSupplierOrders = (filters = {}) => {
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     const fetchOrders = useCallback(async () => {
         try {
@@ -112,17 +114,17 @@ export const useSupplierOrders = (filters = {}) => {
         } finally {
             setIsLoading(false);
         }
-    }, [filters]);
+    }, []);
 
     useEffect(() => {
         fetchOrders();
-    }, [fetchOrders]);
+    }, [refreshTrigger]);
 
     return {
         orders,
         isLoading,
         error,
-        refetchOrders: fetchOrders,
+        refetchOrders: () => setRefreshTrigger(prev => prev + 1),
     };
 };
 

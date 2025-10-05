@@ -1,21 +1,24 @@
 // src/components/modals/DealDetailModal.jsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Tag, Clock, Package, MapPin, Percent, Loader as Loader2, Gift } from 'lucide-react';
+import { X, Tag, Clock, Package, MapPin, Percent, Loader as Loader2, Gift, ShoppingCart } from 'lucide-react';
 import { cityService } from '../../services/cityService';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useCart } from '../../context/CartContext';
 
-const DealDetailModal = ({ 
-    show, 
-    onClose, 
+const DealDetailModal = ({
+    show,
+    onClose,
     dealId,
     onProductClick,
-    onSupplierClick 
+    onSupplierClick
 }) => {
     const [deal, setDeal] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [addingToCart, setAddingToCart] = useState(false);
     const { formatPrice } = useCurrency();
+    const { addItem } = useCart();
 
     useEffect(() => {
         const fetchDealDetails = async () => {
@@ -49,6 +52,43 @@ const DealDetailModal = ({
         if (deal?.supplier_id && onSupplierClick) {
             onSupplierClick(deal.supplier_id);
             onClose();
+        }
+    };
+
+    const handleAddToCart = async () => {
+        if (!deal?.product_id) return;
+
+        setAddingToCart(true);
+        try {
+            // Calculate discounted price if applicable
+            const finalPrice = deal.discount_percentage
+                ? deal.product_price * (1 - deal.discount_percentage / 100)
+                : deal.product_price;
+
+            await addItem({
+                productId: deal.product_id,
+                quantity: 1,
+                price: finalPrice,
+                productName: deal.product_name,
+                supplierId: deal.supplier_id,
+                supplierName: deal.supplier_name
+            });
+
+            // Show success message
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.showAlert('تمت إضافة المنتج إلى السلة بنجاح!');
+            } else {
+                alert('تمت إضافة المنتج إلى السلة بنجاح!');
+            }
+        } catch (error) {
+            console.error('Failed to add to cart:', error);
+            if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.showAlert('فشل في إضافة المنتج إلى السلة');
+            } else {
+                alert('فشل في إضافة المنتج إلى السلة');
+            }
+        } finally {
+            setAddingToCart(false);
         }
     };
 
@@ -270,26 +310,47 @@ const DealDetailModal = ({
                                 <Gift className="h-12 w-12 mx-auto mb-4 opacity-90" />
                                 <h3 className="text-xl font-bold mb-2">لا تفوت هذا العرض!</h3>
                                 <p className="opacity-90 mb-4">
-                                    {deal.end_date 
+                                    {deal.end_date
                                         ? `العرض ساري حتى ${new Date(deal.end_date).toLocaleDateString('ar-EG')}`
                                         : 'عرض محدود لفترة قصيرة'
                                     }
                                 </p>
-                                <div className="flex gap-3">
+                                <div className="flex flex-col gap-3">
                                     {deal.product_id && (
                                         <button
-                                            onClick={handleProductClick}
-                                            className="flex-1 bg-white text-blue-600 py-3 px-4 rounded-lg font-bold hover:bg-gray-100 transition-colors"
+                                            onClick={handleAddToCart}
+                                            disabled={addingToCart}
+                                            className="w-full bg-green-500 text-white py-3 px-4 rounded-lg font-bold hover:bg-green-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            عرض المنتج
+                                            {addingToCart ? (
+                                                <>
+                                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                                    جاري الإضافة...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ShoppingCart className="h-5 w-5" />
+                                                    استفد من العرض الآن
+                                                </>
+                                            )}
                                         </button>
                                     )}
-                                    <button
-                                        onClick={handleSupplierClick}
-                                        className="flex-1 bg-white/20 text-white py-3 px-4 rounded-lg font-bold hover:bg-white/30 transition-colors border border-white/30"
-                                    >
-                                        زيارة المتجر
-                                    </button>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {deal.product_id && (
+                                            <button
+                                                onClick={handleProductClick}
+                                                className="bg-white text-blue-600 py-3 px-4 rounded-lg font-bold hover:bg-gray-100 transition-colors"
+                                            >
+                                                عرض المنتج
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={handleSupplierClick}
+                                            className={`bg-white/20 text-white py-3 px-4 rounded-lg font-bold hover:bg-white/30 transition-colors border border-white/30 ${!deal.product_id ? 'col-span-2' : ''}`}
+                                        >
+                                            زيارة المتجر
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

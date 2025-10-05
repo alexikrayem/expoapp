@@ -10,6 +10,8 @@ const initialFilters = {
     minPrice: '',
     maxPrice: '',
     onSale: false,
+    supplier: null,
+    searchQuery: '',
 };
 
 export const FilterProvider = ({ children }) => {
@@ -19,9 +21,23 @@ export const FilterProvider = ({ children }) => {
         setFilters(newFilters);
     };
 
+    const resetFilters = () => {
+        setFilters(initialFilters);
+    };
+
+    const setSupplierFilter = (supplierName) => {
+        setFilters(prev => ({
+            ...initialFilters,
+            supplier: supplierName,
+            searchQuery: supplierName
+        }));
+    };
+
     const value = {
         currentFilters: filters,
         handleFiltersChange,
+        resetFilters,
+        setSupplierFilter,
     };
 
     return (

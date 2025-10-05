@@ -4,18 +4,23 @@ import { motion } from 'framer-motion';
 import { X, MapPin, Star, Package, Phone, Mail, Globe, Loader as Loader2 } from 'lucide-react';
 import ProductCard from '../common/ProductCard';
 import { cityService } from '../../services/cityService';
+import { useFilters } from '../../context/FilterContext';
+import { useAppContext } from '../../context/AppContext';
 
-const SupplierDetailModal = ({ 
-    show, 
-    onClose, 
-    supplierId, 
-    onAddToCart, 
-    onToggleFavorite, 
-    favoriteIds 
+const SupplierDetailModal = ({
+    show,
+    onClose,
+    supplierId,
+    onAddToCart,
+    onToggleFavorite,
+    onProductClick,
+    favoriteIds
 }) => {
     const [supplier, setSupplier] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { setSupplierFilter } = useFilters();
+    const { setActiveTab } = useAppContext();
 
     useEffect(() => {
         const fetchSupplierDetails = async () => {
@@ -39,9 +44,22 @@ const SupplierDetailModal = ({
     }, [supplierId, show]);
 
     const handleProductClick = (product) => {
-        // Close supplier modal and open product modal
+        if (onProductClick) {
+            onProductClick(product.id);
+        }
+    };
+
+    const handleShowAllProducts = () => {
+        if (!supplier) return;
+
+        // Set supplier filter
+        setSupplierFilter(supplier.name);
+
+        // Switch to products tab
+        setActiveTab('products');
+
+        // Close modal
         onClose();
-        // You might want to emit an event or use a callback to open product modal
     };
 
     if (!show) return null;
@@ -185,11 +203,8 @@ const SupplierDetailModal = ({
                                     
                                     {supplier.hasMoreProducts && (
                                         <div className="text-center mt-6">
-                                            <button 
-                                                onClick={() => {
-                                                    // Navigate to products with supplier filter
-                                                    onClose();
-                                                }}
+                                            <button
+                                                onClick={handleShowAllProducts}
                                                 className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium"
                                             >
                                                 عرض جميع المنتجات ({supplier.product_count})

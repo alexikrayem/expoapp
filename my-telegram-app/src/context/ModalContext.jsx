@@ -40,9 +40,20 @@ export const ModalProvider = ({ children }) => {
             case 'productDetail':
                 return <ProductDetailModal show={true} onClose={closeModal} {...props} />;
                  case 'dealDetail':
-                return <DealDetailModal show={true} onClose={closeModal} {...props} />;
+                return <DealDetailModal
+                    show={true}
+                    onClose={closeModal}
+                    onProductClick={(productId) => openModal('productDetail', { productId })}
+                    onSupplierClick={(supplierId) => openModal('supplierDetail', { supplierId })}
+                    {...props}
+                />;
             case 'supplierDetail':
-                return <SupplierDetailModal show={true} onClose={closeModal} {...props} />;
+                return <SupplierDetailModal
+                    show={true}
+                    onClose={closeModal}
+                    onProductClick={(productId) => openModal('productDetail', { productId })}
+                    {...props}
+                />;
             case 'profile':
                 return <ProfileModal show={true} onClose={closeModal} {...props} />;
             case 'address':
