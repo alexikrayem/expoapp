@@ -50,14 +50,14 @@ const DealDetailModal = ({
     const handleProductClick = () => {
         if (deal?.product_id && onProductClick) {
             onProductClick(deal.product_id);
-            onClose();
+            // Don't close the deal modal - let product modal open on top
         }
     };
 
     const handleSupplierClick = () => {
         if (deal?.supplier_id && onSupplierClick) {
             onSupplierClick(deal.supplier_id);
-            onClose();
+            // Don't close the deal modal - let supplier modal open on top
         }
     };
 
@@ -83,25 +83,20 @@ const DealDetailModal = ({
                 effective_selling_price: finalPrice
             };
 
+            // Add to cart - this will show the mini cart bar automatically
             addToCart(productForCart);
 
-            // Show success message
-            if (window.Telegram?.WebApp) {
-                window.Telegram.WebApp.showAlert('تمت إضافة المنتج إلى السلة بنجاح!');
-            } else {
-                alert('تمت إضافة المنتج إلى السلة بنجاح!');
+            // Haptic feedback
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
             }
 
-            // Close modal after successful add
-            setTimeout(() => {
-                onClose();
-            }, 500);
+            // Don't close modal - just like the regular "Add to Cart" button behavior
+            // The mini cart bar will appear at the bottom showing the success
         } catch (error) {
             console.error('Failed to add to cart:', error);
-            if (window.Telegram?.WebApp) {
-                window.Telegram.WebApp.showAlert('فشل في إضافة المنتج إلى السلة');
-            } else {
-                alert('فشل في إضافة المنتج إلى السلة');
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
             }
         } finally {
             setAddingToCart(false);
