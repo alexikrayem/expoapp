@@ -17,8 +17,14 @@ const DealDetailModal = ({
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [addingToCart, setAddingToCart] = useState(false);
-    const { formatPrice } = useCurrency();
-    const { addItem } = useCart();
+
+    // Safely get currency context
+    const currencyContext = useCurrency();
+    const formatPrice = currencyContext?.formatPrice || ((price) => `${price} د.إ`);
+
+    // Safely get cart context
+    const cartContext = useCart();
+    const addToCart = cartContext?.actions?.addToCart;
 
     useEffect(() => {
         const fetchDealDetails = async () => {
@@ -56,7 +62,10 @@ const DealDetailModal = ({
     };
 
     const handleAddToCart = async () => {
-        if (!deal?.product_id) return;
+        if (!deal?.product_id || !addToCart) {
+            console.error('Cannot add to cart: missing product or cart function');
+            return;
+        }
 
         setAddingToCart(true);
         try {
@@ -65,14 +74,16 @@ const DealDetailModal = ({
                 ? deal.product_price * (1 - deal.discount_percentage / 100)
                 : deal.product_price;
 
-            await addItem({
-                productId: deal.product_id,
-                quantity: 1,
-                price: finalPrice,
-                productName: deal.product_name,
-                supplierId: deal.supplier_id,
-                supplierName: deal.supplier_name
-            });
+            // Create a product object that matches the cart context expectations
+            const productForCart = {
+                id: deal.product_id,
+                name: deal.product_name,
+                image_url: deal.product_image_url || deal.image_url,
+                supplier_name: deal.supplier_name,
+                effective_selling_price: finalPrice
+            };
+
+            addToCart(productForCart);
 
             // Show success message
             if (window.Telegram?.WebApp) {
@@ -80,6 +91,11 @@ const DealDetailModal = ({
             } else {
                 alert('تمت إضافة المنتج إلى السلة بنجاح!');
             }
+
+            // Close modal after successful add
+            setTimeout(() => {
+                onClose();
+            }, 500);
         } catch (error) {
             console.error('Failed to add to cart:', error);
             if (window.Telegram?.WebApp) {
