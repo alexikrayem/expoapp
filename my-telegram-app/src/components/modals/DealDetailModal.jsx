@@ -49,15 +49,15 @@ const DealDetailModal = ({
 
     const handleProductClick = () => {
         if (deal?.product_id && onProductClick) {
-            onProductClick(deal.product_id);
-            // Don't close the deal modal - let product modal open on top
+            onClose(); // Close deal modal first
+            onProductClick(deal.product_id); // Then open product modal
         }
     };
 
     const handleSupplierClick = () => {
         if (deal?.supplier_id && onSupplierClick) {
-            onSupplierClick(deal.supplier_id);
-            // Don't close the deal modal - let supplier modal open on top
+            onClose(); // Close deal modal first
+            onSupplierClick(deal.supplier_id); // Then open supplier modal
         }
     };
 
@@ -91,8 +91,8 @@ const DealDetailModal = ({
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
             }
 
-            // Don't close modal - just like the regular "Add to Cart" button behavior
-            // The mini cart bar will appear at the bottom showing the success
+            // Close modal after adding to cart - just like the regular "Add to Cart" button
+            onClose();
         } catch (error) {
             console.error('Failed to add to cart:', error);
             if (window.Telegram?.WebApp?.HapticFeedback) {
