@@ -34,7 +34,8 @@ const HomePage = () => {
     actions: { addToCart },
   } = useCart()
   const { favoriteIds, toggleFavorite } = useFavorites(telegramUser)
-  const { searchResults, showSearchResults, isSearching, searchError, debouncedSearchTerm } = useSearch()
+  const { searchResults, showSearchResults, isSearching, searchError, debouncedSearchTerm, handleSearchTermChange } =
+    useSearch()
   const { currentFilters: globalFilters, handleFiltersChange: globalHandleFiltersChange } = useFilters()
   const { cachedApiCall } = useCache()
 
@@ -136,6 +137,9 @@ const HomePage = () => {
       onAddToCart: addToCart,
       onToggleFavorite: toggleFavorite,
       favoriteIds,
+      onSearchSupplier: (supplierName) => {
+        handleSearchTermChange(supplierName)
+      },
     })
   }
 
