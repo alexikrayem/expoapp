@@ -6,11 +6,14 @@ import { useModal } from "../../context/ModalContext"
 import { useCart } from "../../context/CartContext"
 import { useSearch } from "../../context/SearchContext"
 import { userService } from "../../services/userService"
+import { cityService } from "../../services/cityService";
+
 
 import { ShoppingCart, Search, X, MapPin, Loader2, Bell, ChevronDown, Sparkles } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import ProfileIcon from "../common/ProfileIcon"
 import CityChangePopover from "../common/CityChangePopover"
+let preloadedCities = null;
 
 const Header = ({ children }) => {
   const { telegramUser, userProfile, onProfileUpdate } = useOutletContext()
@@ -28,13 +31,31 @@ const Header = ({ children }) => {
   const [isCompact, setIsCompact] = useState(false)
 
   // Scroll detection for compact header
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsCompact(window.scrollY > 50)
+ useEffect(() => {
+  const handleScroll = () => {
+    const compact = window.scrollY > 50
+    setIsCompact(compact)
+
+   
+    if (compact && isSearchExpanded && !isSearchFocused) {
+      setIsSearchExpanded(false)
     }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+  }
+
+  window.addEventListener("scroll", handleScroll)
+  return () => window.removeEventListener("scroll", handleScroll)
+}, [isSearchExpanded, isSearchFocused])
+
+useEffect(() => {
+  if (!preloadedCities) {
+    cityService.getCities()
+      .then((data) => {
+        preloadedCities = data;
+      })
+      .catch((err) => console.error("Failed to preload cities:", err));
+  }
+}, []);
+
 
   // Enhanced Telegram Web App integration
   useEffect(() => {
@@ -141,14 +162,13 @@ const Header = ({ children }) => {
 
   return (
     <motion.header
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      className={`sticky top-0 z-30 transition-all duration-300 ${
-        isCompact
-          ? "bg-white/95 backdrop-blur-xl shadow-lg py-2"
-          : "bg-gradient-to-r from-blue-50 via-white to-indigo-50 py-4"
-      }`}
-    >
+  className={`sticky top-0 z-30 ${
+    isCompact
+      ? "bg-white/95 backdrop-blur-xl shadow-lg py-2"
+      : "bg-white/95 backdrop-blur-sm shadow-sm py-4"
+  }`}
+>
+
       <div className="px-3 sm:px-4 max-w-4xl mx-auto">
         {/* Top row */}
         <div className={`flex items-center justify-between gap-2 ${isCompact ? "mb-2" : "mb-4"}`}>
@@ -206,10 +226,11 @@ const Header = ({ children }) => {
               <AnimatePresence>
                 {isCityPopoverOpen && (
                   <CityChangePopover
-                    currentCityId={userProfile?.selected_city_id}
-                    onCitySelect={handleCityChange}
-                    onClose={() => setIsCityPopoverOpen(false)}
-                  />
+    onCitySelect={handleCityChange}
+    currentCityId={userProfile?.selected_city_id}
+    onClose={() => setIsCityPopoverOpen(false)}
+    preloadedCities={preloadedCities}
+  />
                 )}
               </AnimatePresence>
             </div>
@@ -218,10 +239,13 @@ const Header = ({ children }) => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="relative p-1.5 sm:p-2 bg-white/80 backdrop-blur-sm text-gray-600 rounded-xl hover:bg-white transition-all shadow-sm border border-gray-200"
+              className="relative h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center 
+           bg-white/80 backdrop-blur-sm text-gray-600 rounded-xl hover:bg-white 
+           transition-all shadow-sm border border-gray-200"
               title="الإشعارات"
             >
-              <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
+              <Bell className="h-5 w-5 text-gray-600" />
+
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -258,9 +282,11 @@ const Header = ({ children }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsSearchExpanded(true)}
-                className="p-1.5 sm:p-2 bg-white/80 backdrop-blur-sm rounded-xl hover:bg-white transition-all border border-gray-200 shadow-sm"
-              >
-                <Search className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
+                className="h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center 
+               bg-white/80 backdrop-blur-sm rounded-xl hover:bg-white 
+               transition-all border border-gray-200 shadow-sm"
+  >
+    <Search className="h-5 w-5 text-gray-600" />
               </motion.button>
             )}
 
@@ -274,13 +300,15 @@ const Header = ({ children }) => {
         {/* Search bar row */}
         {(!isCompact || isSearchExpanded) && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="relative"
-          >
+    layout
+    initial={{ opacity: 0, height: 0 }}
+    animate={{ opacity: 1, height: "auto" }}
+    exit={{ opacity: 0, height: 0 }}
+    className="relative"
+  >
+            {/* make the search row a fixed height container so icons and input share the same vertical rhythm */}
             <motion.div
-              className="relative"
+              className="relative h-10 sm:h-11"
               animate={{
                 boxShadow: isSearchFocused
                   ? "0 8px 30px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.2)"
@@ -288,7 +316,10 @@ const Header = ({ children }) => {
               }}
               transition={{ duration: 0.3 }}
             >
-              <Search className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400 z-10" />
+              {/* Search icon: vertically centered using top-0 bottom-0 m-auto */}
+              <Search className="absolute right-3 sm:right-4 top-0 bottom-0 m-auto h-4 w-4 sm:h-5 sm:w-5 text-gray-400 z-10" />
+
+              {/* Input field: full height of the container */}
               <motion.input
                 type="text"
                 placeholder="ابحث عن المنتجات، الموردين، العروض..."
@@ -296,8 +327,16 @@ const Header = ({ children }) => {
                 onChange={(e) => handleSearchTermChange(e.target.value)}
                 onFocus={handleSearchFocus}
                 onBlur={handleSearchBlur}
-                className="w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3 border-0 bg-white/90 backdrop-blur-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-300 text-sm placeholder-gray-500 shadow-sm"
+                onKeyDown={(e) => {
+    if (e.key === "Enter") e.target.blur()
+  }}
+               className="w-full h-full pl-10 sm:pl-12 pr-10 sm:pr-12 border border-gray-200 bg-gray-100 
+focus:bg-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 
+transition-all duration-300 text-sm placeholder-gray-500 shadow-sm leading-none"
+
               />
+
+              {/* Clear (X) button: vertically centered using top-0 bottom-0 m-auto */}
               <AnimatePresence>
                 {searchTerm && (
                   <motion.button
@@ -305,9 +344,10 @@ const Header = ({ children }) => {
                     animate={{ opacity: 1, scale: 1, x: 0 }}
                     exit={{ opacity: 0, scale: 0.8, x: 10 }}
                     onClick={clearSearch}
-                    className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors z-10 flex items-center justify-center"
+                    className="absolute left-2 sm:left-3 top-0 bottom-0 m-auto h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors z-10"
+                    aria-label="مسح البحث"
                   >
-                    <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <X className="h-4 w-4 sm:h-5 sm:w-5 align-middle" />
                   </motion.button>
                 )}
               </AnimatePresence>

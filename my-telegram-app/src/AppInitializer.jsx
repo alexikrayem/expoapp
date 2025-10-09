@@ -1,49 +1,28 @@
 "use client"
 
-// src/AppInitializer.jsx - Enhanced with caching and better loading states, Telegram-inspired design, Arabic quotes
 import { useEffect, useState, useCallback } from "react"
 import { Outlet } from "react-router-dom"
-import { motion, AnimatePresence } from "framer-motion" // Import AnimatePresence
+import { motion, AnimatePresence } from "framer-motion"
 import { userService } from "./services/userService"
 import CitySelectionModal from "./components/modals/CitySelectionModal"
 import { SearchProvider } from "./context/SearchContext"
-import { CartProvider } from "./context/CartContext" // Corrected path (assuming CartContext.jsx)
+import { CartProvider } from "./context/CartContext"
 import { FilterProvider } from "./context/FilterContext"
-import { CheckoutProvider } from "./context/CheckoutContext" // Corrected path (assuming CheckoutContext.jsx)
+import { CheckoutProvider } from "./context/CheckoutContext"
 import { MiniCartProvider } from "./context/MiniCartContext"
 import { CacheProvider } from "./context/CacheContext"
-import { Loader2, XCircle } from "lucide-react" // Assuming lucide-react is installed
+import { Loader2, XCircle } from "lucide-react"
 import "./index.css"
 
-import myLogo from "./assets/IMG_1958.JPG" 
-import myBackgroundImage from "./assets/IMG_1787.jpg" // Adjust path as needed
+import appLogoImage from "./assets/IMG_1787.jpg" // will act as logo
 
-// Famous Dentist Quotes in Arabic
 const dentistQuotes = [
-  {
-    quote: "كل سن في رأس الرجل أثمن من الماس.",
-    author: "ميغيل دي ثيربانتس",
-  },
-  {
-    quote: "صحة الفم هي نافذة على صحتك العامة.",
-    author: "سي. إيفرت كوب",
-  },
-  {
-    quote: "الابتسامة هي انحناءة تجعل كل شيء مستقيمًا.",
-    author: "فيليس ديلر",
-  },
-  {
-    quote: "الفم هو بوابة الجسم.",
-    author: "مجهول",
-  },
-  {
-    quote: "أسنان صحية، جسم سليم.",
-    author: "مثل شعبي",
-  },
-  {
-    quote: "الوقاية خير من العلاج، خاصة في طب الأسنان.",
-    author: "مقولة شائعة",
-  },
+  { quote: "كل سن في رأس الرجل أثمن من الماس.", author: "ميغيل دي ثيربانتس" },
+  { quote: "صحة الفم هي نافذة على صحتك العامة.", author: "سي. إيفرت كوب" },
+  { quote: "الابتسامة هي انحناءة تجعل كل شيء مستقيمًا.", author: "فيليس ديلر" },
+  { quote: "الفم هو بوابة الجسم.", author: "مجهول" },
+  { quote: "أسنان صحية، جسم سليم.", author: "مثل شعبي" },
+  { quote: "الوقاية خير من العلاج، خاصة في طب الأسنان.", author: "مقولة شائعة" },
 ]
 
 const AppInitializer = () => {
@@ -52,7 +31,7 @@ const AppInitializer = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [initializationStep, setInitializationStep] = useState("تهيئة التطبيق...")
-  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0) // State for current quote
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0)
 
   const fetchUserProfile = useCallback(async () => {
     try {
@@ -60,61 +39,38 @@ const AppInitializer = () => {
       const profileData = await userService.getProfile()
       setUserProfile(profileData)
     } catch (err) {
-      if (err.status === 404) {
-        setUserProfile({ selected_city_id: null })
-      } else {
-        console.error("Profile fetch error:", err)
-        setError("Could not load your profile. Please try refreshing.")
-      }
+      if (err.status === 404) setUserProfile({ selected_city_id: null })
+      else setError("حدث خطأ أثناء تحميل ملفك الشخصي.")
     } finally {
-      // For demonstration, simulating a minimum load time.
-      // This ensures the quotes have some time to animate.
-      setTimeout(() => setIsLoading(false), 3000) // Increased timeout to see quotes
+      setTimeout(() => setIsLoading(false), 1500)
     }
   }, [])
 
   useEffect(() => {
     const initializeApp = async () => {
       setInitializationStep("الاتصال بتيليجرام...")
-
       const tg = window.Telegram?.WebApp
       if (tg) {
         tg.ready()
         tg.expand()
-
         tg.setHeaderColor("#ffffff")
-        tg.setBackgroundColor("#f8fafc")
-
+        tg.setBackgroundColor("#ffffff")
         tg.enableClosingConfirmation()
         tg.HapticFeedback.impactOccurred("light")
-
-        console.log("✅ Enhanced Telegram Web App initialized")
       }
-
-      document.body.style.overflow = "auto"
-
-      const user = tg?.initDataUnsafe?.user || {
-        id: 123456789,
-        first_name: "Local",
-        last_name: "Dev",
-        username: "localdev",
-      }
+      const user = tg?.initDataUnsafe?.user || { id: 123456, first_name: "Local", last_name: "Dev" }
       setTelegramUser(user)
-
       await fetchUserProfile()
     }
-
     initializeApp()
   }, [fetchUserProfile])
 
-  // Effect to rotate quotes
   useEffect(() => {
     if (isLoading) {
-      const quoteInterval = setInterval(() => {
-        setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % dentistQuotes.length)
-      }, 5000) // Change quote every 5 seconds (adjust as needed)
-
-      return () => clearInterval(quoteInterval) // Cleanup interval on unmount or when loading stops
+      const interval = setInterval(() => {
+        setCurrentQuoteIndex((prev) => (prev + 1) % dentistQuotes.length)
+      }, 5000)
+      return () => clearInterval(interval)
     }
   }, [isLoading])
 
@@ -124,129 +80,72 @@ const AppInitializer = () => {
       const updatedProfile = await userService.updateProfile({ selected_city_id: cityId })
       setUserProfile(updatedProfile)
       window.Telegram?.WebApp?.HapticFeedback.notificationOccurred("success")
-    } catch (err) {
-      console.error(err)
-      setError("Could not save your city selection. Please try again.")
+    } catch {
+      setError("حدث خطأ أثناء حفظ اختيار المدينة.")
       window.Telegram?.WebApp?.HapticFeedback.notificationOccurred("error")
     }
   }
 
   if (isLoading) {
-    // Framer Motion variants for staggered animations
-    const containerVariants = {
-      hidden: { opacity: 0 },
-      visible: {
-        opacity: 1,
-        transition: {
-          when: "beforeChildren",
-          staggerChildren: 0.15,
-        },
-      },
-    }
-
-    const itemVariants = {
-      hidden: { y: 20, opacity: 0 },
-      visible: { y: 0, opacity: 1 },
-    }
-
-    const quoteVariants = {
-      enter: { opacity: 0, y: 10 }, // Start slightly below and invisible
-      center: { opacity: 1, y: 0 }, // Fully visible at natural position
-      exit: { opacity: 0, y: -10 }, // Exit by moving slightly up and fading out
-    }
-
     const currentQuote = dentistQuotes[currentQuoteIndex]
-
     return (
-      <div
-        // *** IMPORTANT CHANGE HERE ***
-        // Changed from bg-contain to bg-cover to fill the screen
-        // bg-center is the default, but you can try others below!
-        className="relative flex items-center justify-center min-h-screen text-gray-800 font-sans bg-cover bg-center"
-        style={{ backgroundImage: `url(${myBackgroundImage})` }}
-      >
-        {/* Background Overlay for better readability of text and card */}
-        {/* Adjusted opacity slightly to show more of the background if desired */}
-        <div className="absolute inset-0 bg-white opacity-50"></div>
+      <div className="w-screen h-screen bg-white flex flex-col items-center justify-center text-gray-800 font-sans">
+        {/* Logo as Image */}
+        <motion.img
+          src={appLogoImage}
+          alt="App Logo"
+          className="w-48 h-48 object-contain mb-8"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        />
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="relative z-10 text-center p-8 max-w-sm w-full bg-white rounded-xl shadow-lg"
+        {/* App Name */}
+        <motion.h1
+          className="text-3xl font-extrabold mb-6 text-gray-900"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
         >
-          {/* Logo Section - Now direct image */}
-          <motion.img
-            src={myLogo}
-            alt="Your Company Logo" // Important for accessibility
-            // Apply animation directly to the image
-            initial={{ scale: 0.8, opacity: 0, rotate: 0 }}
-            animate={{ scale: 1, opacity: 1, rotate: 0 }}
-            transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-            // Styling for the image itself
-            className="mx-auto block max-w-48 h-auto mb-8 object-contain" // Centered, max width, maintain aspect ratio
-            // You can also add the repeating animation here if desired, or remove it
-            // animate={{ scale: [1, 1.05, 1] }}
-            // transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          />
+          معرض المستلزمات الطبية
+        </motion.h1>
 
-          {/* Application Title */}
-          <motion.h1 variants={itemVariants} className="text-3xl md:text-4xl font-extrabold mb-4 text-gray-800">
-            معرض المستلزمات الطبية
-          </motion.h1>
-
-          {/* Initialization Step Message */}
-          <motion.div variants={itemVariants} className="flex items-center justify-center gap-3 text-gray-600 mb-6">
-            <motion.span
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-            >
-              <Loader2 className="h-5 w-5 text-blue-500" />
-            </motion.span>
-            <span className="text-base">{initializationStep}</span>
-          </motion.div>
-
-          {/* Rotating Quotes Section - Now in Arabic */}
-          <motion.div
-            variants={itemVariants} // Apply parent animation
-            className="w-full h-20 flex flex-col justify-center items-center overflow-hidden mb-4" // Fixed height for smooth transitions
-            dir="rtl" // Set text direction to Right-to-Left for Arabic
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentQuote.quote} // Crucial: key changes to trigger exit/enter animations
-                variants={quoteVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-                className="text-center"
-              >
-                <p className="text-sm italic text-gray-700 leading-relaxed mb-1">"{currentQuote.quote}"</p>
-                <p className="text-xs font-semibold text-blue-500">- {currentQuote.author}</p>
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
-
-          {/* Additional reassuring message */}
-          <motion.p variants={itemVariants} className="mt-4 text-sm text-gray-500">
-            الرجاء الانتظار قليلاً...
-          </motion.p>
+        {/* Loading Step */}
+        <motion.div className="flex items-center gap-3 mb-12" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
+          <Loader2 className="animate-spin h-6 w-6 text-blue-500" />
+          <span className="text-base">{initializationStep}</span>
         </motion.div>
+
+        {/* Quote Section */}
+        <div className="absolute bottom-16 px-6 text-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentQuote.quote}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.7 }}
+              className="text-gray-700 text-lg italic"
+              dir="rtl"
+            >
+              "{currentQuote.quote}"
+              <div className="text-sm font-semibold text-blue-500 mt-1">- {currentQuote.author}</div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     )
   }
 
-  // Error state display (kept as is)
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white p-4">
+      <div className="flex items-center justify-center h-screen bg-gray-100 text-gray-900 p-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
           <div className="p-4 bg-red-500 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
             <XCircle className="h-8 w-8 text-white" />
           </div>
           <h2 className="text-xl font-bold mb-2">حدث خطأ</h2>
-          <p className="text-gray-300 mb-4">{error}</p>
+          <p className="text-gray-700 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -258,12 +157,10 @@ const AppInitializer = () => {
     )
   }
 
-  // City selection modal if no city is selected
   if (userProfile && !userProfile.selected_city_id) {
     return <CitySelectionModal show={true} onCitySelect={handleCitySelect} />
   }
 
-  // Main app content wrapped in contexts
   return (
     <CacheProvider>
       <MiniCartProvider>
