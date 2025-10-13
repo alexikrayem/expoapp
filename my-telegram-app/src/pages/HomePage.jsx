@@ -104,7 +104,8 @@ const HomePage = () => {
       product: product,
       productId: product.id,
       onAddToCart: addToCart,
-      onToggleFavorite: { toggle: toggleFavorite, isFavorite: (id) => favoriteIds.has(id) },
+      favoriteIds: favoriteIds,
+      onToggleFavorite: toggleFavorite,
       onSelectAlternative: (alternativeId) => {
         // Close current modal and open alternative product
         handleShowProductDetails({ id: alternativeId })
