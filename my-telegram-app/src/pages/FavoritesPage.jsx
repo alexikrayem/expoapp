@@ -1,83 +1,107 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useOutletContext } from 'react-router-dom';
-import { useFavorites } from '../hooks/useFavorites';
-import { useFavoriteProducts } from '../hooks/useFavoriteProducts';
-import { useModal } from '../context/ModalContext';
-import { useCart } from '../context/CartContext';
-import FavoritesTab from '../components/tabs/FavoritesTab';
-import ProductFilterBar from '../components/common/ProductFilterBar';
-import { Search, X } from 'lucide-react';
+"use client"
+
+import React, { useState, useMemo, useEffect } from "react"
+import { useOutletContext } from "react-router-dom"
+import { useFavorites } from "../hooks/useFavorites"
+import { useFavoriteProducts } from "../hooks/useFavoriteProducts"
+import { useModal } from "../context/ModalContext"
+import { useCart } from "../context/CartContext"
+import FavoritesTab from "../components/tabs/FavoritesTab"
+import ProductFilterBar from "../components/common/ProductFilterBar"
+import { Search, X } from "lucide-react"
 
 const FavoritesPage = () => {
-  const { telegramUser, userProfile } = useOutletContext();
-  const { openModal } = useModal();
-  const { actions: { addToCart } } = useCart();
+  // ✅ Fix: Prevent "Cannot destructure property of undefined"
+  const { telegramUser, userProfile } = useOutletContext() || {}
 
-  const { favoriteIds, toggleFavorite } = useFavorites(telegramUser);
-  const { favoriteProducts, isLoadingFavoritesTab, favoritesTabError } = useFavoriteProducts(favoriteIds, true);
+  const { openModal } = useModal()
+  const {
+    actions: { addToCart },
+  } = useCart()
 
-  const [localFilters, setLocalFilters] = useState({ category: 'all' });
-  const [localSearchTerm, setLocalSearchTerm] = useState('');
-  const [isCompact, setIsCompact] = useState(false);
+  const { favoriteIds, toggleFavorite } = useFavorites(telegramUser)
+  const {
+    favoriteProducts,
+    isLoadingFavoritesTab,
+    favoritesTabError,
+  } = useFavoriteProducts(favoriteIds, true)
 
+  const [localFilters, setLocalFilters] = useState({ category: "all" })
+  const [localSearchTerm, setLocalSearchTerm] = useState("")
+  const [isCompact, setIsCompact] = useState(false)
+
+  // --- Compact header on scroll ---
   useEffect(() => {
-    const handleScroll = () => setIsCompact(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    const handleScroll = () => setIsCompact(window.scrollY > 50)
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
-  const handleFiltersChange = (newFilters) => setLocalFilters(newFilters);
+  const handleFiltersChange = (newFilters) => setLocalFilters(newFilters)
 
+  // --- Filtering + Searching ---
   const filteredAndSearchedProducts = useMemo(() => {
-    if (!favoriteProducts) return [];
-    let filtered = localFilters.category === 'all'
-      ? favoriteProducts
-      : favoriteProducts.filter(p => p.category === localFilters.category);
+    if (!favoriteProducts) return []
 
-    const searchTerm = localSearchTerm.trim().toLowerCase();
+    let filtered =
+      localFilters.category === "all"
+        ? favoriteProducts
+        : favoriteProducts.filter((p) => p.category === localFilters.category)
+
+    const searchTerm = localSearchTerm.trim().toLowerCase()
     if (searchTerm) {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchTerm) ||
-        (p.supplier_name && p.supplier_name.toLowerCase().includes(searchTerm))
-      );
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchTerm) ||
+          (p.supplier_name && p.supplier_name.toLowerCase().includes(searchTerm)),
+      )
     }
-    return filtered;
-  }, [favoriteProducts, localFilters.category, localSearchTerm]);
+
+    return filtered
+  }, [favoriteProducts, localFilters.category, localSearchTerm])
 
   const handleShowProductDetails = (product) => {
-    openModal('productDetail', {
+    openModal("productDetail", {
       product,
       productId: product.id,
       onAddToCart: addToCart,
       onToggleFavorite: { toggle: toggleFavorite, isFavorite: (id) => favoriteIds.has(id) },
-    });
-  };
+    })
+  }
 
   return (
     <div className="pb-24">
       {/* Sticky Header with Search + Filters */}
-      <div className={`sticky top-0 z-20 bg-white/95 backdrop-blur-sm ${isCompact ? 'shadow-md py-2' : 'py-4'} transition-all`}>
+      <div
+        className={`sticky top-0 z-20 bg-white/95 backdrop-blur-sm transition-all ${
+          isCompact ? "shadow-md py-2" : "py-4"
+        }`}
+      >
         <div className="max-w-4xl mx-auto px-4 flex flex-col gap-3">
           {/* Title */}
-              <div className={`flex flex-col transition-all duration-300 ${isCompact ? 'text-gray-800 text-xl' : 'text-gray-800 text-3xl'}`}>
-        <h1 className="text-3xl font-bold text-gray-800 leading-tight">المفضلة</h1>
+          <div
+            className={`flex flex-col transition-all duration-300 ${
+              isCompact ? "text-gray-800 text-xl" : "text-gray-800 text-3xl"
+            }`}
+          >
+            <h1 className="font-bold text-gray-800 leading-tight">المفضلة</h1>
             <p className="text-gray-500 text-sm">المنتجات التي قمت بحفظها.</p>
           </div>
 
-          {/* Search Input */}
+          {/* --- Standard Search Input --- */}
           <div className="relative w-full">
             <input
               type="text"
               placeholder="ابحث في المفضلة..."
               value={localSearchTerm}
               onChange={(e) => setLocalSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+              onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
               className="w-full h-10 pl-10 pr-10 border border-gray-300 rounded-2xl bg-gray-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-sm placeholder-gray-500"
             />
             <Search className="absolute right-3 top-0 bottom-0 m-auto h-5 w-5 text-gray-400" />
             {localSearchTerm && (
               <button
-                onClick={() => setLocalSearchTerm('')}
+                onClick={() => setLocalSearchTerm("")}
                 className="absolute left-3 top-0 bottom-0 m-auto h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-700"
               >
                 <X className="h-4 w-4" />
@@ -94,7 +118,7 @@ const FavoritesPage = () => {
         </div>
       </div>
 
-      {/* Favorites Content */}
+      {/* --- Main Favorites Content --- */}
       <div className="max-w-4xl mx-auto px-4 mt-4">
         <FavoritesTab
           favoriteProducts={filteredAndSearchedProducts}
@@ -107,7 +131,7 @@ const FavoritesPage = () => {
         />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default FavoritesPage;
+export default FavoritesPage

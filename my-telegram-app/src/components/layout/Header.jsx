@@ -6,17 +6,16 @@ import { useModal } from "../../context/ModalContext"
 import { useCart } from "../../context/CartContext"
 import { useSearch } from "../../context/SearchContext"
 import { userService } from "../../services/userService"
-import { cityService } from "../../services/cityService";
-
+import { cityService } from "../../services/cityService"
 
 import { ShoppingCart, Search, X, MapPin, Loader2, Bell, ChevronDown, Sparkles } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import ProfileIcon from "../common/ProfileIcon"
 import CityChangePopover from "../common/CityChangePopover"
-let preloadedCities = null;
+let preloadedCities = null
 
 const Header = ({ children }) => {
-  const { telegramUser, userProfile, onProfileUpdate } = useOutletContext()
+  const { telegramUser, userProfile, onProfileUpdate } = useOutletContext() || {}
   const { openModal } = useModal()
   const { getCartItemCount } = useCart()
   const { searchTerm, handleSearchTermChange, clearSearch } = useSearch()
@@ -31,31 +30,30 @@ const Header = ({ children }) => {
   const [isCompact, setIsCompact] = useState(false)
 
   // Scroll detection for compact header
- useEffect(() => {
-  const handleScroll = () => {
-    const compact = window.scrollY > 50
-    setIsCompact(compact)
+  useEffect(() => {
+    const handleScroll = () => {
+      const compact = window.scrollY > 50
+      setIsCompact(compact)
 
-   
-    if (compact && isSearchExpanded && !isSearchFocused) {
-      setIsSearchExpanded(false)
+      if (compact && isSearchExpanded && !isSearchFocused) {
+        setIsSearchExpanded(false)
+      }
     }
-  }
 
-  window.addEventListener("scroll", handleScroll)
-  return () => window.removeEventListener("scroll", handleScroll)
-}, [isSearchExpanded, isSearchFocused])
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [isSearchExpanded, isSearchFocused])
 
-useEffect(() => {
-  if (!preloadedCities) {
-    cityService.getCities()
-      .then((data) => {
-        preloadedCities = data;
-      })
-      .catch((err) => console.error("Failed to preload cities:", err));
-  }
-}, []);
-
+  useEffect(() => {
+    if (!preloadedCities) {
+      cityService
+        .getCities()
+        .then((data) => {
+          preloadedCities = data
+        })
+        .catch((err) => console.error("Failed to preload cities:", err))
+    }
+  }, [])
 
   // Enhanced Telegram Web App integration
   useEffect(() => {
@@ -95,12 +93,12 @@ useEffect(() => {
       addressLine2: userProfile?.address_line2 || "",
       city: userProfile?.city || userProfile?.selected_city_name || "",
     }
+    console.log("[v0] Opening profile modal with formData:", formData)
     setAddressFormData(formData)
     setProfileError(null)
 
     openModal("profile", {
       formData,
-      onFormChange: handleAddressFormChange,
       onFormSubmit: handleSaveProfileFromModal,
       error: profileError,
       isSaving: isSavingProfile,
@@ -114,16 +112,18 @@ useEffect(() => {
     setAddressFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSaveProfileFromModal = async (e) => {
+  const handleSaveProfileFromModal = async (e, updatedFormData) => {
     e.preventDefault()
+    console.log("[v0] Saving profile with data:", updatedFormData)
     setIsSavingProfile(true)
     setProfileError(null)
     try {
-      await userService.updateProfile(addressFormData)
+      await userService.updateProfile(updatedFormData)
       onProfileUpdate()
       openModal(null)
       window.Telegram?.WebApp?.HapticFeedback.notificationOccurred("success")
     } catch (error) {
+      console.error("[v0] Profile save error:", error)
       setProfileError(error.message || "Failed to save profile.")
       window.Telegram?.WebApp?.HapticFeedback.notificationOccurred("error")
     } finally {
@@ -162,13 +162,10 @@ useEffect(() => {
 
   return (
     <motion.header
-  className={`sticky top-0 z-30 ${
-    isCompact
-      ? "bg-white/95 backdrop-blur-xl shadow-lg py-2"
-      : "bg-white/95 backdrop-blur-sm shadow-sm py-4"
-  }`}
->
-
+      className={`sticky top-0 z-30 ${
+        isCompact ? "bg-white/95 backdrop-blur-xl shadow-lg py-2" : "bg-white/95 backdrop-blur-sm shadow-sm py-4"
+      }`}
+    >
       <div className="px-3 sm:px-4 max-w-4xl mx-auto">
         {/* Top row */}
         <div className={`flex items-center justify-between gap-2 ${isCompact ? "mb-2" : "mb-4"}`}>
@@ -226,11 +223,11 @@ useEffect(() => {
               <AnimatePresence>
                 {isCityPopoverOpen && (
                   <CityChangePopover
-    onCitySelect={handleCityChange}
-    currentCityId={userProfile?.selected_city_id}
-    onClose={() => setIsCityPopoverOpen(false)}
-    preloadedCities={preloadedCities}
-  />
+                    onCitySelect={handleCityChange}
+                    currentCityId={userProfile?.selected_city_id}
+                    onClose={() => setIsCityPopoverOpen(false)}
+                    preloadedCities={preloadedCities}
+                  />
                 )}
               </AnimatePresence>
             </div>
@@ -285,8 +282,8 @@ useEffect(() => {
                 className="h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center 
                bg-white/80 backdrop-blur-sm rounded-xl hover:bg-white 
                transition-all border border-gray-200 shadow-sm"
-  >
-    <Search className="h-5 w-5 text-gray-600" />
+              >
+                <Search className="h-5 w-5 text-gray-600" />
               </motion.button>
             )}
 
@@ -300,12 +297,12 @@ useEffect(() => {
         {/* Search bar row */}
         {(!isCompact || isSearchExpanded) && (
           <motion.div
-    layout
-    initial={{ opacity: 0, height: 0 }}
-    animate={{ opacity: 1, height: "auto" }}
-    exit={{ opacity: 0, height: 0 }}
-    className="relative"
-  >
+            layout
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="relative"
+          >
             {/* make the search row a fixed height container so icons and input share the same vertical rhythm */}
             <motion.div
               className="relative h-10 sm:h-11"
@@ -328,12 +325,11 @@ useEffect(() => {
                 onFocus={handleSearchFocus}
                 onBlur={handleSearchBlur}
                 onKeyDown={(e) => {
-    if (e.key === "Enter") e.target.blur()
-  }}
-               className="w-full h-full pl-10 sm:pl-12 pr-10 sm:pr-12 border border-gray-200 bg-gray-100 
+                  if (e.key === "Enter") e.target.blur()
+                }}
+                className="w-full h-full pl-10 sm:pl-12 pr-10 sm:pr-12 border border-gray-200 bg-gray-100 
 focus:bg-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 
 transition-all duration-300 text-sm placeholder-gray-500 shadow-sm leading-none"
-
               />
 
               {/* Clear (X) button: vertically centered using top-0 bottom-0 m-auto */}

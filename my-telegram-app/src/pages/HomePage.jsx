@@ -28,7 +28,7 @@ import SearchResultsView from "../components/search/SearchResultsView"
 
 const HomePage = () => {
   // --- CONTEXT & GLOBAL DATA ---
-  const { telegramUser, userProfile } = useOutletContext()
+  const { telegramUser, userProfile } = useOutletContext() || {} // Added fallback empty object to prevent destructuring error
   const { openModal } = useModal()
   const {
     actions: { addToCart },
