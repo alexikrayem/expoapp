@@ -1,17 +1,18 @@
 "use client"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, User, Phone, Home, MapPin, Loader2, Save, Camera, Mail } from "lucide-react"
+import { X, User, Phone, Home, MapPin, Loader2, Save, Mail } from "lucide-react"
 
-const ProfileModal = ({ show, onClose, formData, onFormSubmit, error, isSaving }) => {
+const ProfileModal = ({ show, onClose, formData, telegramUser, onFormSubmit, error, isSaving }) => {
   const [localFormData, setLocalFormData] = useState(formData)
 
   useEffect(() => {
     if (show) {
       console.log("[v0] ProfileModal opened with formData:", formData)
+      console.log("[v0] Telegram user:", telegramUser)
       setLocalFormData(formData)
     }
-  }, [show, formData])
+  }, [show, formData, telegramUser])
 
   if (!show) return null
 
@@ -76,26 +77,45 @@ const ProfileModal = ({ show, onClose, formData, onFormSubmit, error, isSaving }
               <div className="relative">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className="w-28 h-28 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-2xl"
+                  className="w-28 h-28 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-2xl overflow-hidden border-4 border-white"
                 >
-                  <User className="h-14 w-14 text-white" />
+                  {telegramUser?.photo_url ? (
+                    <img
+                      src={telegramUser.photo_url}
+                      alt={telegramUser.first_name || "Profile"}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Fallback to icon if image fails to load
+                        e.target.style.display = 'none'
+                        e.target.nextElementSibling.style.display = 'block'
+                      }}
+                    />
+                  ) : null}
+                  <User
+                    className={`h-14 w-14 text-white ${telegramUser?.photo_url ? 'hidden' : ''}`}
+                  />
                 </motion.div>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg border-2 border-blue-500"
-                >
-                  <Camera className="h-4 w-4 text-blue-600" />
-                </motion.button>
+                {/* Telegram Badge */}
+                <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1.5 shadow-lg border-2 border-white">
+                  <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                  </svg>
+                </div>
               </div>
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="mt-4 text-gray-500 text-sm"
+                className="mt-4 text-center"
               >
-                قم بتحديث معلوماتك الشخصية
-              </motion.p>
+                <p className="text-lg font-bold text-gray-800">
+                  {telegramUser?.first_name} {telegramUser?.last_name || ""}
+                </p>
+                {telegramUser?.username && (
+                  <p className="text-sm text-gray-500 mt-1">@{telegramUser.username}</p>
+                )}
+                <p className="text-xs text-gray-400 mt-2">قم بتحديث معلوماتك الشخصية</p>
+              </motion.div>
             </motion.div>
 
             {/* Form */}

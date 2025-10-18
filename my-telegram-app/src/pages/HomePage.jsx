@@ -138,6 +138,7 @@ const HomePage = () => {
       onAddToCart: addToCart,
       onToggleFavorite: toggleFavorite,
       favoriteIds,
+      selectedCityId: userProfile?.selected_city_id,
       onSearchSupplier: (supplierName) => {
         handleSearchTermChange(supplierName)
       },

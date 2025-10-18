@@ -1,10 +1,11 @@
 "use client"
 
 // src/components/modals/SupplierDetailModal.jsx
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
 import { X, MapPin, Star, Package, Loader2, Maximize2 } from "lucide-react"
 import ProductCard from "../common/ProductCard"
+import ProductFilterBar from "../common/ProductFilterBar"
 import { cityService } from "../../services/cityService"
 import ImageViewer from "../common/ImageViewer"
 
@@ -16,11 +17,14 @@ const SupplierDetailModal = ({
   onToggleFavorite,
   favoriteIds,
   onSearchSupplier,
+  selectedCityId,
 }) => {
   const [supplier, setSupplier] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
+  // Local filter state for category filtering within the modal
+  const [categoryFilter, setCategoryFilter] = useState({ category: 'all' })
 
   useEffect(() => {
     const fetchSupplierDetails = async () => {
@@ -32,6 +36,8 @@ const SupplierDetailModal = ({
       try {
         const data = await cityService.getSupplierDetails(supplierId)
         setSupplier(data)
+        // Reset category filter when supplier changes
+        setCategoryFilter({ category: 'all' })
       } catch (err) {
         console.error("Failed to fetch supplier details:", err)
         setError(err.message || "فشل في تحميل تفاصيل المورد")
@@ -56,6 +62,25 @@ const SupplierDetailModal = ({
       window.Telegram?.WebApp?.HapticFeedback.impactOccurred("light")
     }
   }
+
+  // Handle category filter changes
+  const handleFilterChange = (newFilters) => {
+    setCategoryFilter(newFilters)
+    window.Telegram?.WebApp?.HapticFeedback.impactOccurred("light")
+  }
+
+  // Filter products based on selected category
+  const filteredProducts = useMemo(() => {
+    if (!supplier?.products) return []
+    
+    if (categoryFilter.category === 'all') {
+      return supplier.products
+    }
+    
+    return supplier.products.filter(
+      (product) => product.category === categoryFilter.category
+    )
+  }, [supplier?.products, categoryFilter.category])
 
   if (!show) return null
 
@@ -196,28 +221,57 @@ const SupplierDetailModal = ({
                     <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                       <Package className="h-5 w-5 text-blue-500" />
                       منتجات من هذا المورد
+                      {filteredProducts.length !== supplier.products.length && (
+                        <span className="text-sm text-gray-500 font-normal">
+                          ({filteredProducts.length} من {supplier.products.length})
+                        </span>
+                      )}
                     </h4>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {supplier.products.map((product) => (
-                        <ProductCard
-                          key={product.id}
-                          product={product}
-                          onShowDetails={handleProductClick}
-                          onAddToCart={onAddToCart}
-                          onToggleFavorite={onToggleFavorite}
-                          isFavorite={favoriteIds.has(product.id)}
-                        />
-                      ))}
+                    {/* Category Filter Bar */}
+                    <div className="mb-4 -mx-2">
+                      <ProductFilterBar
+                        currentFilters={categoryFilter}
+                        onFiltersChange={handleFilterChange}
+                        selectedCityId={selectedCityId}
+                      />
                     </div>
 
-                    {supplier.hasMoreProducts && (
-                      <div className="text-center mt-6">
+                    {filteredProducts.length > 0 ? (
+                      <>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {filteredProducts.map((product) => (
+                            <ProductCard
+                              key={product.id}
+                              product={product}
+                              onShowDetails={handleProductClick}
+                              onAddToCart={onAddToCart}
+                              onToggleFavorite={onToggleFavorite}
+                              isFavorite={favoriteIds.has(product.id)}
+                            />
+                          ))}
+                        </div>
+
+                        {supplier.hasMoreProducts && (
+                          <div className="text-center mt-6">
+                            <button
+                              onClick={handleShowMore}
+                              className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                            >
+                              عرض جميع المنتجات ({supplier.product_count})
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="bg-gray-50 rounded-lg p-8 text-center">
+                        <Package className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                        <p className="text-gray-600">لا توجد منتجات في هذه الفئة</p>
                         <button
-                          onClick={handleShowMore}
-                          className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                          onClick={() => setCategoryFilter({ category: 'all' })}
+                          className="mt-3 text-blue-500 hover:text-blue-600 text-sm font-medium"
                         >
-                          عرض جميع المنتجات ({supplier.product_count})
+                          عرض جميع المنتجات
                         </button>
                       </div>
                     )}

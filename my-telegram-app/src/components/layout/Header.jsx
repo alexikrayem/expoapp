@@ -99,6 +99,7 @@ const Header = ({ children }) => {
 
     openModal("profile", {
       formData,
+      telegramUser,
       onFormSubmit: handleSaveProfileFromModal,
       error: profileError,
       isSaving: isSavingProfile,
