@@ -7,6 +7,7 @@ import { useCart } from "../../context/CartContext"
 import { useSearch } from "../../context/SearchContext"
 import { userService } from "../../services/userService"
 import { cityService } from "../../services/cityService"
+import appLogoImage from "/src/assets/IMG_1787.png";
 
 import { ShoppingCart, Search, X, MapPin, Loader2, Bell, ChevronDown, Sparkles } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
@@ -171,27 +172,40 @@ const Header = ({ children }) => {
         {/* Top row */}
         <div className={`flex items-center justify-between gap-2 ${isCompact ? "mb-2" : "mb-4"}`}>
           {/* Logo and Brand */}
-          <motion.div
-            className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
-            <div className="relative">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-              </div>
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-                className="absolute -top-0.5 -right-0.5 w-2 h-2 sm:w-3 sm:h-3 bg-green-400 border-2 border-white rounded-full"
-              />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm sm:text-lg font-bold text-gray-800 leading-tight truncate">معرض طبيب</span>
-              <span className="text-xs text-gray-500 leading-tight truncate">المستلزمات الطبية</span>
-            </div>
-          </motion.div>
+         {/* Logo and Brand */}
+<motion.div
+  className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0"
+  initial={{ opacity: 0, x: -20 }}
+  animate={{ opacity: 1, x: 0 }}
+  transition={{ duration: 0.3, delay: 0.1 }}
+>
+  <div className="relative">
+    {/* Logo Image */}
+    <img
+      src={appLogoImage}
+      alt="App Logo"
+      className="w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-xl"
+    />
+
+    {/* Optional notification badge */}
+    <motion.div
+      animate={{ scale: [1, 1.2, 1] }}
+      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      className="absolute -top-0.5 -right-0.5 w-2 h-2 sm:w-3 sm:h-3 bg-green-400 border-2 border-white rounded-full"
+    />
+  </div>
+
+  {/* Brand Text */}
+  <div className="flex flex-col min-w-0">
+    <span className="text-sm sm:text-lg font-bold text-gray-800 leading-tight truncate">
+      معرض طبيب
+    </span>
+    <span className="text-xs text-gray-500 leading-tight truncate">
+      المستلزمات الطبية
+    </span>
+  </div>
+</motion.div>
+
 
           {/* Right actions */}
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
