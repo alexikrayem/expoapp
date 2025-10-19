@@ -56,6 +56,10 @@ const AppInitializer = () => {
       if (tg) {
         tg.ready()
         tg.expand()
+        if (window.Telegram?.WebApp?.requestFullscreen) {
+  window.Telegram.WebApp.requestFullscreen();
+}
+
         tg.setHeaderColor("#ffffff")
         tg.setBackgroundColor("#ffffff")
         tg.enableClosingConfirmation()
