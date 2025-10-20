@@ -88,6 +88,21 @@ const DealDetailModal = ({
         className="fixed inset-0 bg-gray-50 z-50 flex flex-col overflow-y-auto"
         dir="rtl"
       >
+        {/* --- PREHEADER COMPONENT: Centered Logo + Brand Text --- */}
+<motion.div
+  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2"
+>
+  
+  <div className="flex flex-col items-center text-center">
+    <span className="text-lg sm:text-xl font-bold text-white leading-tight truncate">
+      معرض طبيب
+    </span>
+    <span className="text-sm text-white leading-tight truncate">
+      المستلزمات الطبية
+    </span>
+  </div>
+</motion.div>
+
         {/* Header */}
         <div className="sticky top-0 bg-white p-4 shadow-md z-10 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-800 truncate">

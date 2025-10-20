@@ -18,7 +18,6 @@ import {
   Loader2,
   Bell,
   ChevronDown,
-  Sparkles, // Not used in current render, but kept from original
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import ProfileIcon from "../common/ProfileIcon";
@@ -189,92 +188,79 @@ const Header = ({ children }) => {
 
   return (
     <motion.header
-      // Apply safe-area-inset-top directly to the header element.
-      // The fallback `16px` is a reasonable default if `env()` isn't supported (e.g., in a regular browser).
-      // `py-2` or `py-4` adds additional vertical padding *below* the safe area.
       className={`sticky top-0 z-30 pt-[env(safe-area-inset-top, 16px)] ${
-        isCompact ? "bg-white/95 backdrop-blur-xl shadow-lg py-2" : "bg-white/95 backdrop-blur-sm shadow-sm py-4"
+        isCompact ? "bg-white/95 backdrop-blur-xl shadow-lg" : "bg-white/95 backdrop-blur-sm shadow-sm"
       }`}
     >
       <div
-        className="px-3 sm:px-4 max-w-4xl mx-auto flex flex-col items-center"
-        // Dynamically adjust vertical gap between header elements based on compact mode
+        className={`px-3 sm:px-4 max-w-4xl mx-auto flex flex-col items-center ${isCompact ? "py-2" : "py-4"}`}
         style={{ gap: isCompact ? "0.5rem" : "1rem" }}
       >
-        {/* 1. Centered Logo (now static size and position) */}
-        <motion.div
-          className="relative flex-shrink-0"
-          // Removed initial and animate props for static behavior
-        >
-          <img
-            src={appLogoImage}
-            alt="App Logo"
-            // Fixed size regardless of compact mode
-            className="object-contain rounded-xl w-10 h-10 sm:w-12 sm:h-12"
-          />
-          {/* Removed the green dot notification badge from here */}
-        </motion.div>
+        {/* --- PREHEADER COMPONENT: Logo + Brand Text (Centered, fixed size, with left padding) --- */}
+        {/* --- PREHEADER COMPONENT: Centered Logo + Brand Text --- */}
+<motion.div
+  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2"
+>
+  <img
+    src={appLogoImage}
+    alt="App Logo"
+    className="object-contain rounded-xl w-10 h-10 sm:w-12 sm:h-12"
+  />
+  <div className="flex flex-col items-center text-center">
+    <span className="text-lg sm:text-xl font-bold text-gray-800 leading-tight truncate">
+      معرض طبيب
+    </span>
+    <span className="text-sm text-gray-500 leading-tight truncate">
+      المستلزمات الطبية
+    </span>
+  </div>
+</motion.div>
 
-        {/* 2. Brand Text (below logo, centered, still scales in compact mode) */}
-        <motion.div
-          className="flex flex-col items-center flex-shrink-0"
-          initial={{ opacity: 0, y: -10 }}
-          // Brand text still animates for a cleaner compact header
-          animate={isCompact ? { opacity: 0.8, y: -5, scale: 0.8 } : { opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.2, delay: 0.05 }}
-        >
-          <span
-            className={`font-bold text-gray-800 leading-tight ${isCompact ? "text-sm sm:text-base" : "text-lg sm:text-xl"}`}
-          >
-            معرض طبيب
-          </span>
-          <span className={`text-gray-500 leading-tight ${isCompact ? "text-xs" : "text-sm"}`}>
-            المستلزمات الطبية
-          </span>
-        </motion.div>
 
-        {/* 3. Actions Row (spread out horizontally below brand text) */}
-        <div className={`w-full flex items-center justify-between gap-1 sm:gap-2`}>
-          {/* Left group: City selector */}
-          <div className="relative">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsCityPopoverOpen((prev) => !prev)}
-              disabled={isChangingCity}
-              className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-white/80 backdrop-blur-sm text-gray-700 rounded-xl hover:bg-white transition-all shadow-sm border border-gray-200 disabled:opacity-70"
-            >
-              {isChangingCity ? (
-                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500 animate-spin" />
-              ) : (
-                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
-              )}
-              <div className="hidden sm:flex flex-col items-start min-w-0">
-                <span className="text-[10px] text-gray-500 leading-none">المدينة</span>
-                <span className="text-xs font-semibold text-gray-800 leading-none truncate max-w-16">
-                  {isChangingCity ? "جاري..." : userProfile?.selected_city_name || "اختر"}
+        {/* --- ACTIONS ROW (City Selector on Left, Other Actions on Right) --- */}
+        <div className="w-full flex items-center justify-between flex-shrink-0">
+          {/* Left Group: City selector */}
+          <div className="flex items-center"> {/* Group for left-aligned items */}
+            <div className="relative">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsCityPopoverOpen((prev) => !prev)}
+                disabled={isChangingCity}
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-white/80 backdrop-blur-sm text-gray-700 rounded-xl hover:bg-white transition-all shadow-sm border border-gray-200 disabled:opacity-70"
+              >
+                {isChangingCity ? (
+                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500 animate-spin" />
+                ) : (
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+                )}
+                <div className="hidden sm:flex flex-col items-start min-w-0">
+                  <span className="text-[10px] text-gray-500 leading-none">المدينة</span>
+                  <span className="text-xs font-semibold text-gray-800 leading-none truncate max-w-16">
+                    {isChangingCity ? "جاري..." : userProfile?.selected_city_name || "اختر"}
+                  </span>
+                </div>
+                <span className="sm:hidden text-xs font-semibold text-gray-800 truncate max-w-12">
+                  {isChangingCity ? "..." : userProfile?.selected_city_name || "مدينة"}
                 </span>
-              </div>
-              <span className="sm:hidden text-xs font-semibold text-gray-800 truncate max-w-12">
-                {isChangingCity ? "..." : userProfile?.selected_city_name || "مدينة"}
-              </span>
-              <ChevronDown className="h-3 w-3 text-gray-400 hidden sm:block" />
-            </motion.button>
+                <ChevronDown className="h-3 w-3 text-gray-400 hidden sm:block" />
+              </motion.button>
 
-            <AnimatePresence>
-              {isCityPopoverOpen && (
-                <CityChangePopover
-                  onCitySelect={handleCityChange}
-                  currentCityId={userProfile?.selected_city_id}
-                  onClose={() => setIsCityPopoverOpen(false)}
-                  preloadedCities={preloadedCities}
-                />
-              )}
-            </AnimatePresence>
+              <AnimatePresence>
+                {isCityPopoverOpen && (
+                  <CityChangePopover
+                    onCitySelect={handleCityChange}
+                    currentCityId={userProfile?.selected_city_id}
+                    onClose={() => setIsCityPopoverOpen(false)}
+                    preloadedCities={preloadedCities}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
-          {/* Right group: Notifications, Cart, Profile, Compact Search */}
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          {/* Right Group: Notifications, Cart, Profile, Compact Search */}
+          <div className="flex items-center gap-1 sm:gap-2"> {/* Group for right-aligned items */}
             {/* Notifications */}
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -325,9 +311,9 @@ const Header = ({ children }) => {
                 className="h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center 
                bg-white/80 backdrop-blur-sm rounded-xl hover:bg-white 
                transition-all border border-gray-200 shadow-sm"
-              >
-                <Search className="h-5 w-5 text-gray-600" />
-              </motion.button>
+            >
+              <Search className="h-5 w-5 text-gray-600" />
+            </motion.button>
             )}
 
             {/* Profile Icon */}
@@ -337,19 +323,19 @@ const Header = ({ children }) => {
           </div>
         </div>
 
-        {/* Search bar row (only visible when not compact or when expanded) */}
+        {/* --- SEARCH BAR ROW (Full width, below actions) --- */}
         {(!isCompact || isSearchExpanded) && (
           <motion.div
-            layout // Enable layout animations for smooth expansion/collapse
+            layout
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="relative w-full mt-2" // Added top margin for separation from actions
+            className="relative w-full"
           >
             <motion.div
-              className="relative h-10 sm:h-11" // Fixed height for consistent vertical rhythm
+              className="relative h-10 sm:h-11"
               animate={{
-                boxShadow: isSearchFocused // Dynamic box shadow for focus state
+                boxShadow: isSearchFocused
                   ? "0 8px 30px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.2)"
                   : "0 2px 10px rgba(0, 0, 0, 0.05)",
               }}
@@ -367,7 +353,7 @@ const Header = ({ children }) => {
                 onFocus={handleSearchFocus}
                 onBlur={handleSearchBlur}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") e.target.blur(); // Dismiss keyboard on Enter
+                  if (e.key === "Enter") e.target.blur();
                 }}
                 className="w-full h-full pl-10 sm:pl-12 pr-10 sm:pr-12 border border-gray-200 bg-gray-100 
                 focus:bg-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 

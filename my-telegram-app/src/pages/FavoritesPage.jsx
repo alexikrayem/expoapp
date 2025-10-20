@@ -9,6 +9,8 @@ import { useCart } from "../context/CartContext"
 import FavoritesTab from "../components/tabs/FavoritesTab"
 import ProductFilterBar from "../components/common/ProductFilterBar"
 import { Search, X } from "lucide-react"
+import appLogoImage from "/src/assets/IMG_1787.png"; // Adjust path if necessary
+import { motion } from "framer-motion";
 
 const FavoritesPage = () => {
   // ✅ Fix: Prevent "Cannot destructure property of undefined"
@@ -73,11 +75,30 @@ const FavoritesPage = () => {
     <div className="pb-24">
       {/* Sticky Header with Search + Filters */}
       <div
-        className={`sticky top-0 z-20 bg-white/95 backdrop-blur-sm transition-all ${
-          isCompact ? "shadow-md py-2" : "py-4"
-        }`}
-      >
+   className={`sticky top-0 z-20 pt-[env(safe-area-inset-top, 16px)] bg-white/95 backdrop-blur-sm transition-all ${
+     isCompact ? "shadow-md py-2" : "shadow-sm py-4"
+   }`}
+>
         <div className="max-w-4xl mx-auto px-4 flex flex-col gap-3">
+          {/* --- PREHEADER COMPONENT: Centered Logo + Brand Text --- */}
+<motion.div
+  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2"
+>
+  <img
+    src={appLogoImage}
+    alt="App Logo"
+    className="object-contain rounded-xl w-10 h-10 sm:w-12 sm:h-12"
+  />
+  <div className="flex flex-col items-center text-center">
+    <span className="text-lg sm:text-xl font-bold text-gray-800 leading-tight truncate">
+      معرض طبيب
+    </span>
+    <span className="text-sm text-gray-500 leading-tight truncate">
+      المستلزمات الطبية
+    </span>
+  </div>
+</motion.div>
+
           {/* Title */}
           <div
             className={`flex flex-col transition-all duration-300 ${

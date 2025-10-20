@@ -10,6 +10,8 @@ import { Loader2, Trash2, Plus, Minus } from "lucide-react"
 import { useCurrency } from "../context/CurrencyContext"
 import { motion } from "framer-motion"
 import { orderService } from "../services/orderService"
+import appLogoImage from "/src/assets/IMG_1787.png"; // Adjust path if necessary
+import SlideToConfirm from "../components/common/SlideToConfirm"
 
 // --- FILTER BAR COMPONENT (with consistent design) ---
 const OrderFilterBar = ({ activeFilter, setActiveFilter }) => {
@@ -99,13 +101,15 @@ const CheckoutCard = () => {
           <span className="font-semibold">المجموع:</span>
           <span className="font-bold text-blue-600">{formatPrice(total)}</span>
         </div>
-        <button
-          onClick={() => startCheckout(userProfile, telegramUser, onProfileUpdate)}
-          disabled={isPlacingOrder}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center font-bold text-lg"
-        >
-          {isPlacingOrder ? <Loader2 className="animate-spin" /> : "إرسال الطلب"}
-        </button>
+  <SlideToConfirm
+  onConfirm={async () => await startCheckout(userProfile, telegramUser, onProfileUpdate)}
+  disabled={isPlacingOrder}
+  loading={isPlacingOrder}
+  text="إرسال الطلب"
+/>
+
+
+        
       </div>
     </div>
   )
@@ -139,6 +143,25 @@ const OrdersPage = () => {
 
   return (
     <div className="p-4 max-w-4xl mx-auto pb-24">
+      {/* --- PREHEADER COMPONENT: Centered Logo + Brand Text --- */}
+<motion.div
+  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2"
+>
+  <img
+    src={appLogoImage}
+    alt="App Logo"
+    className="object-contain rounded-xl w-10 h-10 sm:w-12 sm:h-12"
+  />
+  <div className="flex flex-col items-center text-center">
+    <span className="text-lg sm:text-xl font-bold text-gray-800 leading-tight truncate">
+      معرض طبيب
+    </span>
+    <span className="text-sm text-gray-500 leading-tight truncate">
+      المستلزمات الطبية
+    </span>
+  </div>
+</motion.div>
+
       <header className="mb-6 mt-4">
         <h1 className="text-3xl font-bold text-gray-800">الطلبات</h1>
         <p className="text-gray-500 mt-1">راجع طلباتك الحالية والسابقة.</p>
