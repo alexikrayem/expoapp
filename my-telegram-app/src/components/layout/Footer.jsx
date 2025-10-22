@@ -20,7 +20,7 @@ const Footer = () => {
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40 flex-shrink-0 bg-white/95 backdrop-blur-xl">
-      <nav className="flex justify-around max-w-4xl mx-auto h-16">
+      <nav className="flex justify-around max-w-4xl mx-auto h-16 mb-[env(safe-area-inset-bottom,16px)] py-2">
         {navItems.map((item) => {
           const isActive = activePath === item.path;
           return (

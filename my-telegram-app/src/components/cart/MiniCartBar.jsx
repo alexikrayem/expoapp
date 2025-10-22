@@ -9,16 +9,18 @@ import { useMiniCart } from '../../context/MiniCartContext';
 
 const MiniCartBar = () => {
     const navigate = useNavigate();
+    const [isExpanded, setIsExpanded] = React.useState(false);
     
     // Data and actions for the cart's content come from CartContext
     const { cartItems, getCartTotal, getCartItemCount, actions } = useCart();
     
     // State and actions for the bar's visibility come from MiniCartContext
-    // IMPORTANT: If you implemented the global visibility from a previous step,
-    // ensure `isMiniCartGloballyVisible` and `closeMiniCartGlobally` are
-    // destructured here as well. For this specific fix, I'll assume your
-    // MiniCartContext is as you provided (without global visibility).
     const { activeMiniCartItem, showActiveItemControls, hideMiniCartBar } = useMiniCart();
+
+    const toggleExpand = () => {
+        window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light');
+        setIsExpanded(prev => !prev);
+    };
 
     if (!cartItems || cartItems.length === 0) {
         return null;
@@ -77,6 +79,49 @@ const MiniCartBar = () => {
     return (
         <div className="fixed bottom-16 left-0 right-0 z-40 flex flex-col items-center pointer-events-none" dir="rtl">
             <div className="w-full max-w-4xl px-3 sm:px-4 pointer-events-auto">
+                <AnimatePresence>
+                    {isExpanded && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, height: 0 }}
+                            animate={{ opacity: 1, y: 0, height: "auto" }}
+                            exit={{ opacity: 0, y: 20, height: 0 }}
+                            className="bg-white rounded-t-xl shadow-xl w-full mb-2 overflow-hidden"
+                        >
+                            <div className="max-h-64 overflow-y-auto p-4">
+                                <div className="space-y-3">
+                                    {cartItems.map((item) => (
+                                        <div key={item.product_id} className="flex items-center gap-3 border-b border-gray-100 pb-3">
+                                            <div 
+                                                className="w-12 h-12 rounded-lg bg-gray-200 flex-shrink-0 bg-cover bg-center" 
+                                                style={{ backgroundImage: `url(${item.image_url})` }}
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-medium text-sm text-gray-800 truncate">{item.name}</h4>
+                                                <p className="text-sm text-gray-500">{formatPrice(item.effective_selling_price)} × {item.quantity}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleQuantityChange(item.product_id, 'decrease')}
+                                                    className="p-1 rounded-full bg-gray-100 hover:bg-gray-200"
+                                                >
+                                                    {item.quantity === 1 ? <Trash2 size={16} /> : <Minus size={16} />}
+                                                </button>
+                                                <span className="w-8 text-center font-medium">{item.quantity}</span>
+                                                <button
+                                                    onClick={() => handleQuantityChange(item.product_id, 'increase')}
+                                                    className="p-1 rounded-full bg-gray-100 hover:bg-gray-200"
+                                                >
+                                                    <Plus size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <AnimatePresence mode="wait">
                     {showSquareCard ? (
                         // === SQUARE CARD LAYOUT ===
@@ -203,16 +248,39 @@ const MiniCartBar = () => {
                         >
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-4">
-                                    <div className="relative">
-                                        <ShoppingCart className="h-6 w-6" />
-                                        <motion.span 
-                                            key={totalCartItems}
-                                            initial={{ scale: 1.5 }}
-                                            animate={{ scale: 1 }}
-                                            className="absolute -top-2 -right-2 bg-white text-blue-600 rounded-full w-6 h-6 text-xs flex items-center justify-center font-bold shadow-md"
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative">
+                                            <ShoppingCart className="h-6 w-6" />
+                                            <motion.span 
+                                                key={totalCartItems}
+                                                initial={{ scale: 1.5 }}
+                                                animate={{ scale: 1 }}
+                                                className="absolute -top-2 -right-2 bg-white text-blue-600 rounded-full w-6 h-6 text-xs flex items-center justify-center font-bold shadow-md"
+                                            >
+                                                {totalCartItems}
+                                            </motion.span>
+                                        </div>
+                                        <motion.button
+                                            onClick={toggleExpand}
+                                            className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.95 }}
                                         >
-                                            {totalCartItems}
-                                        </motion.span>
+                                            <svg 
+                                                className="w-4 h-4 text-white opacity-75"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path 
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M5 15l7-7 7 7"
+                                                />
+                                            </svg>
+                                        </motion.button>
                                     </div>
                                     {/* Informative text for Blue Bar */}
                                     <div className="flex flex-col items-start"> 

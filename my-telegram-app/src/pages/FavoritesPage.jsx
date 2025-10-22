@@ -82,14 +82,14 @@ const FavoritesPage = () => {
         <div className="max-w-4xl mx-auto px-4 flex flex-col gap-3">
           {/* --- PREHEADER COMPONENT: Centered Logo + Brand Text --- */}
 <motion.div
-  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2"
+  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2 mt-4"
 >
   <img
     src={appLogoImage}
     alt="App Logo"
-    className="object-contain rounded-xl w-10 h-10 sm:w-12 sm:h-12"
+    className="object-contain rounded-xl w-10 h-10 sm:w-12 sm:h-12 mt-6"
   />
-  <div className="flex flex-col items-center text-center">
+  <div className="flex flex-col items-center text-center mt-6">
     <span className="text-lg sm:text-xl font-bold text-gray-800 leading-tight truncate">
       معرض طبيب
     </span>

@@ -193,20 +193,20 @@ const Header = ({ children }) => {
       }`}
     >
       <div
-        className={`px-3 sm:px-4 max-w-4xl mx-auto flex flex-col items-center ${isCompact ? "py-2" : "py-4"}`}
-        style={{ gap: isCompact ? "0.5rem" : "1rem" }}
+        className={`px-3 sm:px-4 max-w-4xl mx-auto flex flex-col items-center ${isCompact ? "py-3" : "py-6"}`}
+        style={{ gap: isCompact ? "0.75rem" : "1.25rem" }}
       >
         {/* --- PREHEADER COMPONENT: Logo + Brand Text (Centered, fixed size, with left padding) --- */}
         {/* --- PREHEADER COMPONENT: Centered Logo + Brand Text --- */}
 <motion.div
-  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2"
+  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2 mt-4"
 >
   <img
     src={appLogoImage}
     alt="App Logo"
-    className="object-contain rounded-xl w-10 h-10 sm:w-12 sm:h-12"
+    className="object-contain rounded-xl w-10 h-10 sm:w-12 sm:h-12 mt-6"
   />
-  <div className="flex flex-col items-center text-center">
+  <div className="flex flex-col items-center text-center mt-6">
     <span className="text-lg sm:text-xl font-bold text-gray-800 leading-tight truncate">
       معرض طبيب
     </span>
@@ -281,26 +281,7 @@ const Header = ({ children }) => {
               </motion.span>
             </motion.button>
 
-            {/* Cart button */}
-            {cartItemCount > 0 && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => openModal("cart")}
-                className="relative p-1.5 sm:p-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all shadow-lg"
-                title="السلة"
-              >
-                <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
-                <motion.span
-                  key={cartItemCount} // Key for re-animating when count changes
-                  initial={{ scale: 1.5 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-0.5 -right-0.5 bg-yellow-400 text-blue-900 text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center font-bold shadow-md"
-                >
-                  <span className="text-[8px] sm:text-xs">{cartItemCount}</span>
-                </motion.span>
-              </motion.button>
-            )}
+           
 
             {/* Compact search icon (only visible when header is compact and search isn't expanded) */}
             {isCompact && !isSearchExpanded && (

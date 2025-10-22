@@ -56,10 +56,6 @@ const AppInitializer = () => {
       if (tg) {
         tg.ready()
         tg.expand()
-        if (window.Telegram?.WebApp?.requestFullscreen) {
-  window.Telegram.WebApp.requestFullscreen();
-}
-
         tg.setHeaderColor("#ffffff")
         tg.setBackgroundColor("#ffffff")
         tg.enableClosingConfirmation()
@@ -144,11 +140,13 @@ if (isLoading) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.6 }}
-          className="absolute bottom-20 text-center text-gray-600 text-lg italic"
+          className="absolute bottom-20 w-full max-w-md mx-auto px-6"
           dir="rtl"
         >
-          “{currentQuote.quote}”
-          <div className="text-sm font-semibold text-blue-600 mt-1">- {currentQuote.author}</div>
+          <div className="text-center">
+            <p className="text-gray-600 text-lg italic leading-relaxed">{currentQuote.quote}</p>
+            <div className="text-sm font-semibold text-blue-600 mt-2">- {currentQuote.author}</div>
+          </div>
         </motion.div>
       </AnimatePresence>
     </div>
