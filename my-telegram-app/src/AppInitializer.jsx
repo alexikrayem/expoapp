@@ -55,16 +55,34 @@ const AppInitializer = () => {
       const tg = window.Telegram?.WebApp
       if (tg) {
         tg.ready()
-        tg.expand()
+
+        // 🧩 Ensure full screen mode
+        try {
+          tg.requireFullscreen?.() // legacy support (if exists)
+        } catch {}
+        tg.expand() // modern way to request full screen
+
         tg.setHeaderColor("#ffffff")
         tg.setBackgroundColor("#ffffff")
         tg.enableClosingConfirmation()
-        tg.HapticFeedback.impactOccurred("light")
+        tg.HapticFeedback?.impactOccurred("light")
+
+        // CSS fallback for 100vh
+        document.documentElement.style.height = "100vh"
+        document.body.style.height = "100vh"
+        document.body.style.margin = "0"
+        document.body.style.overflow = "hidden"
       }
-      const user = tg?.initDataUnsafe?.user || { id: 123456, first_name: "Local", last_name: "Dev" }
+
+      const user = tg?.initDataUnsafe?.user || {
+        id: 123456,
+        first_name: "Local",
+        last_name: "Dev",
+      }
       setTelegramUser(user)
       await fetchUserProfile()
     }
+
     init()
   }, [fetchUserProfile])
 
@@ -82,77 +100,78 @@ const AppInitializer = () => {
       setStep("حفظ اختيار المدينة...")
       const updatedProfile = await userService.updateProfile({ selected_city_id: cityId })
       setUserProfile(updatedProfile)
-      window.Telegram?.WebApp?.HapticFeedback.notificationOccurred("success")
+      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("success")
     } catch {
       setError("حدث خطأ أثناء حفظ اختيار المدينة.")
-      window.Telegram?.WebApp?.HapticFeedback.notificationOccurred("error")
+      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("error")
     }
   }
 
   // --- Loading Screen ---
- {/* Loading Screen */}
-if (isLoading) {
-  const currentQuote = dentistQuotes[quoteIndex]
-  return (
-    <div
-      className="w-screen h-screen flex flex-col items-center justify-center text-gray-800 px-6 font-sans relative"
-      style={{
-        background: "linear-gradient(to top, #e6f4ff 0%, #ffffff 70%)", // icy blue -> white
-      }}
-    >
-      {/* Logo */}
-      <motion.img
-        src={appLogoImage}
-        alt="App Logo"
-       className="w-40 h-40 object-contain mb-6"
-
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.8 }}
-      />
-
-      {/* App Title */}
-      <motion.h1
-        className="text-3xl font-extrabold mb-4 text-gray-900"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
+  if (isLoading) {
+    const currentQuote = dentistQuotes[quoteIndex]
+    return (
+      <div
+        className="w-screen h-screen flex flex-col items-center justify-center text-gray-800 px-6 font-sans relative"
+        style={{
+          background: "linear-gradient(to top, #e6f4ff 0%, #ffffff 70%)",
+          height: "100vh",
+          overflow: "hidden",
+        }}
       >
-        معرض المستلزمات الطبية
-      </motion.h1>
+        {/* Logo */}
+        <motion.img
+          src={appLogoImage}
+          alt="App Logo"
+          className="w-40 h-40 object-contain mb-6"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        />
 
-      {/* Loading Step */}
-      <motion.div
-        className="flex items-center gap-3 text-gray-700 mb-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-      >
-        <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
-        <span className="text-base font-medium">{step}</span>
-      </motion.div>
-
-      {/* Rotating Quote */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentQuote.quote}
-          initial={{ opacity: 0, y: 20 }}
+        {/* App Title */}
+        <motion.h1
+          className="text-3xl font-extrabold mb-4 text-gray-900"
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.6 }}
-          className="absolute bottom-20 w-full max-w-md mx-auto px-6"
-          dir="rtl"
+          transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <div className="text-center">
-            <p className="text-gray-600 text-lg italic leading-relaxed">{currentQuote.quote}</p>
-            <div className="text-sm font-semibold text-blue-600 mt-2">- {currentQuote.author}</div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  )
-}
+          معرض المستلزمات الطبية
+        </motion.h1>
 
+        {/* Loading Step */}
+        <motion.div
+          className="flex items-center gap-3 text-gray-700 mb-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
+          <span className="text-base font-medium">{step}</span>
+        </motion.div>
+
+        {/* Rotating Quote */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentQuote.quote}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.6 }}
+            className="absolute bottom-20 w-full max-w-md mx-auto px-6"
+            dir="rtl"
+          >
+            <div className="text-center">
+              <p className="text-gray-600 text-lg italic leading-relaxed">{currentQuote.quote}</p>
+              <div className="text-sm font-semibold text-blue-600 mt-2">
+                - {currentQuote.author}
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    )
+  }
 
   // --- Error Screen ---
   if (error) {
@@ -192,13 +211,22 @@ if (isLoading) {
           <SearchProvider cityId={userProfile?.selected_city_id}>
             <FilterProvider>
               <CheckoutProvider>
-                <Outlet
-                  context={{
-                    telegramUser,
-                    userProfile,
-                    onProfileUpdate: fetchUserProfile,
+                <div
+                  className="min-h-screen w-full bg-white"
+                  style={{
+                    height: "100vh",
+                    overflowY: "auto",
+                    WebkitOverflowScrolling: "touch",
                   }}
-                />
+                >
+                  <Outlet
+                    context={{
+                      telegramUser,
+                      userProfile,
+                      onProfileUpdate: fetchUserProfile,
+                    }}
+                  />
+                </div>
               </CheckoutProvider>
             </FilterProvider>
           </SearchProvider>
