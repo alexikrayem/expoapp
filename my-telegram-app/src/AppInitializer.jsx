@@ -49,42 +49,55 @@ const AppInitializer = () => {
   }, [])
 
   // --- Initialize Telegram + profile ---
-  useEffect(() => {
-    const init = async () => {
-      setStep("الاتصال بتيليجرام...")
-      const tg = window.Telegram?.WebApp
-      if (tg) {
-        tg.ready()
+useEffect(() => {
+  const init = async () => {
+    setStep("الاتصال بتيليجرام...");
+    const tg = window.Telegram?.WebApp;
+    if (!tg) return;
 
-        // 🧩 Ensure full screen mode
-        try {
-          tg.requireFullscreen?.() // legacy support (if exists)
-        } catch {}
-        tg.expand() // modern way to request full screen
+    tg.ready();
+    tg.expand();
 
-        tg.setHeaderColor("#ffffff")
-        tg.setBackgroundColor("#ffffff")
-        tg.enableClosingConfirmation()
-        tg.HapticFeedback?.impactOccurred("light")
-
-        // CSS fallback for 100vh
-        document.documentElement.style.height = "100vh"
-        document.body.style.height = "100vh"
-        document.body.style.margin = "0"
-        document.body.style.overflow = "hidden"
-      }
-
-      const user = tg?.initDataUnsafe?.user || {
-        id: 123456,
-        first_name: "Local",
-        last_name: "Dev",
-      }
-      setTelegramUser(user)
-      await fetchUserProfile()
+    // --- Request fullscreen if available ---
+    if (tg.requestFullscreen) {
+      tg.requestFullscreen().catch((err) => console.warn("Fullscreen failed:", err));
     }
 
-    init()
-  }, [fetchUserProfile])
+    // --- Safe area handling ---
+    const applySafeArea = () => {
+      const insets = tg.viewport?.safeAreaInset;
+      if (!insets) return;
+
+      document.body.style.paddingTop = `${insets.top}px`;
+      document.body.style.paddingBottom = `${insets.bottom}px`;
+      document.body.style.paddingLeft = `${insets.left}px`;
+      document.body.style.paddingRight = `${insets.right}px`;
+    };
+
+    // Apply immediately (may be 0 at first)
+    applySafeArea();
+
+    // Listen for changes (keyboard, rotation, minimize)
+    tg.onEvent("viewportChanged", applySafeArea);
+
+    // Optional: small delay to catch iOS quirks
+    setTimeout(applySafeArea, 100);
+
+    // --- Telegram UI customization ---
+    tg.setHeaderColor("#ffffff");
+    tg.setBackgroundColor("#ffffff");
+    tg.enableClosingConfirmation();
+    tg.HapticFeedback.impactOccurred("light");
+
+    // --- Telegram user + profile fetch ---
+    const user = tg?.initDataUnsafe?.user || { id: 123456, first_name: "Local", last_name: "Dev" };
+    setTelegramUser(user);
+    await fetchUserProfile();
+  };
+
+  init();
+}, [fetchUserProfile]);
+
 
   // --- Cycle quotes while loading ---
   useEffect(() => {
