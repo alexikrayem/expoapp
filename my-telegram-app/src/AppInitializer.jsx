@@ -55,48 +55,42 @@ useEffect(() => {
     const tg = window.Telegram?.WebApp;
     if (!tg) return;
 
-    tg.ready();
-    tg.expand();
+    try {
+      tg.ready();
+      tg.expand();
 
-    // --- Request fullscreen if available ---
-    if (tg.requestFullscreen) {
-      tg.requestFullscreen().catch((err) => console.warn("Fullscreen failed:", err));
+      // Request fullscreen (immersive mode)
+      if (tg.requestFullscreen) {
+        try {
+          tg.requestFullscreen();
+        } catch (err) {
+          console.warn("Fullscreen request failed:", err);
+        }
+      }
+
+      // Telegram UI tweaks
+      tg.setHeaderColor("#ffffff");
+      tg.setBackgroundColor("#ffffff");
+      tg.enableClosingConfirmation();
+      tg.HapticFeedback.impactOccurred("light");
+
+      // Get user
+      const user = tg?.initDataUnsafe?.user || { id: 123456, first_name: "Local", last_name: "Dev" };
+      setTelegramUser(user);
+
+      // Fetch profile
+      await fetchUserProfile();
+    } catch (err) {
+      console.error("Telegram init error:", err);
+      setError("حدث خطأ أثناء الاتصال بتيليجرام.");
+    } finally {
+      setIsLoading(false); // crucial to stop infinite loading
     }
-
-    // --- Safe area handling ---
-    const applySafeArea = () => {
-      const insets = tg.viewport?.safeAreaInset;
-      if (!insets) return;
-
-      document.body.style.paddingTop = `${insets.top}px`;
-      document.body.style.paddingBottom = `${insets.bottom}px`;
-      document.body.style.paddingLeft = `${insets.left}px`;
-      document.body.style.paddingRight = `${insets.right}px`;
-    };
-
-    // Apply immediately (may be 0 at first)
-    applySafeArea();
-
-    // Listen for changes (keyboard, rotation, minimize)
-    tg.onEvent("viewportChanged", applySafeArea);
-
-    // Optional: small delay to catch iOS quirks
-    setTimeout(applySafeArea, 100);
-
-    // --- Telegram UI customization ---
-    tg.setHeaderColor("#ffffff");
-    tg.setBackgroundColor("#ffffff");
-    tg.enableClosingConfirmation();
-    tg.HapticFeedback.impactOccurred("light");
-
-    // --- Telegram user + profile fetch ---
-    const user = tg?.initDataUnsafe?.user || { id: 123456, first_name: "Local", last_name: "Dev" };
-    setTelegramUser(user);
-    await fetchUserProfile();
   };
 
   init();
 }, [fetchUserProfile]);
+
 
 
   // --- Cycle quotes while loading ---
