@@ -54,17 +54,38 @@ const Header = ({ children }) => {
   const [preloadedCities, setPreloadedCities] = useState(null);
 
   // Throttled scroll handling
-  useEffect(() => {
-    const handleScroll = throttle(() => {
-      const compact = window.scrollY > 50;
-      setIsCompact(compact);
-      if (compact && isSearchExpanded && !isSearchFocused) {
-        setIsSearchExpanded(false);
-      }
-    }, 100);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isSearchExpanded, isSearchFocused]);
+useEffect(() => {
+  let ticking = false;
+
+  const updateCompact = () => {
+    const compact = window.scrollY > 50;
+
+    setIsCompact((prev) => {
+      if (prev !== compact) return compact;
+      return prev; // avoid unnecessary re-renders
+    });
+
+    // 👇 NEW: collapse the search bar when compacting
+    if (compact) {
+      setIsSearchExpanded(false);
+      setIsSearchFocused(false);
+    }
+
+    ticking = false;
+  };
+
+  const handleScroll = () => {
+    if (!ticking) {
+      window.requestAnimationFrame(updateCompact);
+      ticking = true;
+    }
+  };
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  return () => window.removeEventListener("scroll", handleScroll);
+}, []);
+
+
 
   // Load cities once safely
   useEffect(() => {
@@ -110,7 +131,8 @@ const Header = ({ children }) => {
       try {
         // sanitize all user inputs
         const safeData = Object.fromEntries(
-          Object.entries(updatedFormData).map(([k, v]) => [k, DOMPurify.sanitize(v)])
+          Object.entries(updatedFormData).map(([k, v]) => [k, DOMPurify.sanitize(v).trim()])
+
         );
 
         await userService.updateProfile(safeData);
@@ -226,138 +248,143 @@ const Header = ({ children }) => {
           </div>
         </motion.div>
 
-        {/* --- ACTIONS --- */}
-        <div className="w-full flex items-center justify-between flex-shrink-0">
-          {/* City selector */}
-          <div className="flex items-center">
-            <div className="relative">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsCityPopoverOpen((prev) => !prev)}
-                disabled={isChangingCity}
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-white/80 backdrop-blur-sm text-gray-700 rounded-xl hover:bg-white transition-all shadow-sm border border-gray-200 disabled:opacity-70"
-              >
-                {isChangingCity ? (
-                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500 animate-spin" />
-                ) : (
-                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
-                )}
-                <div className="hidden sm:flex flex-col items-start min-w-0">
-                  <span className="text-[10px] text-gray-500 leading-none">المدينة</span>
-                  <span className="text-xs font-semibold text-gray-800 leading-none truncate max-w-16">
-                    {isChangingCity ? "جاري..." : userProfile?.selected_city_name || "اختر"}
-                  </span>
-                </div>
-                <span className="sm:hidden text-xs font-semibold text-gray-800 truncate max-w-12">
-                  {isChangingCity ? "..." : userProfile?.selected_city_name || "مدينة"}
-                </span>
-                <ChevronDown className="h-3 w-3 text-gray-400 hidden sm:block" />
-              </motion.button>
-
-              <AnimatePresence>
-                {isCityPopoverOpen && (
-                  <CityChangePopover
-                    onCitySelect={handleCityChange}
-                    currentCityId={userProfile?.selected_city_id}
-                    onClose={() => setIsCityPopoverOpen(false)}
-                    preloadedCities={preloadedCities}
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Right actions */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            {/* Notifications */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center 
-                bg-white/80 backdrop-blur-sm text-gray-600 rounded-xl hover:bg-white 
-                transition-all shadow-sm border border-gray-200"
-              title="الإشعارات"
-            >
-              <Bell className="h-5 w-5 text-gray-600" />
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full h-3 w-3 sm:h-4 sm:w-4 flex items-center justify-center font-bold shadow-md"
-              >
-                <span className="text-[8px] sm:text-xs">3</span>
-              </motion.span>
-            </motion.button>
-
-            {/* Compact Search Icon */}
-            {isCompact && !isSearchExpanded && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsSearchExpanded(true)}
-                className="h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center 
-                  bg-white/80 backdrop-blur-sm rounded-xl hover:bg-white 
-                  transition-all border border-gray-200 shadow-sm"
-              >
-                <Search className="h-5 w-5 text-gray-600" />
-              </motion.button>
-            )}
-
-            {/* Profile Icon */}
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <ProfileIcon user={telegramUser} onClick={handleOpenProfileModal} />
-            </motion.div>
-          </div>
-        </div>
-
-        {/* --- SEARCH BAR --- */}
-        {(!isCompact || isSearchExpanded) && (
-          <motion.div
-            layout
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="relative w-full"
-          >
-            <motion.div
-              className="relative h-10 sm:h-11"
-              animate={{
-                boxShadow: isSearchFocused
-                  ? "0 8px 30px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.2)"
-                  : "0 2px 10px rgba(0, 0, 0, 0.05)",
-              }}
-              transition={{ duration: 0.3 }}
-            >
-              <Search className="absolute right-3 sm:right-4 top-0 bottom-0 m-auto h-4 w-4 sm:h-5 sm:w-5 text-gray-400 z-10" />
-              <motion.input
-                type="text"
-                placeholder="ابحث عن المنتجات، الموردين، العروض..."
-                value={searchTerm}
-                onChange={(e) => handleSearchTermChange(DOMPurify.sanitize(e.target.value))}
-                onFocus={handleSearchFocus}
-                onBlur={handleSearchBlur}
-                onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
-                className="w-full h-full pl-10 sm:pl-12 pr-10 sm:pr-12 border border-gray-200 bg-gray-100 
-                  focus:bg-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 
-                  transition-all duration-300 text-sm placeholder-gray-500 shadow-sm leading-none"
-              />
-              <AnimatePresence>
-                {searchTerm && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8, x: 10 }}
-                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                    exit={{ opacity: 0, scale: 0.8, x: 10 }}
-                    onClick={clearSearch}
-                    className="absolute left-2 sm:left-3 top-0 bottom-0 m-auto h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors z-10"
-                    aria-label="مسح البحث"
-                  >
-                    <X className="h-4 w-4 sm:h-5 sm:w-5 align-middle" />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </motion.div>
+       {/* --- ACTIONS --- */}
+<div className="w-full flex items-center justify-between flex-shrink-0">
+  {/* City selector */}
+  <div className="flex items-center">
+    <div className="relative">
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsCityPopoverOpen((prev) => !prev)}
+        disabled={isChangingCity}
+        className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-white/80 backdrop-blur-sm text-gray-700 rounded-xl hover:bg-white transition-all shadow-sm border border-gray-200 disabled:opacity-70"
+      >
+        {isChangingCity ? (
+          <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+        ) : (
+          <MapPin className="h-4 w-4 text-blue-500" />
         )}
+        <span className="hidden sm:flex flex-col items-start min-w-0">
+          <span className="text-[10px] text-gray-500 leading-none">المدينة</span>
+          <span className="text-xs font-semibold text-gray-800 leading-none truncate max-w-16">
+            {isChangingCity ? "جاري..." : userProfile?.selected_city_name || "اختر"}
+          </span>
+        </span>
+        <ChevronDown className="h-3 w-3 text-gray-400 hidden sm:block" />
+      </motion.button>
+
+      <AnimatePresence>
+        {isCityPopoverOpen && (
+          <CityChangePopover
+            onCitySelect={handleCityChange}
+            currentCityId={userProfile?.selected_city_id}
+            onClose={() => setIsCityPopoverOpen(false)}
+            preloadedCities={preloadedCities}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  </div>
+
+  {/* Right actions */}
+  <div className="flex items-center gap-1 sm:gap-2">
+    {/* Notifications */}
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="relative h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center 
+        bg-white/80 backdrop-blur-sm text-gray-600 rounded-xl hover:bg-white 
+        transition-all shadow-sm border border-gray-200"
+      title="الإشعارات"
+    >
+      <Bell className="h-5 w-5 text-gray-600" />
+      <motion.span
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] sm:text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold shadow-md"
+      >
+        3
+      </motion.span>
+    </motion.button>
+
+    {/* Search Button (Compact Mode) */}
+    <AnimatePresence mode="wait">
+      {isCompact && !isSearchExpanded && (
+        <motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  onClick={() => setIsSearchExpanded(true)}
+  disabled={!isCompact}
+  style={{ willChange: "opacity, transform" }}
+
+  className={`h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center 
+    bg-white/80 backdrop-blur-sm rounded-xl hover:bg-white 
+    transition-all border border-gray-200 shadow-sm
+    ${isCompact && !isSearchExpanded ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+  animate={{
+    opacity: isCompact && !isSearchExpanded ? 1 : 0,
+    y: isCompact && !isSearchExpanded ? 0 : -6,
+    scale: isCompact && !isSearchExpanded ? 1 : 0.95,
+  }}
+  transition={{
+    type: "spring",
+    stiffness: 300,
+    damping: 25,
+  }}
+>
+  <Search className="h-5 w-5 text-gray-600" />
+</motion.button>
+      )}
+    </AnimatePresence>
+
+    {/* Profile */}
+    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+      <ProfileIcon user={telegramUser} onClick={handleOpenProfileModal} />
+    </motion.div>
+  </div>
+</div>
+
+{/* --- SEARCH BAR --- */}
+<AnimatePresence mode="wait">
+  {(!isCompact || isSearchExpanded) && (
+    <motion.div
+      key="expanded-search"
+      transition={{ duration: 0.25 }}
+      className="relative w-full"
+    >
+      <div className="relative h-10 sm:h-11">
+        <Search className="absolute right-3 sm:right-4 top-0 bottom-0 m-auto h-4 w-4 sm:h-5 sm:w-5 text-gray-400 z-10" />
+        <input
+          type="text"
+          placeholder="ابحث عن المنتجات، الموردين، العروض..."
+          value={searchTerm}
+          onChange={(e) => handleSearchTermChange(DOMPurify.sanitize(e.target.value))}
+          onFocus={handleSearchFocus}
+          onBlur={handleSearchBlur}
+          onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
+          className="w-full h-full pl-10 sm:pl-12 pr-10 sm:pr-12 border border-gray-200 bg-gray-100 
+            focus:bg-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-400 
+            transition-all duration-300 text-sm placeholder-gray-500 shadow-sm leading-none"
+        />
+        {searchTerm && (
+          <motion.button
+            key="clear"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={clearSearch}
+            className="absolute left-2 sm:left-3 top-0 bottom-0 m-auto h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors z-10"
+            aria-label="مسح البحث"
+          >
+            <X className="h-4 w-4 sm:h-5 sm:w-5" />
+          </motion.button>
+        )}
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
 
         {children}
       </div>

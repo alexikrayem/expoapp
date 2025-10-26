@@ -1,28 +1,51 @@
-// src/components/layout/Footer.jsx
-import React from 'react';
-import { Home, Heart, ListOrdered } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState } from "react"
+import { Home, Heart, ListOrdered } from "lucide-react"
+import { Link, useLocation } from "react-router-dom"
+import { motion, AnimatePresence } from "framer-motion"
 
 const Footer = () => {
-  const location = useLocation();
-  const activePath = location.pathname;
+  const location = useLocation()
+  const activePath = location.pathname
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  // 👇 Detect scroll position to toggle compact mode
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 40)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  // 👇 Expand footer automatically when route changes
+  useEffect(() => {
+    setIsScrolled(false)
+  }, [location.pathname])
 
   const navItems = [
-    { name: 'home', path: '/', icon: Home, label: 'الرئيسية' },
-    { name: 'favorites', path: '/favorites', icon: Heart, label: 'المفضلة' },
-    { name: 'orders', path: '/orders', icon: ListOrdered, label: 'طلباتي' },
-  ];
+    { name: "home", path: "/", icon: Home, label: "الرئيسية" },
+    { name: "favorites", path: "/favorites", icon: Heart, label: "المفضلة" },
+    { name: "orders", path: "/orders", icon: ListOrdered, label: "طلباتي" },
+  ]
 
   const handleNavClick = () => {
-    window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
-  };
+    // Telegram light vibration feedback
+    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred("light")
+    // Expand labels immediately on click
+    setIsScrolled(false)
+  }
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40 flex-shrink-0 bg-white/95 backdrop-blur-xl">
-      <nav className="flex justify-around max-w-4xl mx-auto h-16 mb-[env(safe-area-inset-bottom,16px)] py-2">
+    <motion.footer
+      animate={{
+        height: isScrolled ? 60 : 72,
+      }}
+      transition={{ duration: 0.3, type: "tween" }}
+      className="fixed bottom-0 left-0 right-0 border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40 flex-shrink-0 bg-white/95 backdrop-blur-xl overflow-hidden"
+    >
+      <nav className="flex justify-around max-w-4xl mx-auto h-full mb-[env(safe-area-inset-bottom,16px)] py-2">
         {navItems.map((item) => {
-          const isActive = activePath === item.path;
+          const isActive = activePath === item.path
           return (
             <motion.div
               key={item.name}
@@ -34,53 +57,63 @@ const Footer = () => {
                 to={item.path}
                 onClick={handleNavClick}
                 className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 h-full relative ${
-                  isActive ? 'text-blue-600' : 'text-gray-500 hover:text-blue-500'
+                  isActive ? "text-blue-600" : "text-gray-500 hover:text-blue-500"
                 }`}
               >
-                {/* Pill-shaped gradient background */}
+                {/* Icon with subtle highlight */}
                 <motion.div
                   animate={{
                     scale: isActive ? 1.05 : 1,
                   }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   className="inline-flex items-center justify-center px-5 py-2 rounded-full relative overflow-hidden"
                   style={{
                     background: isActive
-                      ? 'linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0.6))'
-                      : 'transparent',
+                      ? "linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0.6))"
+                      : "transparent",
                   }}
                 >
                   <item.icon
                     className="h-6 w-6"
-                    fill={isActive ? 'currentColor' : 'none'}
+                    fill={isActive ? "currentColor" : "none"}
                   />
                   {isActive && (
                     <div
                       style={{
-                        position: 'absolute',
+                        position: "absolute",
                         inset: 0,
-                        boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)',
-                        borderRadius: '9999px',
-                        pointerEvents: 'none',
+                        boxShadow: "0 2px 8px rgba(59, 130, 246, 0.15)",
+                        borderRadius: "9999px",
+                        pointerEvents: "none",
                       }}
                     />
                   )}
                 </motion.div>
 
-                <span
-                  className={`text-xs font-semibold transition-all duration-200 ${
-                    isActive ? 'text-blue-600' : 'text-gray-500'
-                  }`}
-                >
-                  {item.label}
-                </span>
+                {/* Animate label visibility */}
+                <AnimatePresence mode="wait">
+                  {!isScrolled && (
+                    <motion.span
+                      key={item.label}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.25 }}
+                      className={`text-xs font-semibold ${
+                        isActive ? "text-blue-600" : "text-gray-500"
+                      }`}
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </Link>
             </motion.div>
-          );
+          )
         })}
       </nav>
-    </footer>
-  );
-};
+    </motion.footer>
+  )
+}
 
-export default Footer;
+export default Footer
