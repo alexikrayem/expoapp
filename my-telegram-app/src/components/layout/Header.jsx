@@ -58,14 +58,19 @@ useEffect(() => {
   let ticking = false;
 
   const updateCompact = () => {
-    const compact = window.scrollY > 50;
+    const scrollY =
+      window.scrollY ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0;
+
+    const compact = scrollY > 50;
 
     setIsCompact((prev) => {
       if (prev !== compact) return compact;
-      return prev; // avoid unnecessary re-renders
+      return prev;
     });
 
-    // 👇 NEW: collapse the search bar when compacting
     if (compact) {
       setIsSearchExpanded(false);
       setIsSearchFocused(false);
@@ -81,9 +86,19 @@ useEffect(() => {
     }
   };
 
-  window.addEventListener("scroll", handleScroll, { passive: true });
-  return () => window.removeEventListener("scroll", handleScroll);
+  // ✅ Detect the right container
+  const scrollContainer =
+    document.scrollingElement ||
+    document.body ||
+    window;
+
+  scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+
+  return () => {
+    scrollContainer.removeEventListener("scroll", handleScroll);
+  };
 }, []);
+
 
 
 
