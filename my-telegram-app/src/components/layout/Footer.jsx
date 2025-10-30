@@ -10,23 +10,42 @@ const Footer = () => {
 
   // 👇 Detect scroll position to toggle compact mode
 // 👇 Detect scroll position to toggle compact mode - FIXED FOR TELEGRAM MINI APP
+// 👇 Detect scroll position to toggle compact mode (FINAL TWA-NATIVE FIX)
 useEffect(() => {
+  const tg = window?.Telegram?.WebApp;
+
   const handleScroll = () => {
-    // Check scroll position on both window and document.documentElement 
-    // for maximum compatibility in embedded environments.
-    const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+    // Read scroll position from all possible sources for max compatibility
+    const scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
     
     // Set threshold to 40px
     setIsScrolled(scrollTop > 40);
   };
 
-  // ✅ Attach listener to the 'document' object (most reliable source in TWA)
-  document.addEventListener("scroll", handleScroll, { passive: true });
+  // --- THE FIX ---
+  // If in Telegram environment, use the TWA-native event
+  if (tg) {
+    // This event fires on scroll, resize, and keyboard
+    tg.onEvent("viewportChanged", handleScroll);
 
-  return () => {
-    document.removeEventListener("scroll", handleScroll);
-  };
-}, []);
+    // Don't forget to run it once on load
+    handleScroll();
+    
+    // Cleanup function
+    return () => {
+      tg.offEvent("viewportChanged", handleScroll);
+    };
+  } 
+  // Fallback for standard browsers
+  else {
+    document.addEventListener("scroll", handleScroll, { passive: true });
+    
+    // Cleanup function
+    return () => {
+      document.removeEventListener("scroll", handleScroll);
+    };
+  }
+}, []); // Empty dependency array
 
 
   // 👇 Expand footer automatically when route changes

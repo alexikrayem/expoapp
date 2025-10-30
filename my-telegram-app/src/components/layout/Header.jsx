@@ -55,17 +55,18 @@ const Header = ({ children }) => {
 
   // Throttled scroll handling
 // Throttled scroll handling - FIXED FOR TELEGRAM MINI APP
+// Throttled scroll handling - (FINAL TWA-NATIVE FIX)
 useEffect(() => {
-  const handleScroll = () => {
-    // Check scroll position on both window and document.documentElement
-    // as window.scrollY is often 0 in embedded environments like Telegram WebApp.
-    const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-    const compact = scrollY > 50; // Threshold of 50px
+  const tg = window?.Telegram?.WebApp;
 
-    // Use a function update to safely check the previous state
+  // This is the scroll handler function
+  const handleScroll = () => {
+    // Read scroll position from all possible sources for max compatibility
+    const scrollY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    const compact = scrollY > 50; // Threshold
+
     setIsCompact((prev) => {
       if (prev !== compact) {
-        // If the state changes to compact, close search elements
         if (compact) {
           setIsSearchExpanded(false);
           setIsSearchFocused(false);
@@ -76,16 +77,30 @@ useEffect(() => {
     });
   };
 
-  // ✅ Attach listener to the 'document' object for better compatibility 
-  // in embedded views (like the Telegram Mini App iframe/webview).
-  document.addEventListener("scroll", handleScroll, { passive: true });
+  // --- THE FIX ---
+  // If in Telegram environment, use the TWA-native event
+  if (tg) {
+    // This event fires on scroll, resize, and keyboard
+    tg.onEvent("viewportChanged", handleScroll);
 
-  // Cleanup function
-  return () => {
-    document.removeEventListener("scroll", handleScroll);
-  };
-}, []); 
-// The empty dependency array ensures this effect runs only once after the initial render.
+    // Don't forget to run it once on load
+    handleScroll();
+
+    // Cleanup function
+    return () => {
+      tg.offEvent("viewportChanged", handleScroll);
+    };
+  }
+  // Fallback for standard browsers (like your local testing)
+  else {
+    document.addEventListener("scroll", handleScroll, { passive: true });
+    
+    // Cleanup function
+    return () => {
+      document.removeEventListener("scroll", handleScroll);
+    };
+  }
+}, []); // Empty dependency array is correct
 
 
   // Load cities once safely
