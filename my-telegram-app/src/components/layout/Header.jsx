@@ -54,43 +54,38 @@ const Header = ({ children }) => {
   const [preloadedCities, setPreloadedCities] = useState(null);
 
   // Throttled scroll handling
+// Throttled scroll handling - FIXED FOR TELEGRAM MINI APP
 useEffect(() => {
-  let ticking = false;
-
-  const updateCompact = () => {
-    const scrollY = window.scrollY || 0;
-    const compact = scrollY > 50;
-
-    setIsCompact((prev) => (prev !== compact ? compact : prev));
-
-    if (compact) {
-      setIsSearchExpanded(false);
-      setIsSearchFocused(false);
-    }
-
-    ticking = false;
-  };
-
   const handleScroll = () => {
-    if (!ticking) {
-      window.requestAnimationFrame(updateCompact);
-      ticking = true;
-    }
+    // Check scroll position on both window and document.documentElement
+    // as window.scrollY is often 0 in embedded environments like Telegram WebApp.
+    const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    const compact = scrollY > 50; // Threshold of 50px
+
+    // Use a function update to safely check the previous state
+    setIsCompact((prev) => {
+      if (prev !== compact) {
+        // If the state changes to compact, close search elements
+        if (compact) {
+          setIsSearchExpanded(false);
+          setIsSearchFocused(false);
+        }
+        return compact;
+      }
+      return prev;
+    });
   };
 
-  // ✅ Use window directly — this is the scroll event source
-  window.addEventListener("scroll", handleScroll, { passive: true });
+  // ✅ Attach listener to the 'document' object for better compatibility 
+  // in embedded views (like the Telegram Mini App iframe/webview).
+  document.addEventListener("scroll", handleScroll, { passive: true });
 
-  // 🧠 Optional debug log (remove after testing)
-  // console.log("Header scroll listener attached");
-
+  // Cleanup function
   return () => {
-    window.removeEventListener("scroll", handleScroll);
+    document.removeEventListener("scroll", handleScroll);
   };
-}, []);
-
-
-
+}, []); 
+// The empty dependency array ensures this effect runs only once after the initial render.
 
 
   // Load cities once safely

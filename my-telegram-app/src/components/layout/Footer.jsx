@@ -9,20 +9,23 @@ const Footer = () => {
   const [isScrolled, setIsScrolled] = useState(false)
 
   // 👇 Detect scroll position to toggle compact mode
+// 👇 Detect scroll position to toggle compact mode - FIXED FOR TELEGRAM MINI APP
 useEffect(() => {
-  let scrollContainer = window;
-  const tgContainer = document.querySelector(".tgwebapp-scroll-container, body, html");
-  if (tgContainer && tgContainer !== document.body) {
-    scrollContainer = tgContainer;
-  }
-
   const handleScroll = () => {
-    const scrollTop = scrollContainer.scrollTop || window.scrollY;
+    // Check scroll position on both window and document.documentElement 
+    // for maximum compatibility in embedded environments.
+    const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+    
+    // Set threshold to 40px
     setIsScrolled(scrollTop > 40);
   };
 
-  scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
-  return () => scrollContainer.removeEventListener("scroll", handleScroll);
+  // ✅ Attach listener to the 'document' object (most reliable source in TWA)
+  document.addEventListener("scroll", handleScroll, { passive: true });
+
+  return () => {
+    document.removeEventListener("scroll", handleScroll);
+  };
 }, []);
 
 
