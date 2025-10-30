@@ -58,18 +58,10 @@ useEffect(() => {
   let ticking = false;
 
   const updateCompact = () => {
-    const scrollY =
-      window.scrollY ||
-      document.documentElement.scrollTop ||
-      document.body.scrollTop ||
-      0;
-
+    const scrollY = window.scrollY || 0;
     const compact = scrollY > 50;
 
-    setIsCompact((prev) => {
-      if (prev !== compact) return compact;
-      return prev;
-    });
+    setIsCompact((prev) => (prev !== compact ? compact : prev));
 
     if (compact) {
       setIsSearchExpanded(false);
@@ -86,18 +78,17 @@ useEffect(() => {
     }
   };
 
-  // ✅ Detect the right container
-  const scrollContainer =
-    document.scrollingElement ||
-    document.body ||
-    window;
+  // ✅ Use window directly — this is the scroll event source
+  window.addEventListener("scroll", handleScroll, { passive: true });
 
-  scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+  // 🧠 Optional debug log (remove after testing)
+  // console.log("Header scroll listener attached");
 
   return () => {
-    scrollContainer.removeEventListener("scroll", handleScroll);
+    window.removeEventListener("scroll", handleScroll);
   };
 }, []);
+
 
 
 
@@ -280,7 +271,8 @@ useEffect(() => {
         ) : (
           <MapPin className="h-4 w-4 text-blue-500" />
         )}
-        <span className="hidden sm:flex flex-col items-start min-w-0">
+        <span className="flex flex-col items-start min-w-0">
+
           <span className="text-[10px] text-gray-500 leading-none">المدينة</span>
           <span className="text-xs font-semibold text-gray-800 leading-none truncate max-w-16">
             {isChangingCity ? "جاري..." : userProfile?.selected_city_name || "اختر"}

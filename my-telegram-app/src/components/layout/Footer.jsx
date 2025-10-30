@@ -9,13 +9,22 @@ const Footer = () => {
   const [isScrolled, setIsScrolled] = useState(false)
 
   // 👇 Detect scroll position to toggle compact mode
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 40)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+useEffect(() => {
+  let scrollContainer = window;
+  const tgContainer = document.querySelector(".tgwebapp-scroll-container, body, html");
+  if (tgContainer && tgContainer !== document.body) {
+    scrollContainer = tgContainer;
+  }
+
+  const handleScroll = () => {
+    const scrollTop = scrollContainer.scrollTop || window.scrollY;
+    setIsScrolled(scrollTop > 40);
+  };
+
+  scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+  return () => scrollContainer.removeEventListener("scroll", handleScroll);
+}, []);
+
 
   // 👇 Expand footer automatically when route changes
   useEffect(() => {
