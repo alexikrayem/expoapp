@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useEffect, useState } from "react"
 import { Home, Heart, ListOrdered } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
@@ -8,13 +10,26 @@ const Footer = () => {
   const activePath = location.pathname
   const [isScrolled, setIsScrolled] = useState(false)
 
-  // 👇 Detect scroll position to toggle compact mode
+  // Detect screen size for compact mode instead of scroll position
+  // This works better in Telegram Mini App
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 40)
+    const handleResize = () => {
+      // Use window.innerHeight as it's more reliable in embedded Telegram view
+      const isSmallViewport = window.innerHeight < 700
+      setIsScrolled(isSmallViewport)
     }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
+
+    // Call immediately on mount
+    handleResize()
+
+    // Listen to resize and orientationchange
+    window.addEventListener("resize", handleResize)
+    window.addEventListener("orientationchange", handleResize)
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      window.removeEventListener("orientationchange", handleResize)
+    }
   }, [])
 
   // 👇 Expand footer automatically when route changes
@@ -73,10 +88,10 @@ const Footer = () => {
                       : "transparent",
                   }}
                 >
-                  <item.icon
-                    className="h-6 w-6"
-                    fill={isActive ? "currentColor" : "none"}
-                  />
+                  {React.createElement(item.icon, {
+                    className: "h-6 w-6",
+                    fill: isActive ? "currentColor" : "none",
+                  })}
                   {isActive && (
                     <div
                       style={{
@@ -99,9 +114,7 @@ const Footer = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
                       transition={{ duration: 0.25 }}
-                      className={`text-xs font-semibold ${
-                        isActive ? "text-blue-600" : "text-gray-500"
-                      }`}
+                      className={`text-xs font-semibold ${isActive ? "text-blue-600" : "text-gray-500"}`}
                     >
                       {item.label}
                     </motion.span>
