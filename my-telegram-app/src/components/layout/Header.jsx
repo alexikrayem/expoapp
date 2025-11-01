@@ -42,10 +42,11 @@ const Header = ({ children }) => {
   const [isChangingCity, setIsChangingCity] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [isSearchExpanded, setIsSearchExpanded] = useState(false)
-  const [isCompact, setIsCompact] = useState(false)
+  const [isCompact, setIsCompact] =useState(false)
   const [preloadedCities, setPreloadedCities] = useState(null)
-  const sentinelRef = useRef(null) // Add sentinel ref for IntersectionObserver
+  const sentinelRef = useRef(null) // This is correct for Telegram Mini Apps
 
+  // This IntersectionObserver is the correct way to handle this in a Telegram Mini App
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
@@ -204,7 +205,7 @@ const Header = ({ children }) => {
   // --- JSX ---
   return (
     <>
-      <div ref={sentinelRef} style={{ height: 0, visibility: "hidden" }} aria-hidden="true" />
+      <div id="page-top-sentinel" ref={sentinelRef} style={{ height: 0, visibility: "hidden" }} aria-hidden="true" />
 
       <motion.header
         className={`sticky top-0 z-30 pt-[env(safe-area-inset-top, 16px)] ${
@@ -329,7 +330,8 @@ const Header = ({ children }) => {
             {(!isCompact || isSearchExpanded) && (
               <motion.div key="expanded-search" transition={{ duration: 0.25 }} className="relative w-full">
                 <div className="relative h-10 sm:h-11">
-                  <Search className="absolute right-3 sm:right-4 top-0 bottom-0 m-auto h-4 w-4 sm:h-5 sm:w-5 text-gray-400 z-10" />
+                  {/* --- FIX IS HERE --- Added pointer-events-none */}
+                  <Search className="absolute right-3 sm:right-4 top-0 bottom-0 m-auto h-4 w-4 sm:h-5 sm:w-5 text-gray-400 z-10 pointer-events-none" />
                   <input
                     type="text"
                     placeholder="ابحث عن المنتجات، الموردين، العروض..."

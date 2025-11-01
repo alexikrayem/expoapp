@@ -5,7 +5,7 @@ import { Home, Heart, ListOrdered } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 
-// small throttle helper
+// small throttle helper (kept for completeness, though not strictly needed here)
 const throttle = (fn, wait = 100) => {
   let last = 0
   let timeout = null
@@ -32,35 +32,62 @@ const throttle = (fn, wait = 100) => {
 const Footer = () => {
   const location = useLocation()
   const activePath = location.pathname
-  const [isScrolled, setIsScrolled] = useState(false)
-  const sentinelRef = useRef(null) // Add sentinel ref for IntersectionObserver
 
+  // State to track intersection with top and bottom sentinels
+  const [isAtTop, setIsAtTop] = useState(true) 
+  const [isAtBottom, setIsAtBottom] = useState(false) 
+  const bottomSentinelRef = useRef(null) 
+
+  // --- Core Logic: Dual Intersection Observer ---
   useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
+    // 1. Get the TOP sentinel from the Header component using its ID
+    const topSentinel = document.querySelector("#page-top-sentinel")
+    // 2. Get the BOTTOM sentinel (local ref)
+    const bottomSentinel = bottomSentinelRef.current
 
-    const observer = new IntersectionObserver(
+    if (!bottomSentinel || !topSentinel) {
+      // This is a safe guard if the Header isn't rendered or the ID is missing
+      console.warn("Footer observers could not find both sentinels. Ensure Header has #page-top-sentinel.")
+      return
+    }
+
+    // Observer 1: Watches the TOP sentinel
+    const topObserver = new IntersectionObserver(
       ([entry]) => {
-        // If sentinel is not visible at top, we're scrolled down
-        setIsScrolled(!entry.isIntersecting)
+        // Sets to true if the top sentinel is visible (i.e., we are at the top)
+        setIsAtTop(entry.isIntersecting)
       },
-      {
-        threshold: [0],
-        rootMargin: "0px",
-      },
+      { threshold: [0], rootMargin: "0px" },
     )
 
-    observer.observe(sentinel)
+    // Observer 2: Watches the BOTTOM sentinel
+    const bottomObserver = new IntersectionObserver(
+      ([entry]) => {
+        // Sets to true if the bottom sentinel is visible (i.e., we are at the bottom)
+        setIsAtBottom(entry.isIntersecting)
+      },
+      { threshold: [0], rootMargin: "0px" },
+    )
+
+    topObserver.observe(topSentinel)
+    bottomObserver.observe(bottomSentinel)
 
     return () => {
-      if (sentinel) observer.unobserve(sentinel)
+      // Cleanup observers
+      if (topSentinel) topObserver.unobserve(topSentinel)
+      if (bottomSentinel) bottomObserver.unobserve(bottomSentinel)
     }
-  }, [])
+  }, []) // Dependency array is empty to run once on mount
 
-  // Expand footer automatically when route changes
+  // Reset state when route changes (to ensure expansion on new page load)
   useEffect(() => {
-    setIsScrolled(false)
+    setIsAtTop(true)
+    setIsAtBottom(false)
   }, [location.pathname])
+  
+  // Logic to determine if the footer should be compact
+  // It is compact ONLY if we are NOT at the top AND NOT at the bottom.
+  const isCompact = !isAtTop && !isAtBottom
 
   const navItems = [
     { name: "home", path: "/", icon: Home, label: "الرئيسية" },
@@ -74,16 +101,22 @@ const Footer = () => {
     } catch (e) {
       // ignore if not available
     }
-    setIsScrolled(false)
+    // No need to manually set scroll state, the route change useEffect handles it.
   }
 
   return (
     <>
-      <div ref={sentinelRef} style={{ height: 0, visibility: "hidden" }} aria-hidden="true" />
+      {/* This is the BOTTOM sentinel element. It must be inside the scrollable container (e.g., your main app layout) and positioned at the very bottom of the content. */}
+      <div 
+        ref={bottomSentinelRef} 
+        style={{ height: 0, visibility: "hidden" }} 
+        aria-hidden="true" 
+      />
 
       <motion.footer
+        // Animate based on the new isCompact state
         animate={{
-          height: isScrolled ? 60 : 72,
+          height: isCompact ? 60 : 72,
         }}
         transition={{ duration: 0.3, type: "tween" }}
         className="fixed bottom-0 left-0 right-0 border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40 flex-shrink-0 bg-white/95 backdrop-blur-xl overflow-hidden"
@@ -137,7 +170,7 @@ const Footer = () => {
 
                   {/* Animate label visibility */}
                   <AnimatePresence mode="wait">
-                    {!isScrolled && (
+                    {!isCompact && ( // Use the isCompact variable
                       <motion.span
                         key={item.label}
                         initial={{ opacity: 0, y: 10 }}
