@@ -5,12 +5,12 @@ import { useOutletContext } from "react-router-dom"
 import { useCart } from "../context/CartContext"
 import { useCheckout } from "../context/CheckoutContext"
 import { useOrders } from "../hooks/useOrders"
+import { useMiniCart } from "../context/MiniCartContext"
 import OrdersTab from "../components/tabs/OrdersTab"
 import { Loader2, Trash2, Plus, Minus } from "lucide-react"
 import { useCurrency } from "../context/CurrencyContext"
 import { motion } from "framer-motion"
 import { orderService } from "../services/orderService"
-import appLogoImage from "/src/assets/IMG_1787.png"; // Adjust path if necessary
 
 // --- FILTER BAR COMPONENT (with consistent design) ---
 const OrderFilterBar = ({ activeFilter, setActiveFilter }) => {
@@ -100,25 +100,13 @@ const CheckoutCard = () => {
           <span className="font-semibold">المجموع:</span>
           <span className="font-bold text-blue-600">{formatPrice(total)}</span>
         </div>
-  <motion.button
-    onClick={async () => await startCheckout(userProfile, telegramUser, onProfileUpdate)}
-    disabled={isPlacingOrder}
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    className="w-full h-14 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-  >
-    {isPlacingOrder ? (
-      <>
-        <Loader2 className="w-5 h-5 animate-spin" />
-        <span>جاري الإرسال...</span>
-      </>
-    ) : (
-      <span>إرسال الطلب</span>
-    )}
-  </motion.button>
-
-
-        
+        <button
+          onClick={() => startCheckout(userProfile, telegramUser, onProfileUpdate)}
+          disabled={isPlacingOrder}
+          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center font-bold text-lg"
+        >
+          {isPlacingOrder ? <Loader2 className="animate-spin" /> : "إرسال الطلب"}
+        </button>
       </div>
     </div>
   )
@@ -126,6 +114,7 @@ const CheckoutCard = () => {
 
 const OrdersPage = () => {
   const { telegramUser } = useOutletContext() || {}
+  const { hideMiniCartBar } = useMiniCart()
   const { orders, isLoadingOrders, ordersError, refetchOrders } = useOrders(telegramUser)
   const [activeFilter, setActiveFilter] = useState("all")
   const [isUpdatingOrder, setIsUpdatingOrder] = useState(null)
@@ -152,25 +141,6 @@ const OrdersPage = () => {
 
   return (
     <div className="p-4 max-w-4xl mx-auto pb-24">
-      {/* --- PREHEADER COMPONENT: Centered Logo + Brand Text --- */}
-<motion.div
-  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2 mt-4"
->
-  <img
-    src={appLogoImage}
-    alt="App Logo"
-    className="object-contain rounded-xl w-10 h-10 sm:w-12 sm:h-12 mt-6"
-  />
-  <div className="flex flex-col items-center text-center mt-6">
-    <span className="text-lg sm:text-xl font-bold text-gray-800 leading-tight truncate">
-      معرض طبيب
-    </span>
-    <span className="text-sm text-gray-500 leading-tight truncate">
-      المستلزمات الطبية
-    </span>
-  </div>
-</motion.div>
-
       <header className="mb-6 mt-4">
         <h1 className="text-3xl font-bold text-gray-800">الطلبات</h1>
         <p className="text-gray-500 mt-1">راجع طلباتك الحالية والسابقة.</p>

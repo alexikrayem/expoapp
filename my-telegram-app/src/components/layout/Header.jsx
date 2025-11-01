@@ -45,26 +45,21 @@ const Header = ({ children }) => {
   const [isCompact, setIsCompact] = useState(false)
   const [preloadedCities, setPreloadedCities] = useState(null)
 
-  // Detect screen size changes and viewport height for compact mode
-  useEffect(() => {
-    const handleResize = () => {
-      // Use window.innerHeight as it's more reliable in Telegram WebApp
-      const isSmallScreen = window.innerHeight < 700 || window.innerWidth < 480
-      setIsCompact(isSmallScreen)
-    }
+// Detect scroll position for compact mode
+useEffect(() => {
+  const handleScroll = throttle(() => {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop
+    setIsCompact(scrollTop > 10) // adjust threshold as desired
+  }, 100)
 
-    // Call immediately on mount
-    handleResize()
+  window.addEventListener("scroll", handleScroll, { passive: true })
+  handleScroll() // run once initially
 
-    // Listen to both resize and orientationchange events
-    window.addEventListener("resize", handleResize)
-    window.addEventListener("orientationchange", handleResize)
+  return () => {
+    window.removeEventListener("scroll", handleScroll)
+  }
+}, [])
 
-    return () => {
-      window.removeEventListener("resize", handleResize)
-      window.removeEventListener("orientationchange", handleResize)
-    }
-  }, [])
 
   // Also detect when search is expanded to collapse it on compact
   useEffect(() => {
