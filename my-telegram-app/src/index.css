@@ -137,3 +137,74 @@ layer base {
     }
   }
 }
+/* ======================================================= */
+/* --- 1. MULTI-COLOR PULSING AURA EFFECT (FINAL) --- */
+/* ======================================================= */
+
+/* Defines the pulsing effect and color cycle for the aura */
+@keyframes multi-color-aura {
+  /* Start with a gentle pink glow */
+  0% {
+    box-shadow: 0 0 8px rgba(255, 0, 127, 0.7); /* Pink (#ff007f) */
+    opacity: 0.9;
+  }
+  
+  /* Transition to purple */
+  33% {
+    box-shadow: 0 0 12px rgba(168, 85, 247, 1); /* Purple (#a855f7) */
+    opacity: 1;
+  }
+  
+  /* Transition to blue */
+  66% {
+    box-shadow: 0 0 8px rgba(25, 118, 237, 0.7); /* Blue (#1976ed) */
+    opacity: 0.9;
+  }
+  
+  /* Return to the starting state (pink) for a seamless loop */
+  100% {
+    box-shadow: 0 0 8px rgba(255, 0, 127, 0.7);
+    opacity: 0.9;
+  }
+}
+
+/* 🎯 The primary wrapper for the input field */
+.animated-border-wrapper {
+  position: relative; 
+  overflow: hidden; 
+  /* Must MATCH the input's rounded-2xl (16px) */
+  border-radius: 16px; 
+  
+  /* Apply the pulsing animation directly to the wrapper */
+  animation: multi-color-aura 5s ease-in-out infinite; /* 5s cycle for smooth transition */
+  
+  /* Ensures smooth transition for the shadow property */
+  transition: box-shadow 0.3s ease-out;
+}
+
+/* We only need ::after for the inner fill color, which remains the same */
+
+/* 🎯 ::after: The solid fill color layer that covers the center */
+.animated-border-wrapper::after {
+  content: '';
+  position: absolute;
+  z-index: -1; 
+  
+  /* inset: 1.5px creates the visual border (the space between ::after and the wrapper edge) */
+  inset: 1.5px; 
+  
+  /* border-radius is 16px - 1.5px = 14.5px */
+  border-radius: 14.5px; 
+  
+  /* The default background color for the input area */
+  background: #f3f4f6; /* Tailwind gray-100 equivalent */
+  
+  transition: background 300ms ease;
+}
+
+/* Focus Effect: Change the inner background color on focus */
+.animated-border-wrapper:focus-within::after {
+    background: white; 
+    /* Optional: Add a subtle static shadow on focus for an extra 'pop' */
+    box-shadow: 0 0 5px rgba(25, 118, 237, 0.4); 
+}
