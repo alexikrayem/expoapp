@@ -6,6 +6,7 @@ import AdminLayout from './components/AdminLayout';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import ManageSuppliersPage from './pages/ManageSuppliersPage';
 import ManageFeaturedItemsPage from './pages/ManageFeaturedItemsPage';
+import ManageFeaturedListsPage from './pages/ManageFeaturedListsPage';
 // Import other placeholder pages you created
 // import ProductsOverviewPage from './pages/ProductsOverviewPage';
 // import DealsManagementPage from './pages/DealsManagementPage';
@@ -40,6 +41,7 @@ function App() {
                     <Route path="/" element={<AdminDashboardPage />} />
                     <Route path="/suppliers" element={<ManageSuppliersPage />} />
                     <Route path="/featured-items" element={<ManageFeaturedItemsPage />} /> 
+                    <Route path="featured-lists" element={<ManageFeaturedListsPage />} />
                     {/* <Route path="/products-overview" element={<ProductsOverviewPage />} /> */}
                     {/* <Route path="/deals-management" element={<DealsManagementPage />} /> */}
                     {/* <Route path="/orders-overview" element={<OrdersOverviewPage />} /> */}

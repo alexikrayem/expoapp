@@ -3,6 +3,7 @@ import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, ShoppingBag, Tag, Settings, LogOut, FileText } from 'lucide-react'; // Added Users, Tag, FileText
 
+
 const AdminLayout = () => {
     const navigate = useNavigate();
     const location = useLocation(); // To highlight active link
@@ -20,7 +21,8 @@ const AdminLayout = () => {
         { name: 'إدارة المنتجات', icon: ShoppingBag, path: '/products-overview' }, // Overview of all products
         { name: 'إدارة العروض', icon: Tag, path: '/deals-management' }, // For featured_items and deals table
         { name: 'إدارة الطلبات', icon: FileText, path: '/orders-overview' }, // Overview of all orders
-        { name: 'إدارة العروض المميزة', icon: Tag, path: '/featured-items' }
+        { name: 'إدارة العروض المميزة', icon: Tag, path: '/featured-items' },
+      { name: 'إدارة العروض المميزة لاوائح', icon: Tag, path: '/featured-lists' }
         // { name: 'الإعدادات', icon: Settings, path: '/settings' }, // For later
     ];
 
