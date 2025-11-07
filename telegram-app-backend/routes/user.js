@@ -63,12 +63,37 @@ const upsertUserProfile = async (userId, profileData) => {
 
 // Validation middleware for profile updates
 const validateProfileUpdate = [
-    body('full_name').optional().isLength({ max: 100 }).withMessage('Full name must be at most 100 characters'),
-    body('phone_number').optional().isMobilePhone().withMessage('Phone number must be a valid mobile number'),
-    body('address_line1').optional().isLength({ max: 255 }).withMessage('Address line 1 must be at most 255 characters'),
-    body('address_line2').optional().isLength({ max: 255 }).withMessage('Address line 2 must be at most 255 characters'),
-    body('city').optional().isLength({ max: 100 }).withMessage('City must be at most 100 characters'),
-    body('selected_city_id').optional().isInt().withMessage('Selected city ID must be a valid integer')
+    body('full_name')
+        .optional()
+        .trim()
+        .isLength({ max: 100 })
+        .withMessage('Full name must be at most 100 characters')
+        .matches(/^[a-zA-Z\s\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]+$/)
+        .withMessage('Full name contains invalid characters'),
+    body('phone_number')
+        .optional()
+        .trim()
+        .isMobilePhone(['ar-SA', 'ar-EG', 'ar-IQ', 'ar-JO', 'ar-KW', 'ar-LB', 'ar-LY', 'ar-MA', 'ar-QA', 'ar-SY', 'ar-TN', 'ar-YE', 'en-US'])
+        .withMessage('Phone number must be a valid mobile number'),
+    body('address_line1')
+        .optional()
+        .trim()
+        .isLength({ max: 255 })
+        .withMessage('Address line 1 must be at most 255 characters'),
+    body('address_line2')
+        .optional()
+        .trim()
+        .isLength({ max: 255 })
+        .withMessage('Address line 2 must be at most 255 characters'),
+    body('city')
+        .optional()
+        .trim()
+        .isLength({ max: 100 })
+        .withMessage('City must be at most 100 characters'),
+    body('selected_city_id')
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage('Selected city ID must be a valid positive integer')
 ];
 
 // --- ROUTES ---

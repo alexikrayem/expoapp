@@ -1,25 +1,8 @@
 // src/pages/ManageSuppliersPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import { Users, PlusCircle, Edit3, Trash2, ToggleLeft, ToggleRight, AlertCircle } from 'lucide-react'; // Added more icons
 import SupplierFormModal from '../components/SupplierFormModal'; // <<< IMPORT
-// Helper to get admin auth token (similar to supplier panel)
-const getAdminAuthToken = () => localStorage.getItem('adminToken');
-
-// Axios instance for admin API calls
-const adminApiClient = axios.create({
-    baseURL: import.meta.env.VITE_ADMIN_API_BASE_URL || 'http://localhost:3001', // From .env
-});
-
-adminApiClient.interceptors.request.use(config => {
-    const token = getAdminAuthToken();
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-}, error => {
-    return Promise.reject(error);
-});
+import { adminApiClient } from '../api/adminApiClient';
 
 const ManageSuppliersPage = () => {
     const [suppliers, setSuppliers] = useState([]);

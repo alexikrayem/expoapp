@@ -7,15 +7,15 @@ const telegramBotService = require('../services/telegramBot');
 
 // Validation middleware for order operations
 const validateCreateOrder = [
-    body('items').isArray({ min: 1 }).withMessage('Items must be a non-empty array'),
-    body('items.*.product_id').isInt({ min: 1 }).withMessage('Each product ID must be a positive integer'),
+    body('items').isArray({ min: 1, max: 50 }).withMessage('Items must be a non-empty array with max 50 items'),
+    body('items.*.product_id').isInt({ min: 1, max: 999999 }).withMessage('Each product ID must be a positive integer'),
     body('items.*.quantity').isInt({ min: 1, max: 999 }).withMessage('Each quantity must be between 1 and 999'),
-    body('items.*.price_at_time_of_order').isFloat({ min: 0 }).withMessage('Price at time of order must be a positive number'),
-    body('total_amount').isFloat({ min: 0 }).withMessage('Total amount must be a positive number')
+    body('items.*.price_at_time_of_order').isFloat({ min: 0, max: 999999 }).withMessage('Price at time of order must be a positive number'),
+    body('total_amount').isFloat({ min: 0, max: 9999999 }).withMessage('Total amount must be a positive number')
 ];
 
 const validateOrderStatusUpdate = [
-    param('orderId').isInt({ min: 1 }).withMessage('Order ID must be a positive integer'),
+    param('orderId').isInt({ min: 1, max: 9999999 }).withMessage('Order ID must be a positive integer'),
     body('status').isIn(['cancelled']).withMessage('Only "cancelled" status is allowed for updates')
 ];
 

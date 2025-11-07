@@ -1,18 +1,8 @@
 // src/pages/ManageFeaturedItemsPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import { Tag, PlusCircle, Edit3, Trash2, AlertCircle, Eye, EyeOff } from 'lucide-react'; // Added Eye, EyeOff
 import FeaturedItemFormModal from '../components/FeaturedItemFormModal';
-
-const getAdminAuthToken = () => localStorage.getItem('adminToken');
-const adminApiClient = axios.create({
-    baseURL: import.meta.env.VITE_ADMIN_API_BASE_URL || 'http://localhost:3001',
-});
-adminApiClient.interceptors.request.use(config => { /* ... (same as before) ... */
-    const token = getAdminAuthToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-}, error => Promise.reject(error));
+import { adminApiClient } from '../api/adminApiClient';
 
 
 const ManageFeaturedItemsPage = () => {

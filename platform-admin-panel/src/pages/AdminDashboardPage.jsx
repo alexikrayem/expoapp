@@ -1,27 +1,17 @@
 // src/pages/AdminDashboardPage.jsx
 import React, { useState, useEffect } from 'react';
-import { 
-    Users, 
-    ShoppingBag, 
-    TrendingUp, 
-    MessageCircle, 
+import {
+    Users,
+    ShoppingBag,
+    TrendingUp,
+    MessageCircle,
     Send,
     AlertCircle,
     CheckCircle,
     DollarSign,
     Package
 } from 'lucide-react';
-import axios from 'axios';
-
-const getAdminAuthToken = () => localStorage.getItem('adminToken');
-const adminApiClient = axios.create({
-    baseURL: import.meta.env.VITE_ADMIN_API_BASE_URL || 'http://localhost:3001',
-});
-adminApiClient.interceptors.request.use(config => {
-    const token = getAdminAuthToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-});
+import { adminApiClient } from '../api/adminApiClient';
 
 const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
     <div className="bg-white rounded-lg shadow-sm p-6 border-l-4" style={{ borderLeftColor: color }}>
@@ -190,8 +180,8 @@ const AdminDashboardPage = () => {
 
                     {broadcastResult && (
                         <div className={`mt-4 p-4 rounded-lg ${
-                            broadcastResult.success 
-                                ? 'bg-green-50 border border-green-200' 
+                            broadcastResult.success
+                                ? 'bg-green-50 border border-green-200'
                                 : 'bg-red-50 border border-red-200'
                         }`}>
                             <div className="flex items-center gap-2">
@@ -218,7 +208,7 @@ const AdminDashboardPage = () => {
                 {/* Platform Overview */}
                 <div className="bg-white rounded-lg shadow-sm p-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">نظرة عامة على المنصة</h3>
-                    
+
                     <div className="space-y-4">
                         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div className="flex items-center gap-3">
@@ -236,9 +226,8 @@ const AdminDashboardPage = () => {
                                 <span className="text-sm font-medium">متوسط قيمة الطلب</span>
                             </div>
                             <span className="font-bold text-blue-600">
-                                {stats?.orders_today > 0 && stats?.sales_this_month 
-                                    ? `${(stats.sales_this_month / stats.orders_today).toFixed(2)} د.إ`
-                                    : '0 د.إ'
+                                {stats?.orders_today > 0 && stats?.sales_this_month
+                                    ? `${(stats.sales_this_month / stats.orders_today).toFixed(2)}.إ` : '0 د.إ'
                                 }
                             </span>
                         </div>
@@ -258,13 +247,13 @@ const AdminDashboardPage = () => {
                     <div className="mt-6 pt-4 border-t border-gray-200">
                         <h4 className="font-medium text-gray-700 mb-3">إجراءات سريعة</h4>
                         <div className="grid grid-cols-2 gap-2">
-                            <button 
+                            <button
                                 onClick={() => window.location.href = '/suppliers'}
                                 className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-md transition-colors"
                             >
                                 إدارة الموردين
                             </button>
-                            <button 
+                            <button
                                 onClick={() => window.location.href = '/featured-items'}
                                 className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-md transition-colors"
                             >

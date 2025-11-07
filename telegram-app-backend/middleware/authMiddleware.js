@@ -11,13 +11,18 @@ if (!BOT_TOKEN) {
 
 const validateTelegramAuth = (req, res, next) => {
     // Check for a special header ONLY used for local development
-    const isDevRequest = req.header('X-Dev-Bypass-Auth') === 'true';
+    // Only allow this in development environment and with specific IP or header
+    const isDevRequest = req.header('X-Dev-Bypass-Auth');
+    const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip.startsWith('::ffff:127.0.0.1');
 
-    if (process.env.NODE_ENV === 'development' && isDevRequest) {
-        console.warn('⚠️  Bypassing Telegram auth for local development via X-Dev-Bypass-Auth header.');
-        // This mock user MUST match the one on your client-side for consistency
-        req.telegramUser = { id: 123456789, first_name: 'Local', last_name: 'Dev' };
-        return next();
+    if (process.env.NODE_ENV === 'development' && isDevRequest && isLocalhost) {
+        // Enhanced security: Check for a specific secret in the header
+        if (isDevRequest === process.env.DEV_BYPASS_SECRET) {
+            console.warn('⚠️  Bypassing Telegram auth for local development via X-Dev-Bypass-Auth header.');
+            // This mock user MUST match the one on your client-side for consistency
+            req.telegramUser = { id: 123456789, first_name: 'Local', last_name: 'Dev' };
+            return next();
+        }
     }
     
     // --- Standard Production Logic ---

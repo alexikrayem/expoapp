@@ -32,16 +32,47 @@ const PORT = process.env.PORT || 3001;
 // Apply security middleware
 app.use(helmet()); // Add security headers
 
-// Add rate limiting
+// Add general rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100 // limit each IP to 100 requests per windowMs
 });
 app.use(limiter);
 
+// Create auth-specific rate limiter
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs for auth endpoints
+  message: {
+    error: 'Too many authentication attempts, please try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // --- CORE MIDDLEWARE ---
 const corsOptions = {
-    origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : '*', // Allow all for now
+    origin: function (origin, callback) {
+        const allowedOrigins = process.env.CORS_ORIGINS ? 
+            process.env.CORS_ORIGINS.split(',').map(url => url.trim()) : [];
+        
+        // In production, never allow all origins
+        if (process.env.NODE_ENV === 'production') {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        } else {
+            // For development, be more permissive but still controlled
+            // Only allow localhost origins in development
+            if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        }
+    },
     credentials: true,
     optionsSuccessStatus: 200
 };
@@ -67,7 +98,7 @@ app.use('/api/supplier', supplierRoutes);
 // 4. SPECIALIZED ROUTES (Auth, Admin)
 // These might have their own separate authentication logic.
 console.log('✅ Applying SPECIALIZED routes...');
-app.use('/api/auth', authRoutes); // e.g., for JWT login/password, not Telegram based
+app.use('/api/auth', authLimiter, authRoutes); // e.g., for JWT login/password, not Telegram based
 app.use('/api/admin', adminRoutes);
 // 2. TELEGRAM AUTHENTICATION MIDDLEWARE
 // Any route defined *after* this line will be protected.

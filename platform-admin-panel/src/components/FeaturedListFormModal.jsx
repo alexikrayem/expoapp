@@ -3,19 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { X, Loader, UploadCloud, ImageIcon, AlertTriangle, Search } from "lucide-react"
-
-const getAdminAuthToken = () => localStorage.getItem("adminToken")
-const adminApiClient = axios.create({
-  baseURL: import.meta.env.VITE_ADMIN_API_BASE_URL || "http://localhost:3001",
-})
-adminApiClient.interceptors.request.use(
-  (config) => {
-    const token = getAdminAuthToken()
-    if (token) config.headers.Authorization = `Bearer ${token}`
-    return config
-  },
-  (error) => Promise.reject(error),
-)
+import { adminApiClient } from '../api/adminApiClient'
 
 const miniAppApiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3001",

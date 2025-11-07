@@ -13,7 +13,7 @@ const LoginPage = () => {
 
     // Redirect if already logged in
     useEffect(() => {
-        if (localStorage.getItem('supplierToken')) {
+        if (localStorage.getItem('supplierAccessToken')) {
             navigate('/', { replace: true });
         }
     }, [navigate]);
@@ -23,36 +23,45 @@ const LoginPage = () => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
-        
+
         console.log('🔐 Attempting supplier login...');
-        
+
         try {
             const apiBaseUrl = import.meta.env.VITE_SUPPLIER_API_BASE_URL || 'http://localhost:3001'; // Ensure .env is set up
             console.log('📡 API Base URL:', apiBaseUrl);
-            
+
             const response = await axios.post(`${apiBaseUrl}/api/auth/supplier/login`, {
                 email: email.toLowerCase().trim(), // Normalize email
                 password,
             });
-            
+
             console.log('✅ Login successful, storing tokens...');
+
+            // Handle the new dual token response
+            if (response.data.accessToken && response.data.refreshToken) {
+                localStorage.setItem('supplierAccessToken', response.data.accessToken);
+                localStorage.setItem('supplierRefreshToken', response.data.refreshToken);
+            } else {
+                // Fallback for backward compatibility - store the single token as access token
+                localStorage.setItem('supplierAccessToken', response.data.token);
+                // Refresh token might be missing, but we'll handle that during refresh
+            }
             
-            localStorage.setItem('supplierToken', response.data.token);
             localStorage.setItem('supplierInfo', JSON.stringify(response.data.supplier));
-            
+
             const fromLocationState = location.state?.from;
             let redirectTo = "/"; // Default redirect path
              if (fromLocationState) {
                 // If 'from' was an object with pathname, search, hash
                 if (typeof fromLocationState === 'object' && fromLocationState.pathname) {
                     redirectTo = fromLocationState.pathname + (fromLocationState.search || '') + (fromLocationState.hash || '');
-                } 
+                }
                 // If 'from' was just a string (pathname)
                 else if (typeof fromLocationState === 'string') {
                     redirectTo = fromLocationState;
                 }
             }
-            
+
             console.log('🔄 Redirecting to:', redirectTo);
             navigate(redirectTo, { replace: true });
 

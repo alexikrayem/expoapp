@@ -1,22 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import axios from "axios"
 import { Tag, PlusCircle, Edit3, Trash2 } from "lucide-react"
 import FeaturedListFormModal from "../components/FeaturedListFormModal"
-
-const getAdminAuthToken = () => localStorage.getItem("adminToken")
-const adminApiClient = axios.create({
-  baseURL: import.meta.env.VITE_ADMIN_API_BASE_URL || "http://localhost:3001",
-})
-adminApiClient.interceptors.request.use(
-  (config) => {
-    const token = getAdminAuthToken()
-    if (token) config.headers.Authorization = `Bearer ${token}`
-    return config
-  },
-  (error) => Promise.reject(error),
-)
+import { adminApiClient } from '../api/adminApiClient'
 
 const ManageFeaturedListsPage = () => {
   const [featuredLists, setFeaturedLists] = useState([])

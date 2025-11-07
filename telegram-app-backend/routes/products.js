@@ -1,13 +1,30 @@
 // routes/products.js (UPGRADED WITH SMARTER ALTERNATIVES)
 const express = require('express');
+const { query, param } = require('express-validator');
 const router = express.Router();
 const db = require('../config/db');
 
 // Get all products with filtering, search, and pagination
-router.get('/', async (req, res) => {
+router.get('/', [
+    query('page').optional().isInt({ min: 1, max: 1000 }).withMessage('Page must be an integer between 1 and 1000'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be an integer between 1 and 100'),
+    query('cityId').optional().isInt({ min: 1 }).withMessage('City ID must be a positive integer'),
+    query('category').optional().trim().isLength({ max: 50 }).withMessage('Category must be at most 50 characters'),
+    query('searchTerm').optional().trim().isLength({ max: 100 }).withMessage('Search term must be at most 100 characters'),
+    query('minPrice').optional().isFloat({ min: 0 }).withMessage('Min price must be a positive number'),
+    query('maxPrice').optional().isFloat({ min: 0 }).withMessage('Max price must be a positive number'),
+    query('onSale').optional().isIn(['true', 'false']).withMessage('onSale must be true or false')
+], async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+        }
+        
         const { page = 1, limit = 12, cityId, category, searchTerm, minPrice, maxPrice, onSale } = req.query;
-        const offset = (parseInt(page) - 1) * parseInt(limit);
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const offset = (pageNum - 1) * limitNum;
         
         let whereConditions = ['s.is_active = true'];
         let queryParams = [];
@@ -15,7 +32,7 @@ router.get('/', async (req, res) => {
 
         if (cityId) {
             whereConditions.push(`s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${paramIndex++})`);
-            queryParams.push(cityId);
+            queryParams.push(parseInt(cityId));
         }
         if (category && category !== 'all') {
             whereConditions.push(`p.category = $${paramIndex++}`);
@@ -26,9 +43,17 @@ router.get('/', async (req, res) => {
             queryParams.push(`%${searchTerm}%`);
             paramIndex++;
         }
-        if (minPrice) { whereConditions.push(`p.price >= $${paramIndex++}`); queryParams.push(parseFloat(minPrice)); }
-        if (maxPrice) { whereConditions.push(`p.price <= $${paramIndex++}`); queryParams.push(parseFloat(maxPrice)); }
-        if (onSale === 'true') { whereConditions.push('p.is_on_sale = true'); }
+        if (minPrice) { 
+            whereConditions.push(`p.price >= $${paramIndex++}`); 
+            queryParams.push(parseFloat(minPrice)); 
+        }
+        if (maxPrice) { 
+            whereConditions.push(`p.price <= $${paramIndex++}`); 
+            queryParams.push(parseFloat(maxPrice)); 
+        }
+        if (onSale === 'true') { 
+            whereConditions.push('p.is_on_sale = true'); 
+        }
 
         const whereClause = `WHERE ${whereConditions.join(' AND ')}`;
 
@@ -44,14 +69,14 @@ router.get('/', async (req, res) => {
         const countQuery = `SELECT COUNT(*) as total FROM products p JOIN suppliers s ON p.supplier_id = s.id ${whereClause}`;
         
         const [productsResult, countResult] = await Promise.all([
-            db.query(productsQuery, [...queryParams, limit, offset]),
+            db.query(productsQuery, [...queryParams, limitNum, offset]),
             db.query(countQuery, queryParams)
         ]);
 
         res.json({
             items: productsResult.rows,
-            currentPage: parseInt(page),
-            totalPages: Math.ceil(parseInt(countResult.rows[0].total) / limit),
+            currentPage: pageNum,
+            totalPages: Math.ceil(parseInt(countResult.rows[0].total) / limitNum),
         });
     } catch (error) {
         console.error('Error fetching products:', error);
@@ -60,8 +85,15 @@ router.get('/', async (req, res) => {
 });
 
 // Get product categories for filter options
-router.get('/categories', async (req, res) => {
+router.get('/categories', [
+    query('cityId').optional().isInt({ min: 1 }).withMessage('City ID must be a positive integer')
+], async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+        }
+        
         const { cityId } = req.query;
         let query = `
             SELECT p.category, COUNT(*) as product_count
@@ -72,7 +104,7 @@ router.get('/categories', async (req, res) => {
         const queryParams = [];
         if (cityId) {
             query += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $1)`;
-            queryParams.push(cityId);
+            queryParams.push(parseInt(cityId));
         }
         query += `
             GROUP BY p.category
@@ -88,12 +120,20 @@ router.get('/categories', async (req, res) => {
 });
 
 // Get products by batch of IDs (for favorites tab)
-router.get('/batch', async (req, res) => {
+router.get('/batch', [
+    query('ids').optional().trim().matches(/^[\d,]+$/).withMessage('IDs must be comma-separated integers')
+], async (req, res) => {
     try {
         const { ids } = req.query;
         if (!ids) return res.json([]);
-        const productIds = ids.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
-        if (productIds.length === 0) return res.json([]);
+        
+        const productIds = ids.split(',')
+            .map(id => parseInt(id))
+            .filter(id => !isNaN(id) && id > 0);
+        
+        if (productIds.length === 0 || productIds.length > 50) {
+            return res.status(400).json({ error: 'Invalid product IDs provided' });
+        }
 
         const placeholders = productIds.map((_, index) => `$${index + 1}`).join(',');
         const query = `
@@ -113,8 +153,15 @@ router.get('/batch', async (req, res) => {
 
 
 // Get favorite product details with alternatives (used in ProductDetailModal)
-router.get('/favorite-details/:productId', async (req, res) => {
+router.get('/favorite-details/:productId', [
+    param('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer')
+], async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+        }
+        
         const { productId } = req.params;
 
         // Step 1: Fetch the main product and its supplier in a single, efficient query.
@@ -124,7 +171,7 @@ router.get('/favorite-details/:productId', async (req, res) => {
             LEFT JOIN suppliers s ON p.supplier_id = s.id
             WHERE p.id = $1
         `;
-        const productPromise = db.query(productQuery, [productId]);
+        const productPromise = db.query(productQuery, [parseInt(productId)]);
 
         // We will run the product fetch and potentially the alternatives fetch in parallel.
         const [productResult] = await Promise.all([productPromise]);
@@ -149,7 +196,7 @@ router.get('/favorite-details/:productId', async (req, res) => {
                     FROM products p JOIN suppliers s ON p.supplier_id = s.id
                     WHERE p.master_product_id = $1 AND p.id != $2 AND s.is_active = true AND p.stock_level > 0
                     ORDER BY p.price ASC LIMIT 5`;
-                alternativesParams = [product.master_product_id, productId];
+                alternativesParams = [product.master_product_id, parseInt(productId)];
             } else if (product.standardized_name_input) {
                 alternativesQuery = `
                     SELECT p.*, s.name as supplier_name,
@@ -157,7 +204,7 @@ router.get('/favorite-details/:productId', async (req, res) => {
                     FROM products p JOIN suppliers s ON p.supplier_id = s.id
                     WHERE p.standardized_name_input ILIKE $1 AND p.id != $2 AND s.is_active = true AND p.stock_level > 0
                     ORDER BY p.price ASC LIMIT 3`;
-                alternativesParams = [`%${product.standardized_name_input}%`, productId];
+                alternativesParams = [`%${product.standardized_name_input}%`, parseInt(productId)];
             }
 
             if (alternativesQuery) {
@@ -185,10 +232,16 @@ router.get('/favorite-details/:productId', async (req, res) => {
 
 
 // Get individual product by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', [
+    param('id').isInt({ min: 1 }).withMessage('Product ID must be a positive integer')
+], async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+        }
+        
         const productId = parseInt(req.params.id);
-        if (isNaN(productId)) return res.status(400).json({ error: 'Invalid product ID' });
 
         const query = `
             SELECT p.*, s.name as supplier_name,

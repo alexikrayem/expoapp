@@ -7,6 +7,24 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const crypto = require('crypto');
 
+// Helper function to generate both access and refresh tokens
+const generateTokens = (payload, role) => {
+  const accessToken = jwt.sign(
+    payload,
+    process.env.JWT_SECRET || process.env[`JWT_${role}_SECRET`],
+    { expiresIn: '15m' } // Short-lived access token
+  );
+  
+  // Use different secrets for different roles where possible
+  const refreshToken = jwt.sign(
+    { ...payload, type: 'refresh' },
+    process.env.JWT_REFRESH_SECRET || process.env[`JWT_${role}_REFRESH_SECRET`] || process.env.JWT_SECRET || process.env[`JWT_${role}_SECRET`],
+    { expiresIn: '7d' } // Longer refresh token
+  );
+  
+  return { accessToken, refreshToken };
+};
+
 // Supplier Login
 router.post('/supplier/login', async (req, res) => {
     try {
@@ -20,7 +38,10 @@ router.post('/supplier/login', async (req, res) => {
         const supplierQuery = 'SELECT * FROM suppliers WHERE email = $1 AND is_active = true';
         const supplierResult = await db.query(supplierQuery, [email.toLowerCase()]);
 
+        // Don't distinguish between user not found vs wrong password to prevent enumeration
         if (supplierResult.rows.length === 0) {
+            // Still hash the password to prevent timing attacks
+            await bcrypt.compare(password, '$2b$10$NQ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9y'); // dummy hash
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -32,20 +53,20 @@ router.post('/supplier/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Generate JWT token
-        const token = jwt.sign(
+        // Generate JWT tokens
+        const { accessToken, refreshToken } = generateTokens(
             {
                 supplierId: supplier.id,
                 email: supplier.email,
                 name: supplier.name,
                 role: 'supplier'
             },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
+            'SUPPLIER'
         );
 
         res.json({
-            token,
+            accessToken,
+            refreshToken,
             supplier: {
                 id: supplier.id,
                 name: supplier.name,
@@ -65,33 +86,33 @@ router.post('/supplier/login', async (req, res) => {
 router.post('/admin/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        console.log('Login attempt:', email);
 
         const adminQuery = 'SELECT * FROM admins WHERE email = $1';
         const adminResult = await db.query(adminQuery, [email.toLowerCase()]);
-        console.log('Admin lookup result:', adminResult.rows);
 
         if (adminResult.rows.length === 0) {
-            return res.status(401).json({ error: 'Invalid credentials (no admin found)' });
+            // Still hash the password to prevent timing attacks
+            await bcrypt.compare(password, '$2b$10$NQ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9y'); // dummy hash
+            return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         const admin = adminResult.rows[0];
-        console.log('Checking password for:', admin.email);
 
         const isValidPassword = await bcrypt.compare(password, admin.password_hash);
-        console.log('Password match:', isValidPassword);
-
         if (!isValidPassword) {
-            return res.status(401).json({ error: 'Invalid credentials (bad password)' });
+            return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        const token = jwt.sign(
+        const { accessToken, refreshToken } = generateTokens(
             { adminId: admin.id, email: admin.email, name: admin.full_name, role: 'admin' },
-            process.env.JWT_ADMIN_SECRET,
-            { expiresIn: '7d' }
+            'ADMIN'
         );
 
-        res.json({ token, admin: { id: admin.id, name: admin.full_name, email: admin.email, role: admin.role } });
+        res.json({ 
+            accessToken,
+            refreshToken,
+            admin: { id: admin.id, name: admin.full_name, email: admin.email, role: admin.role } 
+        });
 
     } catch (error) {
         console.error('Admin login error:', error);
@@ -114,6 +135,8 @@ router.post('/delivery/login', async (req, res) => {
         const agentResult = await db.query(agentQuery, [phoneNumber]);
 
         if (agentResult.rows.length === 0) {
+            // Still hash the password to prevent timing attacks
+            await bcrypt.compare(password, '$2b$10$NQ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9y'); // dummy hash
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -125,20 +148,20 @@ router.post('/delivery/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Generate JWT token
-        const token = jwt.sign(
+        // Generate JWT tokens
+        const { accessToken, refreshToken } = generateTokens(
             {
                 deliveryAgentId: agent.id,
                 supplierId: agent.supplier_id,
                 name: agent.full_name,
                 role: 'delivery_agent'
             },
-            process.env.JWT_DELIVERY_SECRET,
-            { expiresIn: '7d' }
+            'DELIVERY'
         );
 
         res.json({
-            token,
+            accessToken,
+            refreshToken,
             agent: {
                 id: agent.id,
                 name: agent.full_name,
@@ -171,7 +194,41 @@ router.post('/delivery/verify-telegram', async (req, res) => {
     }
 });
 
+// Refresh token endpoint
+router.post('/refresh', async (req, res) => {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+        return res.status(401).json({ error: 'Refresh token required' });
+    }
 
+    try {
+        // Verify the refresh token
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
+        
+        if (decoded.type !== 'refresh') {
+            return res.status(403).json({ error: 'Invalid token type' });
+        }
+
+        // Generate new access token based on the decoded payload
+        const payload = { ...decoded };
+        delete payload.type;
+        delete payload.iat;
+        delete payload.exp;
+
+        // Create a new access token with the same role
+        const newAccessToken = jwt.sign(
+            payload,
+            process.env.JWT_SECRET || process.env[`JWT_${decoded.role.toUpperCase()}_SECRET`],
+            { expiresIn: '15m' } // Short-lived access token
+        );
+
+        res.json({ accessToken: newAccessToken });
+    } catch (error) {
+        console.error('Refresh token error:', error);
+        return res.status(403).json({ error: 'Invalid or expired refresh token' });
+    }
+});
 
 // --- NEW: Telegram Native App Login Endpoint ---
 router.post('/telegram-native', async (req, res) => {
@@ -245,20 +302,19 @@ router.post('/telegram-native', async (req, res) => {
             user = newUserResult.rows[0];
         }
 
-        // Generate JWT token for the user
-        // Use JWT_SECRET for general user tokens
-        const token = jwt.sign(
+        // Generate JWT tokens for the user
+        const { accessToken, refreshToken } = generateTokens(
             {
                 userId: user.id, // Your internal user ID
                 telegramId: user.telegram_id,
                 role: 'customer' // Assign a role for general app users
             },
-            process.env.JWT_SECRET, // Make sure JWT_SECRET is defined in your backend .env
-            { expiresIn: '7d' } // Token valid for 7 days
+            'CUSTOMER'
         );
 
         res.json({
-            token,
+            accessToken,
+            refreshToken,
             telegramUser: { // Return basic Telegram user info for client convenience
                 id: auth_data.id,
                 first_name: auth_data.first_name,
