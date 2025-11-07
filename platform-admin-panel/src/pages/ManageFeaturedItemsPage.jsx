@@ -135,14 +135,19 @@ const ManageFeaturedItemsPage = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-200">
                             {featuredItems.map(item => (
-                                <tr key={item.feature_definition_id} className="hover:bg-gray-50">
+                                <tr key={item.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-3 whitespace-nowrap">{item.display_order}</td>
                                     <td className="px-4 py-3 whitespace-nowrap capitalize">{item.item_type}</td>
                                     <td className="px-4 py-3 whitespace-nowrap">{item.item_id}</td>
                                     <td className="px-4 py-3">
-                                        {item.custom_title || item.original_item_name || <span className="italic text-gray-400">No Title</span>}
-                                        {item.custom_title && item.original_item_name && <span className="block text-xs text-gray-400">Original: {item.original_item_name}</span>}
-                                    </td>
+    {/* Use a fragment to group the two possible sibling elements */}
+    <React.Fragment key={`title-${item.id}`}>
+        {item.custom_title || item.original_item_name || <span className="italic text-gray-400">No Title</span>}
+        {item.custom_title && item.original_item_name && (
+            <span className="block text-xs text-gray-400">Original: {item.original_item_name}</span>
+        )}
+    </React.Fragment>
+</td>
                                     <td className="px-4 py-3 whitespace-nowrap">
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                             {item.is_active ? 'Active' : 'Inactive'}
@@ -152,7 +157,7 @@ const ManageFeaturedItemsPage = () => {
                                     <td className="px-4 py-3 whitespace-nowrap">{formatDate(item.active_until)}</td>
                                     <td className="px-4 py-3 whitespace-nowrap space-x-2 space-x-reverse">
                                         <button onClick={() => handleEditItem(item)} className="text-indigo-600 hover:text-indigo-800 p-1"><Edit3 size={16}/></button>
-                                        <button onClick={() => handleDeleteItem(item.feature_definition_id)} className="text-red-600 hover:text-red-800 p-1"><Trash2 size={16}/></button>
+                                        <button onClick={() => handleDeleteItem(item.id)} className="text-red-600 hover:text-red-800 p-1"><Trash2 size={16}/></button>
                                     </td>
                                 </tr>
                             ))}

@@ -1,7 +1,23 @@
 // routes/cart.js (FINAL CORRECTED VERSION)
 const express = require('express');
+const { body, param, validationResult } = require('express-validator');
 const router = express.Router();
 const db = require('../config/db');
+
+// Validation middleware for cart operations
+const validateAddToCart = [
+    body('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
+    body('quantity').optional().isInt({ min: 1, max: 999 }).withMessage('Quantity must be between 1 and 999')
+];
+
+const validateUpdateCart = [
+    param('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
+    body('quantity').isInt({ min: 0, max: 999 }).withMessage('Quantity must be between 0 and 999')
+];
+
+const validateCartParams = [
+    param('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer')
+];
 
 // GET the user's entire cart
 router.get('/', async (req, res) => {
@@ -30,8 +46,13 @@ router.get('/', async (req, res) => {
 });
 
 // POST to add an item or increase its quantity
-router.post('/items', async (req, res) => {
+router.post('/items', validateAddToCart, async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+        }
+        
         const { id: userId } = req.telegramUser;
         const { productId, quantity = 1 } = req.body;
 
@@ -58,8 +79,13 @@ router.post('/items', async (req, res) => {
 });
 
 // PUT to update a specific item's quantity
-router.put('/items/:productId', async (req, res) => {
+router.put('/items/:productId', validateUpdateCart, async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+        }
+        
         const { id: userId } = req.telegramUser;
         const { productId } = req.params;
         const { quantity } = req.body;
@@ -87,8 +113,13 @@ router.put('/items/:productId', async (req, res) => {
 });
 
 // DELETE to remove an item from the cart
-router.delete('/items/:productId', async (req, res) => {
+router.delete('/items/:productId', validateCartParams, async (req, res) => {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+        }
+        
         const { id: userId } = req.telegramUser;
         const { productId } = req.params;
         

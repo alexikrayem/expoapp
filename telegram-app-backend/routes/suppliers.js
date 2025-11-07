@@ -1,4 +1,3 @@
-// routes/suppliers.js - Complete supplier routes with proper CRUD
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
@@ -39,116 +38,6 @@ router.get('/profile', authSupplier, async (req, res) => {
     } catch (error) {
         console.error('Error fetching supplier profile:', error);
         res.status(500).json({ error: 'Failed to fetch profile' });
-    }
-});
-
-// Get all cities (for supplier use)
-router.get('/cities', async (req, res) => {
-    try {
-        const query = 'SELECT * FROM cities WHERE is_active = true ORDER BY name ASC';
-        const result = await db.query(query);
-        res.json(result.rows);
-    } catch (error) {
-        console.error('Error fetching cities for supplier:', error);
-        res.status(500).json({ error: 'Failed to fetch cities' });
-    }
-});
-
-// Get all cities (alternative endpoint for supplier use)
-router.get('/cities-list', async (req, res) => {
-    try {
-        const query = 'SELECT * FROM cities WHERE is_active = true ORDER BY name ASC';
-        const result = await db.query(query);
-        res.json(result.rows);
-    } catch (error) {
-        console.error('Error fetching cities list for supplier:', error);
-        res.status(500).json({ error: 'Failed to fetch cities' });
-    }
-});
-
-// Update supplier's own profile
-router.put('/profile', authSupplier, async (req, res) => {
-    try {
-        const supplierId = req.supplier.supplierId;
-        const {
-            name, email, category, location, 
-            rating, description, image_url
-        } = req.body;
-        
-        const updateFields = [];
-        const updateValues = [];
-        let paramIndex = 1;
-        
-        if (name !== undefined) {
-            updateFields.push(`name = $${paramIndex}`);
-            updateValues.push(name);
-            paramIndex++;
-        }
-        
-        if (email !== undefined) {
-            updateFields.push(`email = $${paramIndex}`);
-            updateValues.push(email.toLowerCase());
-            paramIndex++;
-        }
-        
-        if (category !== undefined) {
-            updateFields.push(`category = $${paramIndex}`);
-            updateValues.push(category);
-            paramIndex++;
-        }
-        
-        if (location !== undefined) {
-            updateFields.push(`location = $${paramIndex}`);
-            updateValues.push(location);
-            paramIndex++;
-        }
-        
-        if (rating !== undefined) {
-            updateFields.push(`rating = $${paramIndex}`);
-            updateValues.push(rating);
-            paramIndex++;
-        }
-        
-        if (description !== undefined) {
-            updateFields.push(`description = $${paramIndex}`);
-            updateValues.push(description);
-            paramIndex++;
-        }
-        
-        if (image_url !== undefined) {
-            updateFields.push(`image_url = $${paramIndex}`);
-            updateValues.push(image_url);
-            paramIndex++;
-        }
-        
-        if (updateFields.length === 0) {
-            return res.status(400).json({ error: 'No fields to update' });
-        }
-        
-        updateFields.push(`updated_at = NOW()`);
-        updateValues.push(supplierId);
-        
-        const updateQuery = `
-            UPDATE suppliers 
-            SET ${updateFields.join(', ')}
-            WHERE id = $${paramIndex}
-            RETURNING *
-        `;
-        
-        const result = await db.query(updateQuery, updateValues);
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Supplier not found' });
-        }
-        
-        const supplier = result.rows[0];
-        delete supplier.password_hash;
-        
-        res.json(supplier);
-        
-    } catch (error) {
-        console.error('Error updating supplier profile:', error);
-        res.status(500).json({ error: 'Failed to update profile' });
     }
 });
 
@@ -226,37 +115,9 @@ router.put('/cities', authSupplier, async (req, res) => {
 router.get('/products', authSupplier, async (req, res) => {
     try {
         const supplierId = req.supplier.supplierId;
-        const { page = 1, limit = 20, search, category, status } = req.query;
+        const { page = 1, limit = 20 } = req.query;
 
         const offset = (parseInt(page) - 1) * parseInt(limit);
-        
-        let whereConditions = ['p.supplier_id = $1'];
-        let queryParams = [supplierId];
-        let paramIndex = 2;
-
-        if (search) {
-            whereConditions.push(`(p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex})`);
-            queryParams.push(`%${search}%`);
-            paramIndex++;
-        }
-
-        if (category) {
-            whereConditions.push(`p.category = $${paramIndex}`);
-            queryParams.push(category);
-            paramIndex++;
-        }
-
-        if (status === 'in_stock') {
-            whereConditions.push('p.stock_level > 0');
-        } else if (status === 'out_of_stock') {
-            whereConditions.push('p.stock_level = 0');
-        } else if (status === 'low_stock') {
-            whereConditions.push('p.stock_level > 0 AND p.stock_level <= 5');
-        } else if (status === 'on_sale') {
-            whereConditions.push('p.is_on_sale = true');
-        }
-
-        const whereClause = `WHERE ${whereConditions.join(' AND ')}`;
 
         const query = `
             SELECT 
@@ -267,30 +128,13 @@ router.get('/products', authSupplier, async (req, res) => {
                     ELSE p.price 
                 END as effective_selling_price
             FROM products p
-            ${whereClause}
+            WHERE p.supplier_id = $1
             ORDER BY p.created_at DESC
-            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+            LIMIT $2 OFFSET $3
         `;
 
-        const countQuery = `
-            SELECT COUNT(*) as total
-            FROM products p
-            ${whereClause}
-        `;
-
-        queryParams.push(parseInt(limit), offset);
-
-        const [productsResult, countResult] = await Promise.all([
-            db.query(query, queryParams),
-            db.query(countQuery, queryParams.slice(0, -2))
-        ]);
-
-        res.json({
-            items: productsResult.rows,
-            currentPage: parseInt(page),
-            totalPages: Math.ceil(parseInt(countResult.rows[0].total) / parseInt(limit)),
-            totalItems: parseInt(countResult.rows[0].total)
-        });
+        const result = await db.query(query, [supplierId, parseInt(limit), offset]);
+        res.json(result.rows);
 
     } catch (error) {
         console.error('Error fetching supplier products:', error);
@@ -507,64 +351,6 @@ router.put('/products/bulk-stock', authSupplier, async (req, res) => {
     }
 });
 
-// Bulk toggle sale status
-router.put('/products/bulk-sale', authSupplier, async (req, res) => {
-    try {
-        const supplierId = req.supplier.supplierId;
-        const { product_ids, is_on_sale, discount_percentage } = req.body;
-        
-        if (!Array.isArray(product_ids) || product_ids.length === 0) {
-            return res.status(400).json({ error: 'Product IDs array is required' });
-        }
-        
-        const client = await db.pool.connect();
-        
-        try {
-            await client.query('BEGIN');
-            
-            for (const productId of product_ids) {
-                // Verify product belongs to this supplier and get current price
-                const verifyQuery = 'SELECT id, price FROM products WHERE id = $1 AND supplier_id = $2';
-                const verifyResult = await client.query(verifyQuery, [productId, supplierId]);
-                
-                if (verifyResult.rows.length === 0) {
-                    await client.query('ROLLBACK');
-                    return res.status(404).json({ error: `Product ${productId} not found or not owned by you` });
-                }
-                
-                const product = verifyResult.rows[0];
-                let discountPrice = null;
-                
-                if (is_on_sale && discount_percentage) {
-                    discountPrice = product.price * (1 - discount_percentage / 100);
-                }
-                
-                // Update sale status
-                await client.query(
-                    'UPDATE products SET is_on_sale = $1, discount_price = $2, updated_at = NOW() WHERE id = $3',
-                    [is_on_sale, discountPrice, productId]
-                );
-            }
-            
-            await client.query('COMMIT');
-            res.json({ 
-                message: 'Sale status updated successfully', 
-                updated_count: product_ids.length 
-            });
-            
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
-        
-    } catch (error) {
-        console.error('Error bulk updating sale status:', error);
-        res.status(500).json({ error: 'Failed to update sale status' });
-    }
-});
-
 // Get supplier stats
 router.get('/stats', authSupplier, async (req, res) => {
     try {
@@ -641,7 +427,9 @@ router.get('/orders', authSupplier, async (req, res) => {
                         'product_name', p.name,
                         'product_image_url', p.image_url,
                         'quantity', oi.quantity,
-                        'price_at_time_of_order', oi.price_at_time_of_order
+                        'price_at_time_of_order', oi.price_at_time_of_order,
+                        'supplier_item_status', oi.supplier_item_status,
+                        'delivery_item_status', oi.delivery_item_status
                     )
                 ) as items_for_this_supplier,
                 SUM(oi.quantity * oi.price_at_time_of_order) as supplier_order_value

@@ -99,7 +99,7 @@ const FeaturedListFormModal = ({ isOpen, onClose, onSave, listToEdit, isLoading,
   const performSearch = async (term) => {
     setIsSearching(true)
     try {
-      const response = await miniAppApiClient.get("/search", {
+      const response = await miniAppApiClient.get("/api/search", {
         params: {
           searchTerm: term,
           cityId: cityId || "1",

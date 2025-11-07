@@ -2,6 +2,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 // Import our new security middleware
 const { validateTelegramAuth } = require('./middleware/authMiddleware');
@@ -22,13 +24,20 @@ const deliveryRoutes = require('./routes/delivery');
 const adminRoutes = require('./routes/admin'); 
 
 // Import Telegram Bot Service
-const { initializeTelegramBot } = require('./services/telegramBotService');
-
-// Import rate limiting middleware
-const createRateLimiter = require('./src/middleware/rateLimiter');
+const telegramBotService = require('./services/telegramBot');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Apply security middleware
+app.use(helmet()); // Add security headers
+
+// Add rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use(limiter);
 
 // --- CORE MIDDLEWARE ---
 const corsOptions = {
@@ -39,13 +48,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Add rate limiting
-app.use('/api', createRateLimiter({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 1000, // Generous limit for development
-    message: 'Too many requests, please try again later'
-}));
 
 // --- ROUTE DEFINITIONS ---
 
@@ -60,20 +62,13 @@ app.use('/api/deals', dealRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/featured-items', featuredItemsRoutes);
 
-// Add authentication routes (no auth required)
-app.use('/api/auth', authRoutes);
-
-// Add webhook route for Telegram (production)
-if (process.env.NODE_ENV === 'production' && process.env.TELEGRAM_WEBHOOK_URL) {
-    app.post('/api/telegram/webhook', (req, res) => {
-        telegramBotService.handleWebhookUpdate(req, res);
-    });
-    console.log('✅ Telegram webhook route configured');
-}
-
-// Add supplier-specific routes (these need auth)
+// Add supplier-specific authenticated routes
 app.use('/api/supplier', supplierRoutes);
-
+// 4. SPECIALIZED ROUTES (Auth, Admin)
+// These might have their own separate authentication logic.
+console.log('✅ Applying SPECIALIZED routes...');
+app.use('/api/auth', authRoutes); // e.g., for JWT login/password, not Telegram based
+app.use('/api/admin', adminRoutes);
 // 2. TELEGRAM AUTHENTICATION MIDDLEWARE
 // Any route defined *after* this line will be protected.
 // It checks the 'X-Telegram-Init-Data' header. If valid, it adds `req.telegramUser`.
@@ -89,11 +84,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/delivery', deliveryRoutes);
 
-// 4. SPECIALIZED ROUTES (Auth, Admin)
-// These might have their own separate authentication logic.
-console.log('✅ Applying SPECIALIZED routes...');
-app.use('/api/auth', authRoutes); // e.g., for JWT login/password, not Telegram based
-app.use('/api/admin', adminRoutes);
+
 
 
 // --- ERROR HANDLERS ---
@@ -110,19 +101,9 @@ app.use((error, req, res, next) => {
 // --- SERVER STARTUP ---
 const server = app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
-
-// Initialize Telegram bot (optional)
-const telegramBot = initializeTelegramBot(process.env.TELEGRAM_BOT_TOKEN);
-if (telegramBot.isReady()) {
-    console.log('✅ Telegram bot is ready for notifications');
-} else {
-    console.log('⚠️ Telegram bot is disabled (no token provided)');
-}
-
 // Graceful shutdown logic
 process.on('SIGTERM', () => {
     console.log('🛑 SIGTERM received, shutting down gracefully...');
-    if (telegramBot) telegramBot.stop();
     server.close(() => {
         console.log('✅ Process terminated');
         process.exit(0);
@@ -131,7 +112,6 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
     console.log('🛑 SIGINT received, shutting down gracefully...');
-    if (telegramBot) telegramBot.stop();
     server.close(() => {
         console.log('✅ Process terminated');
         process.exit(0);

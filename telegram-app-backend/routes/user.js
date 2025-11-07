@@ -1,5 +1,6 @@
 // routes/user.js (FINAL ROBUST VERSION)
 const express = require('express');
+const { body, validationResult } = require('express-validator');
 const router = express.Router();
 const db = require('../config/db');
 
@@ -60,8 +61,17 @@ const upsertUserProfile = async (userId, profileData) => {
     return result.rows[0];
 };
 
+// Validation middleware for profile updates
+const validateProfileUpdate = [
+    body('full_name').optional().isLength({ max: 100 }).withMessage('Full name must be at most 100 characters'),
+    body('phone_number').optional().isMobilePhone().withMessage('Phone number must be a valid mobile number'),
+    body('address_line1').optional().isLength({ max: 255 }).withMessage('Address line 1 must be at most 255 characters'),
+    body('address_line2').optional().isLength({ max: 255 }).withMessage('Address line 2 must be at most 255 characters'),
+    body('city').optional().isLength({ max: 100 }).withMessage('City must be at most 100 characters'),
+    body('selected_city_id').optional().isInt().withMessage('Selected city ID must be a valid integer')
+];
 
-// --- ROUTES (No changes needed below) ---
+// --- ROUTES ---
 
 router.get('/profile', async (req, res) => {
     try {
@@ -83,9 +93,16 @@ router.get('/profile', async (req, res) => {
     }
 });
 
-router.put('/profile', async (req, res) => {
+router.put('/profile', validateProfileUpdate, async (req, res) => {
     try {
         const { id: userId } = req.telegramUser;
+        
+        // Check for validation errors
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+        }
+        
         const profileData = req.body;
         
         const updatedProfile = await upsertUserProfile(userId, profileData);

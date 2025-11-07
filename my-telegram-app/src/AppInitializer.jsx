@@ -16,6 +16,7 @@ import { CacheProvider } from "./context/CacheContext"
 import { Loader2, XCircle } from "lucide-react"
 import "./index.css"
 import appLogoImage from "./assets/IMG_1787.png"
+import WelcomeOnboardingModal from "./components/WelcomeOnboardingModal"
 
 const dentistQuotes = [
   { quote: "كل سن في رأس الرجل أثمن من الماس.", author: "ميغيل دي ثيربانتس" },
@@ -33,6 +34,7 @@ const AppInitializer = () => {
   const [error, setError] = useState(null)
   const [step, setStep] = useState("تهيئة التطبيق...")
   const [quoteIndex, setQuoteIndex] = useState(0)
+  const [showOnboarding, setShowOnboarding] = useState(false)
 
   // --- Helpers ---
   const fetchUserProfile = useCallback(async () => {
@@ -48,50 +50,33 @@ const AppInitializer = () => {
     }
   }, [])
 
+    const [hasSeenWelcome, setHasSeenWelcome] = useState(() => {
+  try {
+    return localStorage.getItem("hasSeenWelcome_v1") === "true";
+  } catch {
+    return false;
+  }
+});
+
   // --- Initialize Telegram + profile ---
-useEffect(() => {
-  const init = async () => {
-    setStep("الاتصال بتيليجرام...");
-    const tg = window.Telegram?.WebApp;
-    if (!tg) return;
-
-    try {
-      tg.ready();
-      tg.expand();
-
-      // Request fullscreen (immersive mode)
-      if (tg.requestFullscreen) {
-        try {
-          tg.requestFullscreen();
-        } catch (err) {
-          console.warn("Fullscreen request failed:", err);
-        }
+  useEffect(() => {
+    const init = async () => {
+      setStep("الاتصال بتيليجرام...")
+      const tg = window.Telegram?.WebApp
+      if (tg) {
+        tg.ready()
+        tg.expand()
+        tg.setHeaderColor("#ffffff")
+        tg.setBackgroundColor("#ffffff")
+        tg.enableClosingConfirmation()
+        tg.HapticFeedback.impactOccurred("light")
       }
-
-      // Telegram UI tweaks
-      tg.setHeaderColor("#ffffff");
-      tg.setBackgroundColor("#ffffff");
-      tg.enableClosingConfirmation();
-      tg.HapticFeedback.impactOccurred("light");
-
-      // Get user
-      const user = tg?.initDataUnsafe?.user || { id: 123456, first_name: "Local", last_name: "Dev" };
-      setTelegramUser(user);
-
-      // Fetch profile
-      await fetchUserProfile();
-    } catch (err) {
-      console.error("Telegram init error:", err);
-      setError("حدث خطأ أثناء الاتصال بتيليجرام.");
-    } finally {
-      setIsLoading(false); // crucial to stop infinite loading
+      const user = tg?.initDataUnsafe?.user || { id: 123456, first_name: "Local", last_name: "Dev" }
+      setTelegramUser(user)
+      await fetchUserProfile()
     }
-  };
-
-  init();
-}, [fetchUserProfile]);
-
-
+    init()
+  }, [fetchUserProfile])
 
   // --- Cycle quotes while loading ---
   useEffect(() => {
@@ -102,83 +87,100 @@ useEffect(() => {
     return () => clearInterval(timer)
   }, [isLoading])
 
+  useEffect(() => {
+  const hasSeenWelcome = localStorage.getItem("hasSeenWelcome_v1")
+  if (!hasSeenWelcome) {
+    setTimeout(() => setShowOnboarding(true), 800)
+  }
+}, [])
+
+
   const handleCitySelect = async ({ cityId }) => {
     try {
       setStep("حفظ اختيار المدينة...")
       const updatedProfile = await userService.updateProfile({ selected_city_id: cityId })
       setUserProfile(updatedProfile)
-      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("success")
+      window.Telegram?.WebApp?.HapticFeedback.notificationOccurred("success")
     } catch {
       setError("حدث خطأ أثناء حفظ اختيار المدينة.")
-      window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("error")
+      window.Telegram?.WebApp?.HapticFeedback.notificationOccurred("error")
     }
   }
 
+  const handleFinishWelcome = () => {
+  try {
+    localStorage.setItem("hasSeenWelcome_v1", "true");
+  } catch {}
+  setHasSeenWelcome(true);
+  // Optionally: send update to backend:
+  // await userService.updateProfile({ has_seen_welcome: true })
+};
+
+
   // --- Loading Screen ---
-  if (isLoading) {
-    const currentQuote = dentistQuotes[quoteIndex]
-    return (
-      <div
-        className="w-screen h-screen flex flex-col items-center justify-center text-gray-800 px-6 font-sans relative"
-        style={{
-          background: "linear-gradient(to top, #e6f4ff 0%, #ffffff 70%)",
-          height: "100vh",
-          overflow: "hidden",
-        }}
+ {/* Loading Screen */}
+if (isLoading) {
+  const currentQuote = dentistQuotes[quoteIndex]
+  return (
+    <div
+      className="w-screen h-screen flex flex-col items-center justify-center text-gray-800 px-6 font-sans relative"
+      style={{
+        background: "linear-gradient(to top, #e6f4ff 0%, #ffffff 70%)", // icy blue -> white
+      }}
+    >
+      {/* Logo */}
+      <motion.img
+        src={appLogoImage}
+        alt="App Logo"
+       className="w-40 h-40 object-contain mb-6"
+
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.8 }}
+      />
+
+      {/* App Title */}
+      <motion.h1
+        className="text-3xl font-extrabold mb-4 text-gray-900"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
       >
-        {/* Logo */}
-        <motion.img
-          src={appLogoImage}
-          alt="App Logo"
-          className="w-40 h-40 object-contain mb-6"
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.8 }}
-        />
+        معرض المستلزمات الطبية
+      </motion.h1>
 
-        {/* App Title */}
-        <motion.h1
-          className="text-3xl font-extrabold mb-4 text-gray-900"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          معرض المستلزمات الطبية
-        </motion.h1>
+      {/* Loading Step */}
+      <motion.div
+        className="flex items-center gap-3 text-gray-700 mb-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
+        <span className="text-base font-medium">{step}</span>
+      </motion.div>
 
-        {/* Loading Step */}
+      {/* Rotating Quote */}
+      <AnimatePresence mode="wait">
         <motion.div
-          className="flex items-center gap-3 text-gray-700 mb-10"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
+          key={currentQuote.quote}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.6 }}
+          className="absolute bottom-20 w-full max-w-md mx-auto px-6"
+          dir="rtl"
         >
-          <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
-          <span className="text-base font-medium">{step}</span>
+          <div className="text-center">
+            <p className="text-gray-600 text-lg italic leading-relaxed">{currentQuote.quote}</p>
+            <div className="text-sm font-semibold text-blue-600 mt-2">- {currentQuote.author}</div>
+          </div>
         </motion.div>
+      </AnimatePresence>
+    </div>
+  )
+}
 
-        {/* Rotating Quote */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentQuote.quote}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.6 }}
-            className="absolute bottom-20 w-full max-w-md mx-auto px-6"
-            dir="rtl"
-          >
-            <div className="text-center">
-              <p className="text-gray-600 text-lg italic leading-relaxed">{currentQuote.quote}</p>
-              <div className="text-sm font-semibold text-blue-600 mt-2">
-                - {currentQuote.author}
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    )
-  }
 
   // --- Error Screen ---
   if (error) {
@@ -205,10 +207,21 @@ useEffect(() => {
     )
   }
 
+  if (!hasSeenWelcome && userProfile && userProfile.selected_city_id) {
+  return (
+    <WelcomeOnboardingModal
+      isOpen={true}
+      onFinish={handleFinishWelcome}
+      version="v1"
+    />
+  );
+}
+
   // --- City Selection ---
   if (userProfile && !userProfile.selected_city_id) {
     return <CitySelectionModal show={true} onCitySelect={handleCitySelect} />
   }
+
 
   // --- App Layout ---
   return (
@@ -218,22 +231,13 @@ useEffect(() => {
           <SearchProvider cityId={userProfile?.selected_city_id}>
             <FilterProvider>
               <CheckoutProvider>
-                <div
-                  className="min-h-screen w-full bg-white"
-                  style={{
-                    height: "100vh",
-                    overflowY: "auto",
-                    WebkitOverflowScrolling: "touch",
+                <Outlet
+                  context={{
+                    telegramUser,
+                    userProfile,
+                    onProfileUpdate: fetchUserProfile,
                   }}
-                >
-                  <Outlet
-                    context={{
-                      telegramUser,
-                      userProfile,
-                      onProfileUpdate: fetchUserProfile,
-                    }}
-                  />
-                </div>
+                />
               </CheckoutProvider>
             </FilterProvider>
           </SearchProvider>
