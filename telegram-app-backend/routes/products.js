@@ -1,8 +1,9 @@
 // routes/products.js (UPGRADED WITH SMARTER ALTERNATIVES)
 const express = require('express');
-const { query, param } = require('express-validator');
+const { query, param, body, validationResult } = require('express-validator');
 const router = express.Router();
 const db = require('../config/db');
+
 
 // Get all products with filtering, search, and pagination
 router.get('/', [

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { Outlet } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { userService } from "./services/userService"
+import { authService } from "./services/authService"
 import CitySelectionModal from "./components/modals/CitySelectionModal"
 
 import { SearchProvider } from "./context/SearchContext"
@@ -58,25 +59,45 @@ const AppInitializer = () => {
   }
 });
 
-  // --- Initialize Telegram + profile ---
+  // --- Initialize Telegram + authenticate + profile ---
+ // --- Initialize Telegram + authenticate + profile ---
   useEffect(() => {
     const init = async () => {
-      setStep("الاتصال بتيليجرام...")
-      const tg = window.Telegram?.WebApp
+      setStep(" ...");
+      const tg = window.Telegram?.WebApp;
       if (tg) {
-        tg.ready()
-        tg.expand()
-        tg.setHeaderColor("#ffffff")
-        tg.setBackgroundColor("#ffffff")
-        tg.enableClosingConfirmation()
-        tg.HapticFeedback.impactOccurred("light")
+        tg.ready();
+        tg.expand();
+        tg.setHeaderColor("#ffffff");
+        tg.setBackgroundColor("#ffffff");
+        tg.enableClosingConfirmation();
+     
+       tg.HapticFeedback.impactOccurred("light");
       }
-      const user = tg?.initDataUnsafe?.user || { id: 123456, first_name: "Local", last_name: "Dev" }
-      setTelegramUser(user)
-      await fetchUserProfile()
-    }
-    init()
-  }, [fetchUserProfile])
+      const user = tg?.initDataUnsafe?.user || { id: 123456, first_name: "Local", last_name: "Dev" };
+      setTelegramUser(user);
+      
+      // Try to authenticate AND fetch profile
+      try {
+        setStep("  ...");
+        await authService.telegramNativeLogin();
+        
+        // ONLY fetch the profile if login was successful
+        await fetchUserProfile();
+
+      } catch (authError) {
+        // Log the ENTIRE error object to see what it contains
+        console.error("Critical authentication or profile fetch error:", authError);
+        
+        // Safely access the message, or use the object itself, or a generic string
+        const errorMessage = authError.message || String(authError) || "Unknown error during authentication.";
+        
+        setError(`Authentication failed: ${errorMessage}`);
+        setIsLoading(false); 
+      }
+    };
+    init();
+  }, [fetchUserProfile]);
 
   // --- Cycle quotes while loading ---
   useEffect(() => {

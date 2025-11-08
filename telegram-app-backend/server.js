@@ -32,23 +32,30 @@ const PORT = process.env.PORT || 3001;
 // Apply security middleware
 app.use(helmet()); // Add security headers
 
-// Add general rate limiting
+// Check the environment to set appropriate limits
+const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
+const DEV_MAX_REQUESTS = 5000;
+const PROD_MAX_REQUESTS = 100;
+
+// Apply general rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: IS_DEVELOPMENT ? DEV_MAX_REQUESTS : PROD_MAX_REQUESTS // General API limit
 });
 app.use(limiter);
 
-// Create auth-specific rate limiter
+// Create auth-specific rate limiter (Stricter in Prod, Open in Dev)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs for auth endpoints
+  max: IS_DEVELOPMENT ? DEV_MAX_REQUESTS : 5, // Auth attempts limit
   message: {
     error: 'Too many authentication attempts, please try again later.'
   },
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+
 
 // --- CORE MIDDLEWARE ---
 const corsOptions = {

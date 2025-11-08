@@ -25,10 +25,8 @@ const refreshAccessToken = async () => {
 
         const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${refreshToken}`,
-            },
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken }), // ✅ FIXED: send in body
         });
 
         if (!response.ok) {
@@ -36,16 +34,20 @@ const refreshAccessToken = async () => {
         }
 
         const data = await response.json();
-        setTokens(data.accessToken, data.refreshToken);
+
+        // Backend only returns a new access token
+        if (data.accessToken) {
+            setTokens(data.accessToken, refreshToken); // ✅ reuse same refresh token
+        }
+
         return data.accessToken;
     } catch (error) {
         console.error('Token refresh error:', error);
         clearTokens();
-        // Optionally redirect to login page
-        // window.location.href = '/login';
         throw error;
     }
 };
+
 
 async function apiClient(endpoint, { body, ...customConfig } = {}) {
     const tg = window.Telegram?.WebApp;
@@ -57,7 +59,7 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
     if (IS_DEVELOPMENT && !initData) {
         // If we're in development mode AND there's no real Telegram data,
         // send the special bypass header.
-        headers['X-Dev-Bypass-Auth'] = 'true';
+        headers['X-Dev-Bypass-Auth'] = import.meta.env.VITE_DEV_BYPASS_SECRET;
         console.log("DEV MODE: Sending bypass auth header.");
     } else if (initData) {
         // Otherwise, if we DO have initData (in production), send it.

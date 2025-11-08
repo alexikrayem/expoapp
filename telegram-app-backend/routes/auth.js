@@ -1,4 +1,3 @@
-// routes/auth.js
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const router = express.Router();
@@ -196,6 +195,32 @@ router.post('/delivery/verify-telegram', async (req, res) => {
 
 // Refresh token endpoint
 router.post('/refresh', async (req, res) => {
+    // Check for development bypass for refresh token endpoint as well
+    const isDevRequest = req.header('X-Dev-Bypass-Auth');
+    const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip.startsWith('::ffff:127.0.0.1');
+
+    if (process.env.NODE_ENV === 'development' && isDevRequest && isLocalhost) {
+        // Enhanced security: Check for a specific secret in the header
+        if (isDevRequest === process.env.DEV_BYPASS_SECRET) {
+            console.warn('⚠️  Bypassing token refresh for local development via X-Dev-Bypass-Auth header.');
+            
+            // Generate a mock access token for development
+            const mockToken = jwt.sign(
+                { 
+                    userId: 1, 
+                    telegramId: 123456789, 
+                    role: 'customer',
+                    type: 'access'
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '15m' }
+            );
+
+            res.json({ accessToken: mockToken });
+            return;
+        }
+    }
+    
     const { refreshToken } = req.body;
     
     if (!refreshToken) {
@@ -230,9 +255,114 @@ router.post('/refresh', async (req, res) => {
     }
 });
 
-// --- NEW: Telegram Native App Login Endpoint ---
+// Helper to construct full name from Telegram auth data
+const getFullNameFromAuthData = (authData) => {
+    let fullName = authData.first_name || '';
+    if (authData.last_name) {
+        fullName += (fullName ? ' ' : '') + authData.last_name;
+    }
+    return fullName;
+};
+
+
+// --- Telegram Native App Login Endpoint ---
 router.post('/telegram-native', async (req, res) => {
     try {
+        // Check for development bypass first
+        const isDevRequest = req.header('X-Dev-Bypass-Auth');
+        const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip.startsWith('::ffff:127.0.0.1');
+
+        if (process.env.NODE_ENV === 'development' && isDevRequest && isLocalhost) {
+            // Enhanced security: Check for a specific secret in the header
+            if (isDevRequest === process.env.DEV_BYPASS_SECRET) {
+                console.warn('⚠️  Bypassing Telegram auth for local development via X-Dev-Bypass-Auth header.');
+                
+                // Mock user data for development
+                const mockAuthData = {
+                    id: 123456789,
+                    first_name: 'Local',
+                    last_name: 'Dev',
+                    username: 'localdev',
+                    photo_url: null
+                };
+
+                // In dev mode, use the mock user data from the request body or default
+                const { auth_data: requestData } = req.body;
+                const auth_data = requestData || mockAuthData; 
+
+                // Construct the full name for the database
+                const fullName = getFullNameFromAuthData(auth_data);
+
+                // --- User Lookup/Creation ---
+                // We use the existing 'user_profiles' table and 'user_id' column for Telegram ID storage.
+
+                let user;
+                const findUserQuery = 'SELECT * FROM user_profiles WHERE user_id = $1';
+                const userResult = await db.query(findUserQuery, [auth_data.id]);
+
+                if (userResult.rows.length > 0) {
+                    user = userResult.rows[0];
+                    
+                    // ✅ FIXED: Only update the 'full_name' column which exists
+                    const updateQuery = `
+                        UPDATE user_profiles
+                        SET
+                            full_name = $1,
+                            updated_at = NOW()
+                        WHERE user_id = $2
+                        RETURNING *;
+                    `;
+                    const updatedUserResult = await db.query(updateQuery, [
+                        fullName,
+                        auth_data.id
+                    ]);
+                    user = updatedUserResult.rows[0];
+                } else {
+                    // Create new user
+                    // ✅ FIXED: Only insert into 'user_id' and 'full_name'
+                    const insertUserQuery = `
+                        INSERT INTO user_profiles (user_id, full_name, created_at, updated_at)
+                        VALUES ($1, $2, NOW(), NOW())
+                        RETURNING *;
+                    `;
+                    const newUserResult = await db.query(insertUserQuery, [
+                        auth_data.id,
+                        fullName,
+                    ]);
+                    user = newUserResult.rows[0];
+                }
+
+                // Generate JWT tokens for the user
+                const { accessToken, refreshToken } = generateTokens(
+                    {
+                        userId: user.user_id, // Using Telegram ID as the primary unique user identifier in the token payload
+                        telegramId: user.user_id,
+                        role: 'customer' // Assign a role for general app users
+                    },
+                    'CUSTOMER'
+                );
+
+                res.json({
+                    accessToken,
+                    refreshToken,
+                    telegramUser: { // Return basic Telegram user info for client convenience
+                        id: auth_data.id,
+                        first_name: auth_data.first_name,
+                        last_name: auth_data.last_name,
+                        username: auth_data.username,
+                        photo_url: auth_data.photo_url
+                    },
+                    userProfile: { // Return initial user profile details from your backend
+                        userId: user.user_id, // Use user_id (Telegram ID)
+                        fullName: user.full_name, // Use fullName
+                        selected_city_id: user.selected_city_id // Include selected city if it exists
+                    }
+                });
+                return; // Exit early after handling dev mode
+            }
+        }
+        
+        // --- Regular production Telegram data validation ---
         const { auth_data } = req.body; // auth_data is the object returned by Telegram Login Widget
 
         if (!auth_data || !auth_data.hash || !auth_data.id) {
@@ -240,7 +370,15 @@ router.post('/telegram-native', async (req, res) => {
         }
 
         // --- Telegram Data Validation (HMAC-SHA256) ---
-        // This logic is similar to your existing authMiddleware.js
+        // BOT_TOKEN is missing. Assuming it's defined elsewhere or will be fixed by the user.
+        // const secretKey = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
+        // Placeholder for BOT_TOKEN, assuming it's available via env variable
+        const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; 
+        if (!BOT_TOKEN) {
+             console.error('CRITICAL: TELEGRAM_BOT_TOKEN is missing from environment variables.');
+             return res.status(500).json({ error: 'Server configuration error: Missing bot token.' });
+        }
+
         const dataCheckString = Object.keys(auth_data)
             .filter(key => key !== 'hash') // Exclude 'hash' itself
             .map(key => `${key}=${auth_data[key]}`)
@@ -254,50 +392,44 @@ router.post('/telegram-native', async (req, res) => {
             console.warn('Telegram auth failed: Hash mismatch for user ID', auth_data.id);
             return res.status(403).json({ error: 'Forbidden: Invalid Telegram authentication data (hash mismatch).' });
         }
+        
+        // Construct the full name for the database
+        const fullName = getFullNameFromAuthData(auth_data);
 
         // --- User Lookup/Creation ---
-        // Assuming a 'users' table for general customers/app users
-        // This table should at least have: id (PK), telegram_id (UNIQUE), first_name, last_name, username, photo_url, created_at, updated_at, selected_city_id
         
         let user;
-        const findUserQuery = 'SELECT * FROM users WHERE telegram_id = $1';
+        const findUserQuery = 'SELECT * FROM user_profiles WHERE user_id = $1';
         const userResult = await db.query(findUserQuery, [auth_data.id]);
 
         if (userResult.rows.length > 0) {
             user = userResult.rows[0];
-            // Optionally update user details (name, photo, etc.) from Telegram if they've changed
+            
+            // ✅ FIXED: Only update the 'full_name' column which exists
             const updateQuery = `
-                UPDATE users
+                UPDATE user_profiles
                 SET 
-                    first_name = $1, 
-                    last_name = $2, 
-                    username = $3, 
-                    photo_url = $4,
+                    full_name = $1,
                     updated_at = NOW()
-                WHERE telegram_id = $5
+                WHERE user_id = $2
                 RETURNING *;
             `;
             const updatedUserResult = await db.query(updateQuery, [
-                auth_data.first_name || null,
-                auth_data.last_name || null,
-                auth_data.username || null,
-                auth_data.photo_url || null,
+                fullName,
                 auth_data.id
             ]);
             user = updatedUserResult.rows[0];
         } else {
             // Create new user
+            // ✅ FIXED: Only insert into 'user_id' and 'full_name'
             const insertUserQuery = `
-                INSERT INTO users (telegram_id, first_name, last_name, username, photo_url, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+                INSERT INTO user_profiles (user_id, full_name, created_at, updated_at)
+                VALUES ($1, $2, NOW(), NOW())
                 RETURNING *;
             `;
             const newUserResult = await db.query(insertUserQuery, [
                 auth_data.id,
-                auth_data.first_name || null,
-                auth_data.last_name || null,
-                auth_data.username || null,
-                auth_data.photo_url || null
+                fullName,
             ]);
             user = newUserResult.rows[0];
         }
@@ -305,8 +437,8 @@ router.post('/telegram-native', async (req, res) => {
         // Generate JWT tokens for the user
         const { accessToken, refreshToken } = generateTokens(
             {
-                userId: user.id, // Your internal user ID
-                telegramId: user.telegram_id,
+                userId: user.user_id, // Using Telegram ID as the primary unique user identifier in the token payload
+                telegramId: user.user_id,
                 role: 'customer' // Assign a role for general app users
             },
             'CUSTOMER'
@@ -323,10 +455,8 @@ router.post('/telegram-native', async (req, res) => {
                 photo_url: auth_data.photo_url
             },
             userProfile: { // Return initial user profile details from your backend
-                id: user.id,
-                first_name: user.first_name,
-                last_name: user.last_name,
-                username: user.username,
+                userId: user.user_id, // Use user_id (Telegram ID)
+                fullName: user.full_name, // Use fullName
                 selected_city_id: user.selected_city_id // Include selected city if it exists
             }
         });
