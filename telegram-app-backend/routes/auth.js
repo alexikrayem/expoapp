@@ -379,17 +379,43 @@ router.post('/telegram-native', async (req, res) => {
              return res.status(500).json({ error: 'Server configuration error: Missing bot token.' });
         }
 
-        const dataCheckString = Object.keys(auth_data)
-            .filter(key => key !== 'hash') // Exclude 'hash' itself
-            .map(key => `${key}=${auth_data[key]}`)
-            .sort()
-            .join('\n');
+        // According to Telegram documentation for Web Apps, we need to:
+        // 1. Get all received parameters
+        // 2. Exclude 'hash' parameter
+        // 3. Sort parameters alphabetically by parameter name
+        // 4. Create a string by joining all parameter-value pairs in format: parameter=value
+        // 5. For 'user' object, serialize it as JSON string in a specific format
+        let dataCheckArray = [];
+        
+        // Get all parameter names except 'hash' and sort them alphabetically
+        const paramNames = Object.keys(auth_data).filter(key => key !== 'hash').sort();
+        
+        for (const key of paramNames) {
+            if (key === 'user' && typeof auth_data[key] === 'object') {
+                // For the 'user' object, stringify it in a specific format required by Telegram
+                // Must be a JSON string without any extra spaces
+                const userString = JSON.stringify(auth_data[key]).replace(/\s/g, '');
+                dataCheckArray.push(`${key}=${userString}`);
+            } else {
+                // For other parameters, just add them as key=value
+                if (auth_data[key] !== undefined && auth_data[key] !== null) {
+                    dataCheckArray.push(`${key}=${auth_data[key]}`);
+                }
+            }
+        }
+        
+        const dataCheckString = dataCheckArray.join('\n');
 
-        const secretKey = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
+        // According to Telegram documentation, the secret key should be the SHA256 of the bot token
+        const secretKey = crypto.createHash('sha256').update(BOT_TOKEN).digest();
         const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
 
         if (calculatedHash !== auth_data.hash) {
             console.warn('Telegram auth failed: Hash mismatch for user ID', auth_data.id);
+            console.warn('dataCheckString used for validation:', dataCheckString);
+            console.warn('Expected hash:', auth_data.hash);
+            console.warn('Calculated hash:', calculatedHash);
+            console.warn('Full auth_data received:', auth_data);
             return res.status(403).json({ error: 'Forbidden: Invalid Telegram authentication data (hash mismatch).' });
         }
         
@@ -467,6 +493,7 @@ router.post('/telegram-native', async (req, res) => {
     }
 });
 // --- END NEW: Telegram Native App Login Endpoint ---
+
 
 
 module.exports = router;
