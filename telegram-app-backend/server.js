@@ -27,7 +27,11 @@ const adminRoutes = require('./routes/admin');
 const telegramBotService = require('./services/telegramBot');
 
 const app = express();
+
 const PORT = process.env.PORT || 3001;
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 // Apply security middleware
 app.use(helmet()); // Add security headers
