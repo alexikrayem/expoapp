@@ -406,8 +406,13 @@ router.post('/telegram-native', async (req, res) => {
         
         const dataCheckString = dataCheckArray.join('\n');
 
-        // According to Telegram documentation, the secret key should be the SHA256 of the bot token
-        const secretKey = crypto.createHash('sha256').update(BOT_TOKEN).digest();
+        // According to Telegram Web App documentation, the secret key should be:
+        // SHA256 of the string "WebAppData" concatenated with the bot token
+        const secretKey = crypto
+            .createHmac('sha256', 'WebAppData')
+            .update(BOT_TOKEN)
+            .digest();
+
         const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
 
         // Check if this is development mode with mock hash
