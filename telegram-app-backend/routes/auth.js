@@ -410,7 +410,15 @@ router.post('/telegram-native', async (req, res) => {
         const secretKey = crypto.createHash('sha256').update(BOT_TOKEN).digest();
         const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
 
-        if (calculatedHash !== auth_data.hash) {
+        // Check if this is development mode with mock hash
+        const isDevMode = process.env.NODE_ENV === 'development';
+        const isDevMockHash = auth_data.hash === 'mock_hash_for_dev_mode';
+        
+        // In development, allow mock hash or real hash
+        if (isDevMode && isDevMockHash) {
+            // Allow mock hash in development mode
+            console.log('Allowing mock hash for development user ID', auth_data.id);
+        } else if (calculatedHash !== auth_data.hash) {
             console.warn('Telegram auth failed: Hash mismatch for user ID', auth_data.id);
             console.warn('dataCheckString used for validation:', dataCheckString);
             console.warn('Expected hash:', auth_data.hash);
