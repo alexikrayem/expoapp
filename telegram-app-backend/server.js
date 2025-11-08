@@ -139,6 +139,21 @@ app.use((error, req, res, next) => {
     res.status(statusCode).json({ error: message });
 });
 
+app.use((err, req, res, next) => {
+    console.error('--- UNHANDLED SERVER CRASH (HIGH PRIORITY) ---');
+    console.error(err.stack); // Log the full stack trace
+    
+    // In production, send a detailed error message ONLY if debugging
+    if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_MODE === 'true') {
+        return res.status(500).json({ 
+            error: 'Fatal Server Error', 
+            details: err.message,
+            stack: err.stack.split('\n').slice(0, 5) // Send a slice of the stack trace
+        });
+    }
+
+    res.status(500).json({ error: 'Internal Server Error.' });
+});
 
 // --- SERVER STARTUP ---
 const server = app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
