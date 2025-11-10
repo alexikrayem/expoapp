@@ -1,6 +1,7 @@
-// src/hooks/useFavorites.js
+// src/hooks/useFavorites.js (JWT-AUTHENTICATED VERSION)
 import { useState, useEffect, useCallback } from 'react';
 import { userService } from '../services/userService';
+import { authService } from '../services/authService';
 
 export const useFavorites = (telegramUser) => {
     const [favoriteIds, setFavoriteIds] = useState(new Set());
@@ -8,7 +9,12 @@ export const useFavorites = (telegramUser) => {
     const [error, setError] = useState(null);
 
     const fetchFavoriteIds = useCallback(async () => {
-        if (!telegramUser?.id) return;
+        // Check if user is authenticated using JWT tokens instead of telegramUser
+        if (!authService.isAuthenticated()) {
+            setFavoriteIds(new Set());
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
@@ -22,7 +28,7 @@ export const useFavorites = (telegramUser) => {
         } finally {
             setIsLoading(false);
         }
-    }, [telegramUser?.id]);
+    }, []);
 
     useEffect(() => {
         fetchFavoriteIds();
@@ -30,7 +36,7 @@ export const useFavorites = (telegramUser) => {
 
     const toggleFavorite = useCallback(async (productId) => {
         const isCurrentlyFavorite = favoriteIds.has(productId);
-        
+
         // Optimistic UI update: update the state immediately
         const newFavoriteIds = new Set(favoriteIds);
         if (isCurrentlyFavorite) {
@@ -50,7 +56,7 @@ export const useFavorites = (telegramUser) => {
         } catch (error) {
             console.error("Error toggling favorite:", error);
             // Revert UI on failure
-            setFavoriteIds(favoriteIds); 
+            setFavoriteIds(favoriteIds);
             alert(`Error: ${error.message}`);
         }
     }, [favoriteIds]);

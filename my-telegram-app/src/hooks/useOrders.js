@@ -1,6 +1,7 @@
-// src/hooks/useOrders.js (DEFINITIVE FINAL VERSION)
+// src/hooks/useOrders.js (JWT-AUTHENTICATED VERSION)
 import { useState, useEffect, useCallback } from 'react';
 import { orderService } from '../services/orderService';
+import { authService } from '../services/authService';
 import { emitter } from '../utils/emitter'; // Make sure you have created this file
 
 export const useOrders = (telegramUser) => {
@@ -9,7 +10,8 @@ export const useOrders = (telegramUser) => {
     const [error, setError] = useState(null);
 
     const fetchOrders = useCallback(async () => {
-        if (!telegramUser?.id) {
+        // Check if user is authenticated using JWT tokens instead of telegramUser
+        if (!authService.isAuthenticated()) {
             setOrders([]);
             setIsLoading(false);
             return;
@@ -25,7 +27,7 @@ export const useOrders = (telegramUser) => {
         } finally {
             setIsLoading(false);
         }
-    }, [telegramUser?.id]);
+    }, []);
 
     useEffect(() => {
         fetchOrders(); // Initial fetch
@@ -35,7 +37,7 @@ export const useOrders = (telegramUser) => {
             emitter.off('order-placed', onOrderPlaced); // Unsubscribe on cleanup
         };
     }, [fetchOrders]);
-    
+
     const refetchOrders = () => fetchOrders();
 
     return { orders, isLoadingOrders: isLoading, ordersError: error, refetchOrders };

@@ -5,7 +5,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const crypto = require('crypto');
-const { validateTelegramData } = require('../src/utils/telegramAuth');
 
 
 // Helper function to generate both access and refresh tokens
@@ -267,41 +266,44 @@ const getFullNameFromAuthData = (authData) => {
 };
 
 
-// --- Telegram Native App Login Endpoint ---
-router.post('/telegram-native', async (req, res) => {
+// --- Telegram Login Widget Endpoint ---
+const { validateTelegramLoginWidgetData } = require('../src/utils/telegramAuth');
+
+router.post('/telegram-login-widget', async (req, res) => {
   try {
     const isDevRequest = req.header('X-Dev-Bypass-Auth');
     const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip.startsWith('::ffff:127.0.0.1');
 
+    let authData;
+
     // ✅ Dev bypass
     if (process.env.NODE_ENV === 'development' && isDevRequest && isLocalhost && isDevRequest === process.env.DEV_BYPASS_SECRET) {
-      console.warn('⚠️  Dev bypass active for Telegram login.');
-      const mockAuthData = {
+      console.warn('⚠️  Dev bypass active for Telegram Login Widget.');
+      authData = {
         id: 123456789,
         first_name: 'Local',
         last_name: 'Dev',
         username: 'localdev',
+        auth_date: Math.floor(Date.now() / 1000) // Current timestamp
       };
-      req.telegramUser = mockAuthData;
     } else {
-      const { initData } = req.body;
-      if (!initData) return res.status(400).json({ error: 'Missing initData' });
+      const { authData: receivedAuthData } = req.body;
+      if (!receivedAuthData) return res.status(400).json({ error: 'Missing authData' });
 
       const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-      const validation = validateTelegramData(initData, BOT_TOKEN);
+      const validation = validateTelegramLoginWidgetData(receivedAuthData, BOT_TOKEN);
       if (!validation.ok) {
-        console.warn('Telegram hash mismatch:', validation);
+        console.warn('Telegram Login Widget validation failed:', validation);
         return res.status(403).json({ error: 'Invalid Telegram authentication data', details: validation });
       }
-      req.telegramUser = validation.user;
+      authData = validation.user;
     }
 
-    const auth_data = req.telegramUser;
-    const fullName = [auth_data.first_name, auth_data.last_name].filter(Boolean).join(' ');
+    const fullName = [authData.first_name, authData.last_name].filter(Boolean).join(' ');
 
     // user lookup / creation logic remains unchanged
     const findUserQuery = 'SELECT * FROM user_profiles WHERE user_id = $1';
-    const userResult = await db.query(findUserQuery, [auth_data.id]);
+    const userResult = await db.query(findUserQuery, [authData.id]);
 
     let user;
     if (userResult.rows.length > 0) {
@@ -310,14 +312,14 @@ router.post('/telegram-native', async (req, res) => {
         SET full_name = $1, updated_at = NOW()
         WHERE user_id = $2 RETURNING *;
       `;
-      const updatedUser = await db.query(updateQuery, [fullName, auth_data.id]);
+      const updatedUser = await db.query(updateQuery, [fullName, authData.id]);
       user = updatedUser.rows[0];
     } else {
       const insertUserQuery = `
         INSERT INTO user_profiles (user_id, full_name, created_at, updated_at)
         VALUES ($1, $2, NOW(), NOW()) RETURNING *;
       `;
-      const newUser = await db.query(insertUserQuery, [auth_data.id, fullName]);
+      const newUser = await db.query(insertUserQuery, [authData.id, fullName]);
       user = newUser.rows[0];
     }
 
@@ -329,7 +331,7 @@ router.post('/telegram-native', async (req, res) => {
     res.json({
       accessToken,
       refreshToken,
-      telegramUser: auth_data,
+      telegramUser: authData,
       userProfile: {
         userId: user.user_id,
         fullName: user.full_name,
@@ -337,11 +339,14 @@ router.post('/telegram-native', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Telegram native login error:', error);
-    res.status(500).json({ error: 'Internal server error during Telegram login.' });
+    console.error('Telegram Login Widget error:', error);
+    res.status(500).json({ error: 'Internal server error during Telegram Login Widget authentication.' });
   }
 });
-// --- END NEW: Telegram Native App Login Endpoint ---
+// --- END Telegram Login Widget Endpoint ---
+
+
+
 
 
 

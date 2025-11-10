@@ -1,10 +1,9 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import TelegramLoginWidget from './TelegramLoginWidget';
 
 /**
- * Step 4 – final integration with local assets + fonts + rounded design
+ * WelcomeOnboardingModal - Shows either onboarding slides for first-time users or login for new users
  */
 
 const slides = [
@@ -13,7 +12,7 @@ const slides = [
     title: "مرحباً بك في معرض المستلزمات الطبية",
     description:
       "تعرّف على تطبيقنا الذي يجمع أفضل العروض والمنتجات الطبية في مكانٍ واحد بسهولةٍ وأناقة.",
-    image: "/assets/onboarding/slide1.png", // ✅ put your local images here
+    image: "/assets/onboarding/slide1.png", // put your local images here
   },
   {
     id: "slide-2",
@@ -37,25 +36,29 @@ export default function WelcomeOnboardingModal({
   isOpen = true,
   onFinish,
   version = "v1",
+  showLogin = false // New prop to show login instead of slides
 }) {
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [loginError, setLoginError] = useState(null);
 
   // Keyboard navigation (→ next, ← previous)
   useEffect(() => {
+    if (showLogin) return; // Don't handle keyboard navigation when showing login
+    
     const handleKey = (e) => {
-      if (e.key === "ArrowLeft") next();
-      if (e.key === "ArrowRight") prev();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  });
+  }, [showLogin, index]);
 
   const next = () => {
     if (index < slides.length - 1) {
       setDirection(1);
       setIndex((i) => i + 1);
-    } else finish();
+    }
   };
 
   const prev = () => {
@@ -70,8 +73,68 @@ export default function WelcomeOnboardingModal({
     onFinish?.();
   };
 
+  const handleLoginSuccess = (result) => {
+    // User successfully logged in, finish onboarding
+    localStorage.setItem(storageKey(version), "true");
+    onFinish?.(result);
+  };
+
+  const handleLoginError = (error) => {
+    setLoginError(`Login failed: ${error.message || 'Unknown error'}`);
+    console.error('Telegram login failed:', error);
+  };
+
   if (!isOpen) return null;
 
+  if (showLogin) {
+    // Show login screen instead of slides
+    return (
+      <div
+        dir="rtl"
+        className="fixed inset-0 flex items-center justify-center z-50 bg-gradient-to-b from-[#E3F3FF] via-[#F5FAFF] to-white font-[Montaserat]"
+      >
+        <div className="relative w-full max-w-md h-[70vh] flex flex-col items-center justify-center text-center px-8 py-12 select-none">
+          {/* Logo or App Icon */}
+          <div className="mb-8">
+            <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center mx-auto">
+              <span className="text-3xl">🩺</span>
+            </div>
+          </div>
+          
+          {/* Welcome Title */}
+          <h2 className="text-2xl font-semibold text-gray-900 mb-3 leading-snug">
+            مرحباً بكم في معرض المستلزمات الطبية
+          </h2>
+          
+          <p className="text-gray-600 text-sm leading-relaxed mb-8 max-w-sm">
+            سجّل الدخول باستخدام حساب تيليجرام للوصول إلى أفضل العروض والمنتجات الطبية
+          </p>
+          
+          {/* Telegram Login Widget */}
+          <div className="w-full max-w-xs mx-auto mb-6">
+            <TelegramLoginWidget 
+              onLoginSuccess={handleLoginSuccess}
+              onError={handleLoginError}
+            />
+          </div>
+          
+          {/* Error Message */}
+          {loginError && (
+            <div className="text-red-500 text-sm mb-4">
+              {loginError}
+            </div>
+          )}
+          
+          {/* Instructions */}
+          <p className="text-gray-500 text-xs mt-6 max-w-xs">
+            بالضغط على تسجيل الدخول، فإنك توافق على شروط الخدمة وسياسة الخصوصية
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show onboarding slides
   return (
     <div
       dir="rtl"
@@ -83,11 +146,11 @@ export default function WelcomeOnboardingModal({
           <motion.div
             key={slides[index].id}
             custom={direction}
-           variants={{
-  enter: (dir) => ({ x: dir > 0 ? -80 : 80, opacity: 0 }),  // swapped
-  center: { x: 0, opacity: 1 },
-  exit: (dir) => ({ x: dir < 0 ? -80 : 80, opacity: 0 }),   // swapped
-}}
+            variants={{
+              enter: (dir) => ({ x: dir > 0 ? -80 : 80, opacity: 0 }),  // swapped
+              center: { x: 0, opacity: 1 },
+              exit: (dir) => ({ x: dir < 0 ? -80 : 80, opacity: 0 }),   // swapped
+            }}
             initial="enter"
             animate="center"
             exit="exit"
@@ -133,12 +196,21 @@ export default function WelcomeOnboardingModal({
               السابق
             </button>
           )}
-          <button
-            onClick={next}
-            className="flex-1 py-3 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
-          >
-            {index === slides.length - 1 ? "ابدأ الآن" : "التالي"}
-          </button>
+          {index < slides.length - 1 ? (
+            <button
+              onClick={next}
+              className="flex-1 py-3 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
+            >
+              التالي
+            </button>
+          ) : (
+            <button
+              onClick={finish}
+              className="flex-1 py-3 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
+            >
+              ابدأ الآن
+            </button>
+          )}
         </div>
       </div>
     </div>

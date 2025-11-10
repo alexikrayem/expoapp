@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { Outlet } from "react-router-dom"
+import { Outlet, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { userService } from "./services/userService"
 import { authService } from "./services/authService"
@@ -43,9 +43,22 @@ const AppInitializer = () => {
       setStep("تحميل ملفك الشخصي...")
       const profileData = await userService.getProfile()
       setUserProfile(profileData)
+      
+      // Set telegramUser data from profile if available
+      if (profileData && profileData.userId) {
+        setTelegramUser({
+          id: profileData.userId,
+          first_name: profileData.full_name?.split(' ')[0] || 'User',
+          last_name: profileData.full_name?.split(' ').slice(1).join(' ') || '',
+        });
+      }
     } catch (err) {
-      if (err.status === 404) setUserProfile({ selected_city_id: null })
-      else setError("حدث خطأ أثناء تحميل ملفك الشخصي.")
+      if (err.status === 404) {
+        setUserProfile({ selected_city_id: null })
+        setTelegramUser(null);
+      } else {
+        setError("حدث خطأ أثناء تحميل ملفك الشخصي.")
+      }
     } finally {
       setTimeout(() => setIsLoading(false), 1200)
     }
@@ -59,45 +72,26 @@ const AppInitializer = () => {
   }
 });
 
-  // --- Initialize Telegram + authenticate + profile ---
- // --- Initialize Telegram + authenticate + profile ---
+  // --- Initialize authentication and profile ---
   useEffect(() => {
     const init = async () => {
-      setStep(" ...");
-      const tg = window.Telegram?.WebApp;
-      if (tg) {
-        tg.ready();
-        tg.expand();
-        tg.setHeaderColor("#ffffff");
-        tg.setBackgroundColor("#ffffff");
-        tg.enableClosingConfirmation();
-     
-       tg.HapticFeedback.impactOccurred("light");
-      }
-      const user = tg?.initDataUnsafe?.user || { id: 123456, first_name: "Local", last_name: "Dev" };
-      setTelegramUser(user);
-      
-      // Try to authenticate AND fetch profile
-      try {
-        setStep("  ...");
-        await authService.telegramNativeLogin();
-        
-        // ONLY fetch the profile if login was successful
-        await fetchUserProfile();
+      setStep("Authenticating...");
 
-      } catch (authError) {
-        // Log the ENTIRE error object to see what it contains
-        console.error("Critical authentication or profile fetch error:", authError);
-        
-        // Safely access the message, or use the object itself, or a generic string
-        const errorMessage = authError.message || String(authError) || "Unknown error during authentication.";
-        
-        setError(`Authentication failed: ${errorMessage}`);
-        setIsLoading(false); 
+      // Check if user is already authenticated via JWT tokens
+      const isAuthenticated = authService.isAuthenticated();
+      
+      if (!isAuthenticated) {
+        // If not authenticated, show login onboarding
+        setShowOnboarding(true);
+        setIsLoading(false);
+        return;
       }
+
+      // ONLY fetch the profile if login was successful
+      await fetchUserProfile();
     };
     init();
-  }, [fetchUserProfile]);
+  }, [fetchUserProfile, hasSeenWelcome]);
 
   // --- Cycle quotes while loading ---
   useEffect(() => {
@@ -108,12 +102,8 @@ const AppInitializer = () => {
     return () => clearInterval(timer)
   }, [isLoading])
 
-  useEffect(() => {
-  const hasSeenWelcome = localStorage.getItem("hasSeenWelcome_v1")
-  if (!hasSeenWelcome) {
-    setTimeout(() => setShowOnboarding(true), 800)
-  }
-}, [])
+  // Remove this useEffect as it interferes with the authentication flow
+  // Onboarding slides are now shown only to authenticated users who haven't seen them yet
 
 
   const handleCitySelect = async ({ cityId }) => {
@@ -203,6 +193,39 @@ if (isLoading) {
 }
 
 
+  // Show login onboarding modal if user is not authenticated
+  if (showOnboarding) {
+    return (
+      <WelcomeOnboardingModal
+        isOpen={true}
+        onFinish={() => {
+          // After login, reinitialize the app by calling the initialization again
+          setIsLoading(true);
+          setError(null);
+          setShowOnboarding(false);
+          setTelegramUser(null);
+          setUserProfile(null);
+          
+          // Re-initialize the app state
+          const reinit = async () => {
+            setStep("Authenticating...");
+            
+            // Check if user is now authenticated via JWT tokens
+            const isAuthenticated = authService.isAuthenticated();
+            
+            if (isAuthenticated) {
+              // ONLY fetch the profile if login was successful
+              await fetchUserProfile();
+            }
+          };
+          reinit();
+        }}
+        version="v1"
+        showLogin={true} // Show login instead of slides for unauthenticated users
+      />
+    );
+  }
+
   // --- Error Screen ---
   if (error) {
     return (
@@ -215,7 +238,7 @@ if (isLoading) {
           <div className="p-4 bg-red-500 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
             <XCircle className="h-8 w-8 text-white" />
           </div>
-          <h2 className="text-xl font-bold mb-2">حدث خطأ</h2>
+          <h2 className="text-xl font-bold mb-2">Authentication Required</h2>
           <p className="text-gray-700 mb-5 leading-relaxed">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -228,15 +251,16 @@ if (isLoading) {
     )
   }
 
-  if (!hasSeenWelcome && userProfile && userProfile.selected_city_id) {
-  return (
-    <WelcomeOnboardingModal
-      isOpen={true}
-      onFinish={handleFinishWelcome}
-      version="v1"
-    />
-  );
-}
+  // Show onboarding slides only if user is authenticated and hasn't seen them yet
+  if (!hasSeenWelcome && userProfile && userProfile.selected_city_id && !showOnboarding) {
+    return (
+      <WelcomeOnboardingModal
+        isOpen={true}
+        onFinish={handleFinishWelcome}
+        version="v1"
+      />
+    );
+  }
 
   // --- City Selection ---
   if (userProfile && !userProfile.selected_city_id) {
@@ -248,7 +272,7 @@ if (isLoading) {
   return (
     <CacheProvider>
       <MiniCartProvider>
-        <CartProvider user={telegramUser}>
+        <CartProvider user={telegramUser || (userProfile ? {id: userProfile.userId} : null)}>
           <SearchProvider cityId={userProfile?.selected_city_id}>
             <FilterProvider>
               <CheckoutProvider>

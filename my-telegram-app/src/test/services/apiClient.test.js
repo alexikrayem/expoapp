@@ -25,10 +25,10 @@ describe('API Client', () => {
     )
   })
 
-  it('sends Telegram init data when available', async () => {
-    // Mock Telegram data
-    global.Telegram.WebApp.initData = 'mock_telegram_data'
-    
+  it('sends JWT access token when available', async () => {
+    // Mock JWT token
+    localStorage.setItem('accessToken', 'mock_jwt_token')
+
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ success: true })
@@ -40,23 +40,26 @@ describe('API Client', () => {
       'http://localhost:3001/test-endpoint',
       expect.objectContaining({
         headers: expect.objectContaining({
-          'X-Telegram-Init-Data': 'mock_telegram_data'
+          'Authorization': 'Bearer mock_jwt_token'
         })
       })
     )
+
+    // Clean up
+    localStorage.removeItem('accessToken')
   })
 
   it('handles POST requests correctly', async () => {
     const testData = { name: 'test' }
-    
+
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ success: true })
     })
 
-    await apiClient('test-endpoint', { 
+    await apiClient('test-endpoint', {
       method: 'POST',
-      body: testData 
+      body: testData
     })
 
     expect(global.fetch).toHaveBeenCalledWith(

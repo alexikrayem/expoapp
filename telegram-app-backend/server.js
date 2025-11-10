@@ -111,14 +111,14 @@ app.use('/api/supplier', supplierRoutes);
 console.log('✅ Applying SPECIALIZED routes...');
 app.use('/api/auth', authLimiter, authRoutes); // e.g., for JWT login/password, not Telegram based
 app.use('/api/admin', adminRoutes);
-// 2. TELEGRAM AUTHENTICATION MIDDLEWARE
+// 2. JWT AUTHENTICATION MIDDLEWARE
 // Any route defined *after* this line will be protected.
-// It checks the 'X-Telegram-Init-Data' header. If valid, it adds `req.telegramUser`.
+// It checks for a valid JWT token in the Authorization header. If valid, it adds `req.user`.
 app.use('/api', validateTelegramAuth);
-console.log('🔒 Telegram Authentication Middleware is now active for subsequent routes.');
+console.log('🔒 JWT Authentication Middleware is now active for subsequent routes.');
 
-// 3. PROTECTED ROUTES (Requires a valid Telegram user)
-// These routes can now safely use `req.telegramUser` to identify the user.
+// 3. PROTECTED ROUTES (Requires a valid authenticated user)
+// These routes can now safely use `req.user` to identify the user.
 console.log('✅ Applying PROTECTED routes...');
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);

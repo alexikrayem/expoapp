@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
 
-// Mock Telegram Web App
+// Mock Telegram Web App (for compatibility with existing code that checks for Telegram context)
 global.Telegram = {
   WebApp: {
     ready: vi.fn(),
@@ -25,7 +25,7 @@ global.Telegram = {
       hide: vi.fn(),
       onClick: vi.fn(),
     },
-    initData: 'mock_init_data',
+    initData: null,  // No init data since we're using Login Widget
     initDataUnsafe: {
       user: {
         id: 123456789,
@@ -41,7 +41,8 @@ global.Telegram = {
 Object.defineProperty(import.meta, 'env', {
   value: {
     VITE_API_BASE_URL: 'http://localhost:3001',
-    DEV: true
+    DEV: true,
+    VITE_DEV_BYPASS_SECRET: 'true'
   }
 })
 

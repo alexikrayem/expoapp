@@ -27,7 +27,7 @@ router.post('/from-cart', validateCreateOrder, async (req, res) => {
             return res.status(400).json({ error: 'Validation failed', details: errors.array() });
         }
         
-        const { userId } = req.user;
+        const { id: userId } = req.telegramUser;
         const { items, total_amount } = req.body;
         
         if (!items || !Array.isArray(items) || items.length === 0) {
@@ -151,7 +151,7 @@ router.post('/from-cart', validateCreateOrder, async (req, res) => {
 // POST / - Create a new order for the authenticated user
 router.post('/', async (req, res) => {
     try {
-        const { userId } = req.user;
+        const { id: userId } = req.telegramUser;
         const client = await db.pool.connect();
 
         try {
@@ -243,7 +243,7 @@ router.post('/', async (req, res) => {
 // GET / - Get all orders for the authenticated user (This route was already correct)
 router.get('/', async (req, res) => {
     try {
-        const { userId } = req.user;
+        const { id: userId } = req.telegramUser;
         const ordersQuery = `
             SELECT o.*,
                    json_agg(json_build_object(
@@ -273,7 +273,7 @@ router.put('/:orderId/status', validateOrderStatusUpdate, async (req, res) => {
             return res.status(400).json({ error: 'Validation failed', details: errors.array() });
         }
         
-        const { userId } = req.user;
+        const { id: userId } = req.telegramUser;
         const { orderId } = req.params;
         const { status } = req.body;
 

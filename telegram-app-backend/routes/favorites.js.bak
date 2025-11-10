@@ -7,7 +7,7 @@ const db = require('../config/db');
 router.get('/', async (req, res) => {
     try {
         // SECURE: Get the user ID from the middleware.
-        const { userId } = req.user;
+        const { id: userId } = req.telegramUser;
         
         const query = 'SELECT product_id FROM user_favorites WHERE user_id = $1';
         const result = await db.query(query, [userId]);
@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         // SECURE: Get the user ID from the middleware.
-        const { userId } = req.user;
+        const { id: userId } = req.telegramUser;
         const { productId } = req.body;
         
         if (!productId) {
@@ -50,7 +50,7 @@ router.post('/', async (req, res) => {
 router.delete('/:productId', async (req, res) => {
     try {
         // SECURE: Get the user ID from the middleware.
-        const { userId } = req.user;
+        const { id: userId } = req.telegramUser;
         const { productId } = req.params;
         
         const deleteQuery = 'DELETE FROM user_favorites WHERE user_id = $1 AND product_id = $2';

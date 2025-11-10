@@ -1,13 +1,4 @@
-const crypto = require('crypto');
-const { validateTelegramData } = require('../src/utils/telegramAuth');
-
-
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-
-if (!BOT_TOKEN) {
-  console.error("\nFATAL ERROR: TELEGRAM_BOT_TOKEN is not defined.");
-  process.exit(1);
-}
+const jwt = require('jsonwebtoken');
 
 const validateTelegramAuth = (req, res, next) => {
   const isDevRequest = req.header('X-Dev-Bypass-Auth');
@@ -19,25 +10,32 @@ const validateTelegramAuth = (req, res, next) => {
   // Development bypass
   if (process.env.NODE_ENV === 'development' && isDevRequest && isLocalhost) {
     if (isDevRequest === process.env.DEV_BYPASS_SECRET) {
-      console.warn('⚠️  Bypassing Telegram auth for local development.');
-      req.telegramUser = { id: 123456789, first_name: 'Local', last_name: 'Dev' };
+      console.warn('⚠️  Bypassing auth for local development.');
+      req.user = { userId: 123456789, telegramId: 123456789, first_name: 'Local', last_name: 'Dev', role: 'customer' };
       return next();
     }
   }
 
-  const initDataString = req.header('X-Telegram-Init-Data');
-  if (!initDataString) {
-    return res.status(401).json({ message: 'Missing X-Telegram-Init-Data header.' });
+  // Get token from header
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Access token required.' });
   }
 
-  const validation = validateTelegramData(initDataString, BOT_TOKEN);
-  if (!validation.ok) {
-    console.warn('Telegram auth failed:', validation);
-    return res.status(403).json({ message: 'Invalid Telegram authentication.', details: validation });
+  const token = authHeader.split(' ')[1];
+
+  try {
+    // Verify the JWT token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || process.env.JWT_CUSTOMER_SECRET);
+    
+    // Add user information to request object
+    req.user = decoded;
+    next();
+  } catch (error) {
+    console.warn('JWT verification failed:', error.message);
+    return res.status(403).json({ message: 'Invalid or expired token.' });
   }
 
-  req.telegramUser = validation.user;
-  next();
 };
 
 module.exports = { validateTelegramAuth };

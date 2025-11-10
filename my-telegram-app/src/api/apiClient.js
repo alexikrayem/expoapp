@@ -23,15 +23,12 @@ const refreshAccessToken = async () => {
     const refreshToken = getRefreshToken();
     if (!refreshToken) throw new Error("No refresh token available");
 
-    const tg = window.Telegram?.WebApp;
-    const initData = tg?.initData || "";
-
     const headers = { "Content-Type": "application/json" };
-    if (IS_DEVELOPMENT && !initData) {
+    
+    // In development mode, we send the bypass header
+    if (IS_DEVELOPMENT) {
       headers["X-Dev-Bypass-Auth"] = import.meta.env.VITE_DEV_BYPASS_SECRET;
       console.log("DEV MODE: Using bypass header for refresh token request.");
-    } else if (initData) {
-      headers["X-Telegram-Init-Data"] = initData;
     }
 
     // ✅ Always hit your actual backend route, adjust prefix if needed
@@ -44,6 +41,7 @@ const refreshAccessToken = async () => {
     if (!response.ok) throw new Error("Token refresh failed");
 
     const data = await response.json();
+    // Only update refresh token if the backend sends a new one
     const newRefreshToken = data.refreshToken || refreshToken;
     setTokens(data.accessToken, newRefreshToken);
     return data.accessToken;
@@ -56,17 +54,12 @@ const refreshAccessToken = async () => {
 
 // --- Main API Client ---
 async function apiClient(endpoint, { body, ...customConfig } = {}) {
-  const tg = window.Telegram?.WebApp;
-  const initData = tg?.initData || "";
-
   const headers = { "Content-Type": "application/json" };
 
-  // Development bypass vs. real Telegram header
-  if (IS_DEVELOPMENT && !initData) {
+  // In development mode, we send the bypass header
+  if (IS_DEVELOPMENT) {
     headers["X-Dev-Bypass-Auth"] = import.meta.env.VITE_DEV_BYPASS_SECRET;
     console.log("DEV MODE: Sending X-Dev-Bypass-Auth header.");
-  } else if (initData) {
-    headers["X-Telegram-Init-Data"] = initData; // raw Telegram initData string
   }
 
   // Add JWT access token if exists
