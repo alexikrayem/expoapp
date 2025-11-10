@@ -1,28 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect } from 'react';
 import { authService } from '../services/authService';
 
 const TelegramLoginWidget = ({ onLoginSuccess, onError }) => {
-  const divRef = useRef(null);
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
-
   useEffect(() => {
-    // Ensure we have the required environment variable
+    // Ensure the environment variable is available
     if (!import.meta.env.VITE_TELEGRAM_BOT_USERNAME) {
       console.error('VITE_TELEGRAM_BOT_USERNAME environment variable is missing');
       return;
     }
 
-    // Define the callback function
+    // Define the callback function that the Telegram script will call
     const onTelegramAuth = async (user) => {
       try {
-        // Add current timestamp for auth_date
-        const authData = {
-          ...user,
-          auth_date: Math.floor(Date.now() / 1000)
-        };
-
+        const authData = { ...user, auth_date: Math.floor(Date.now() / 1000) };
         const result = await authService.telegramLoginWidget(authData);
-
         if (onLoginSuccess) {
           onLoginSuccess(result);
         }
@@ -34,63 +25,32 @@ const TelegramLoginWidget = ({ onLoginSuccess, onError }) => {
       }
     };
 
-    // Store the callback in window for the Telegram widget to access
+    // Attach the callback function to the window object
     window.onTelegramAuth = onTelegramAuth;
 
-    // Load Telegram Login Widget script if not already loaded
-    if (!document.getElementById('telegram-widget-script')) {
-      const script = document.createElement('script');
-      script.id = 'telegram-widget-script';
-      script.src = 'https://telegram.org/js/telegram-widget.js?22';
-      script.async = true;
-      script.onload = () => setIsScriptLoaded(true);
-      document.head.appendChild(script);
-    } else {
-      setIsScriptLoaded(true);
-    }
+    // Load the Telegram widget script
+    const script = document.createElement('script');
+    script.src = 'https://telegram.org/js/telegram-widget.js?22';
+    script.async = true;
+    document.head.appendChild(script);
 
-    // Clean up
+    // Clean up the function from the window object when the component unmounts
     return () => {
       delete window.onTelegramAuth;
+      document.head.removeChild(script);
     };
   }, [onLoginSuccess, onError]);
 
-  useEffect(() => {
-    if (isScriptLoaded && divRef.current && import.meta.env.VITE_TELEGRAM_BOT_USERNAME) {
-      // Wait a bit for the Telegram script to be ready, then create the widget
-      setTimeout(() => {
-        // The Telegram script should have processed the element by now
-        // If not, we can try to manually trigger the widget creation
-        if (window.Telegram && window.Telegram.LoginWidget) {
-          // This should already be handled by the script tag approach
-        } else {
-          // Create the widget manually if needed
-          const widgetContainer = divRef.current;
-          if (widgetContainer && !widgetContainer.querySelector('.telegram-login-button')) {
-            const buttonElement = document.createElement('div');
-            buttonElement.className = 'telegram-login-button';
-            buttonElement.setAttribute('data-telegram-login', import.meta.env.VITE_TELEGRAM_BOT_USERNAME);
-            buttonElement.setAttribute('data-size', 'large');
-            buttonElement.setAttribute('data-onauth', 'onTelegramAuth(user)');
-            buttonElement.setAttribute('data-request-access', 'write');
-            widgetContainer.appendChild(buttonElement);
-          }
-        }
-      }, 100);
-    }
-  }, [isScriptLoaded]);
-
+  // Render a container for the Telegram login button.
+  // The script will automatically find this element and render the button.
   return (
-    <div ref={divRef} className="flex justify-center">
-      {/* This div will contain the Telegram login button */}
-      <div 
-        className="telegram-login-button"
-        data-telegram-login={import.meta.env.VITE_TELEGRAM_BOT_USERNAME}
-        data-size="large"
-        data-onauth="onTelegramAuth(user)"
-        data-request-access="write"
-      />
-    </div>
+    <div 
+      className="telegram-login-button"
+      data-telegram-login={import.meta.env.VITE_TELEGRAM_BOT_USERNAME}
+      data-size="large"
+      data-onauth="onTelegramAuth(user)"
+      data-request-access="write"
+    />
   );
 };
 
