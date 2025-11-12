@@ -15,7 +15,9 @@ export const CheckoutProvider = ({ children }) => {
     const [checkoutError, setCheckoutError] = useState(null);
     
     const startCheckout = async (userProfile, telegramUser, onProfileUpdate) => {
-        if (!telegramUser?.id || cartItems.length === 0) {
+        // Check if user is authenticated by checking for both telegramUser.id and userProfile.userId
+        const isAuthenticated = telegramUser?.id || (userProfile && userProfile.userId);
+        if (!isAuthenticated || cartItems.length === 0) {
             alert('سلة التسوق فارغة أو لم يتم تسجيل الدخول');
             return;
         }

@@ -32,7 +32,7 @@ const refreshAccessToken = async () => {
     }
 
     // ✅ Always hit your actual backend route, adjust prefix if needed
-    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",
       headers,
       body: JSON.stringify({ refreshToken }),

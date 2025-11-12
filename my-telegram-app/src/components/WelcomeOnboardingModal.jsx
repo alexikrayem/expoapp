@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import TelegramLoginWidget from './TelegramLoginWidget';
+import DummyTelegramLogin from './DummyTelegramLogin';
+
+const IS_DEVELOPMENT = import.meta.env.DEV;
 
 /**
  * WelcomeOnboardingModal - Shows either onboarding slides for first-time users or login for new users
@@ -112,10 +115,17 @@ export default function WelcomeOnboardingModal({
           
           {/* Telegram Login Widget */}
           <div className="w-full max-w-xs mx-auto mb-6">
-            <TelegramLoginWidget 
-              onLoginSuccess={handleLoginSuccess}
-              onError={handleLoginError}
-            />
+            {IS_DEVELOPMENT ? (
+              <DummyTelegramLogin
+                onLoginSuccess={handleLoginSuccess}
+                onError={handleLoginError}
+              />
+            ) : (
+              <TelegramLoginWidget
+                onLoginSuccess={handleLoginSuccess}
+                onError={handleLoginError}
+              />
+            )}
           </div>
           
           {/* Error Message */}

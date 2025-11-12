@@ -276,26 +276,19 @@ router.post('/telegram-login-widget', async (req, res) => {
 
     let authData;
 
-    // ✅ Dev bypass
-    if (process.env.NODE_ENV === 'development' && isDevRequest && isLocalhost && isDevRequest === process.env.DEV_BYPASS_SECRET) {
-      console.warn('⚠️  Dev bypass active for Telegram Login Widget.');
+    // Simplified Dev Bypass
+    if (process.env.NODE_ENV === 'development' && !req.body.authData) {
+      console.warn('⚠️  Simplified dev bypass active for Telegram Login Widget.');
       authData = {
         id: 123456789,
         first_name: 'Local',
         last_name: 'Dev',
         username: 'localdev',
-        auth_date: Math.floor(Date.now() / 1000) // Current timestamp
+        auth_date: Math.floor(Date.now() / 1000)
       };
     } else {
       const { authData: receivedAuthData } = req.body;
       if (!receivedAuthData) return res.status(400).json({ error: 'Missing authData' });
-
-      // const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-      // const validation = validateTelegramLoginWidgetData(receivedAuthData, BOT_TOKEN);
-      // if (!validation.ok) {
-      //   console.warn('Telegram Login Widget validation failed:', validation);
-      //   return res.status(403).json({ error: 'Invalid Telegram authentication data', details: validation });
-      // }
       authData = receivedAuthData;
     }
 

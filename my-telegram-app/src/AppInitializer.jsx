@@ -46,12 +46,18 @@ const AppInitializer = () => {
       setUserProfile(profileData)
       
       // Set telegramUser data from profile if available
-      if (profileData && profileData.userId) {
+      // The backend may return different field names depending on auth method
+      const userId = profileData?.userId || profileData?.id || profileData?.user_id;
+      if (profileData && userId) {
         setTelegramUser({
-          id: profileData.userId,
-          first_name: profileData.full_name?.split(' ')[0] || 'User',
-          last_name: profileData.full_name?.split(' ').slice(1).join(' ') || '',
+          id: userId,
+          first_name: profileData.full_name?.split(' ')[0] || profileData.first_name || profileData.firstName || 'User',
+          last_name: profileData.full_name?.split(' ').slice(1).join(' ') || profileData.last_name || profileData.lastName || '',
         });
+      } else {
+        // If profile data exists but no userId, the user may be logged in but profile is incomplete
+        console.warn("Profile fetched but no userId found:", profileData);
+        setError("فشل في تحميل معلومات المستخدم. يرجى المحاولة مرة أخرى.");
       }
     } catch (err) {
       if (err.status === 404) {

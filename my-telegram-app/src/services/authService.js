@@ -38,6 +38,33 @@ export const authService = {
         return data;
     },
 
+    devBypassLogin: async () => {
+        if (!IS_DEVELOPMENT) {
+            console.error('Development bypass login is only available in development mode.');
+            return null;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/auth/telegram-login-widget`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: `Request failed with status ${response.status}` }));
+            error.status = response.status;
+            throw error;
+        }
+
+        const data = await response.json();
+
+        if (data.accessToken && data.refreshToken) {
+            setTokens(data.accessToken, data.refreshToken);
+        }
+
+        return data;
+    },
+
     // Check if user is authenticated (has valid tokens)
     isAuthenticated: () => {
         const accessToken = localStorage.getItem('accessToken');

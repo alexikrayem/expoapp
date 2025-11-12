@@ -59,6 +59,12 @@ const CheckoutCard = () => {
     return null
   }
 
+  // Check if user is properly authenticated before enabling checkout
+  const hasTelegramUser = !!telegramUser?.id;
+  const hasUserProfile = !!userProfile?.userId;
+  const hasItems = cartItems.length > 0;
+  const isAuthenticated = (hasTelegramUser || hasUserProfile) && hasItems;
+
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8 border border-blue-200">
       <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
@@ -100,13 +106,22 @@ const CheckoutCard = () => {
           <span className="font-semibold">المجموع:</span>
           <span className="font-bold text-blue-600">{formatPrice(total)}</span>
         </div>
-        <button
-          onClick={() => startCheckout(userProfile, telegramUser, onProfileUpdate)}
-          disabled={isPlacingOrder}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center font-bold text-lg"
-        >
-          {isPlacingOrder ? <Loader2 className="animate-spin" /> : "إرسال الطلب"}
-        </button>
+        <div className="space-y-2">
+          {!isAuthenticated && hasItems && (
+            <div className="text-center text-xs text-red-600 mb-2">
+              {!hasTelegramUser && !hasUserProfile 
+                ? "يرجى تسجيل الدخول أولاً" 
+                : "سلة التسوق فارغة"}
+            </div>
+          )}
+          <button
+            onClick={() => startCheckout(userProfile, telegramUser, onProfileUpdate)}
+            disabled={!isAuthenticated || isPlacingOrder}
+            className={`w-full py-3 rounded-lg font-bold text-lg ${isAuthenticated && !isPlacingOrder ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} flex items-center justify-center`}
+          >
+            {isPlacingOrder ? <Loader2 className="animate-spin" /> : "إرسال الطلب"}
+          </button>
+        </div>
       </div>
     </div>
   )
