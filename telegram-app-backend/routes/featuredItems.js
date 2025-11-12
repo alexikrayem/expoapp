@@ -63,4 +63,63 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get items in a featured list
+router.get('/list/:listId', async (req, res) => {
+    try {
+        const { listId } = req.params
+
+        const query = `
+            SELECT
+                fli.id as list_item_id,
+                fli.item_type,
+                fli.display_order,
+                CASE
+                    WHEN fli.item_type = 'product' THEN p.id
+                    WHEN fli.item_type = 'deal' THEN d.id
+                END as item_id,
+                CASE
+                    WHEN fli.item_type = 'product' THEN p.name
+                    WHEN fli.item_type = 'deal' THEN d.title
+                END as item_name,
+                CASE
+                    WHEN fli.item_type = 'product' THEN p.description
+                    WHEN fli.item_type = 'deal' THEN d.description
+                END as item_description,
+                CASE
+                    WHEN fli.item_type = 'product' THEN p.image_url
+                    WHEN fli.item_type = 'deal' THEN d.image_url
+                END as item_image_url,
+                CASE
+                    WHEN fli.item_type = 'product' THEN p.price
+                    WHEN fli.item_type = 'deal' THEN d.discount_percentage
+                END as item_price,
+                CASE
+                    WHEN fli.item_type = 'product' THEN p.supplier_id
+                END as supplier_id
+            FROM featured_list_items fli
+            LEFT JOIN products p ON fli.item_type = 'product' AND fli.item_id = p.id
+            LEFT JOIN deals d ON fli.item_type = 'deal' AND fli.item_id = d.id
+            WHERE fli.featured_list_id = $1
+            ORDER BY fli.display_order ASC
+        `
+
+        const result = await db.query(query, [listId])
+
+        const items = result.rows.map((row) => ({
+            id: row.item_id,
+            type: row.item_type,
+            name: row.item_name,
+            description: row.item_description,
+            imageUrl: row.item_image_url,
+            price: row.item_price,
+            supplierId: row.supplier_id,
+        }))
+
+        res.json(items)
+    } catch (error) {
+        console.error('Error fetching featured list items:', error);
+        res.status(500).json({ error: 'Failed to fetch featured list items' });
+    }
+});
+
 module.exports = router;
