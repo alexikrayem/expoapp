@@ -17,22 +17,12 @@ function validateTelegramLoginWidgetData(authData, botToken) {
     return { ok: false, error: 'Auth data is too old' };
   }
 
-  // Prepare data string for hash verification
-  const fieldsToCheck = [
-    'id',
-    'first_name',
-    'last_name',
-    'username',
-    'photo_url',
-    'auth_date'
-  ];
-
-  const dataCheckString = fieldsToCheck
-    .filter(field => authData.hasOwnProperty(field))
-    .map(field => `${field}=${authData[field]}`)
+  const dataCheckString = Object.keys(authData)
+    .filter(key => key !== 'hash')
     .sort()
+    .map(key => (`${key}=${authData[key]}`))
     .join('\n');
-
+  
   const secretKey = crypto.createHash('sha256').update(botToken).digest();
 
   const calculatedHash = crypto.createHmac('sha256', secretKey)
