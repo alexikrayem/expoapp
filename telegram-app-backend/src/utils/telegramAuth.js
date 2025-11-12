@@ -33,9 +33,7 @@ function validateTelegramLoginWidgetData(authData, botToken) {
     .sort()
     .join('\n');
 
-  const secretKey = crypto.createHmac('sha256', botToken)
-    .update('WebAppData')
-    .digest();
+  const secretKey = crypto.createHash('sha256').update(botToken).digest();
 
   const calculatedHash = crypto.createHmac('sha256', secretKey)
     .update(dataCheckString)
