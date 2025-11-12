@@ -1,7 +1,10 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useRef } from 'react';
 import { authService } from '../services/authService';
 
 const TelegramLoginWidget = ({ onLoginSuccess, onError }) => {
+  const ref = useRef();
+
   useEffect(() => {
     // Ensure the environment variable is available
     if (!import.meta.env.VITE_TELEGRAM_BOT_USERNAME) {
@@ -32,26 +35,20 @@ const TelegramLoginWidget = ({ onLoginSuccess, onError }) => {
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-widget.js?22';
     script.async = true;
-    document.head.appendChild(script);
+    script.setAttribute('data-telegram-login', import.meta.env.VITE_TELEGRAM_BOT_USERNAME);
+    script.setAttribute('data-size', 'large');
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    script.setAttribute('data-request-access', 'write');
+
+    ref.current.appendChild(script);
 
     // Clean up the function from the window object when the component unmounts
     return () => {
       delete window.onTelegramAuth;
-      document.head.removeChild(script);
     };
   }, [onLoginSuccess, onError]);
 
-  // Render a container for the Telegram login button.
-  // The script will automatically find this element and render the button.
-  return (
-    <div 
-      className="telegram-login-button"
-      data-telegram-login={import.meta.env.VITE_TELEGRAM_BOT_USERNAME}
-      data-size="large"
-      data-onauth="onTelegramAuth(user)"
-      data-request-access="write"
-    />
-  );
+  return <div ref={ref} />;
 };
 
 export default TelegramLoginWidget;

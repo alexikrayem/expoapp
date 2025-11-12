@@ -5,7 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
-// Import our new security middleware
+// Import our security middleware
 const { validateTelegramAuth } = require('./middleware/authMiddleware');
 
 // Import all your route handlers
@@ -62,38 +62,53 @@ const authLimiter = rateLimit({
 
 
 // --- CORE MIDDLEWARE ---
+// ✅ Updated only for development — production remains unchanged
 const corsOptions = {
-    origin: function (origin, callback) {
-        const allowedOrigins = process.env.CORS_ORIGINS ? 
-            process.env.CORS_ORIGINS.split(',').map(url => url.trim()) : [];
-        
-        // In production, never allow all origins
-        if (process.env.NODE_ENV === 'production') {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        } else {
-            // For development, be more permissive but still controlled
-            // Only allow localhost origins in development
-            if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        }
-    },
-    credentials: true,
-    optionsSuccessStatus: 200
+  origin: function (origin, callback) {
+    const allowedOrigins = process.env.CORS_ORIGINS
+      ? process.env.CORS_ORIGINS.split(',').map(url => url.trim())
+      : [];
+
+    if (process.env.NODE_ENV === 'production') {
+      // 🚫 Keep current production behavior (strict)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    } else {
+      // 🧩 Development: allow localhost + ngrok
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.startsWith('http://localhost') ||
+        origin.startsWith('http://127.0.0.1') ||
+        origin.endsWith('.ngrok-free.dev') // ✅ allow ngrok tunnels
+      ) {
+        callback(null, true);
+      } else {
+        console.warn(`Blocked by CORS (dev): ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200,
 };
+
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // --- ROUTE DEFINITIONS ---
 
-// 1. PUBLIC ROUTES (No Telegram user validation needed)
+// 1. SPECIALIZED ROUTES (Auth, Admin) - These should be accessible without JWT validation
+// These might have their own separate authentication logic (like login endpoints).
+console.log('✅ Applying SPECIALIZED routes...');
+app.use('/api/auth', authLimiter, authRoutes); // e.g., for JWT login/password, not Telegram based
+app.use('/api/admin', adminRoutes);
+
+// 2. PUBLIC ROUTES (No Telegram user validation needed)
 // These routes are open and can be accessed without a valid Telegram session.
 console.log('✅ Applying PUBLIC routes...');
 app.get('/health', (req, res) => res.json({ status: 'OK' }));
@@ -106,19 +121,21 @@ app.use('/api/featured-items', featuredItemsRoutes);
 
 // Add supplier-specific authenticated routes
 app.use('/api/supplier', supplierRoutes);
-// 4. SPECIALIZED ROUTES (Auth, Admin)
-// These might have their own separate authentication logic.
-console.log('✅ Applying SPECIALIZED routes...');
-app.use('/api/auth', authLimiter, authRoutes); // e.g., for JWT login/password, not Telegram based
-app.use('/api/admin', adminRoutes);
-// 2. JWT AUTHENTICATION MIDDLEWARE
-// Any route defined *after* this line will be protected.
-// It checks for a valid JWT token in the Authorization header. If valid, it adds `req.user`.
-app.use('/api', validateTelegramAuth);
-console.log('🔒 JWT Authentication Middleware is now active for subsequent routes.');
 
-// 3. PROTECTED ROUTES (Requires a valid authenticated user)
-// These routes can now safely use `req.user` to identify the user.
+// 3. JWT AUTHENTICATION MIDDLEWARE - Apply only to routes that need protection
+// Apply validation only to routes that should be protected (not /api/auth)
+app.use('/api', (req, res, next) => {
+    // Skip JWT validation for auth routes only
+    if (req.path.startsWith('/auth')) {
+        return next();
+    }
+    // For other routes, apply the JWT validation
+    validateTelegramAuth(req, res, next);
+});
+console.log('🔒 JWT Authentication Middleware is now active for protected routes (excluding auth).');
+
+// 4. PROTECTED ROUTES (Requires a valid authenticated user)
+// These routes were already protected by the middleware above.
 console.log('✅ Applying PROTECTED routes...');
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
