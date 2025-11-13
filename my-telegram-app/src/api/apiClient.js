@@ -1,4 +1,5 @@
 // my-telegram-app/src/api/apiClient.js
+import { ensureValidToken } from '../utils/tokenManager';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const IS_DEVELOPMENT = import.meta.env.DEV; // true in vite dev mode
@@ -62,10 +63,21 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
     console.log("DEV MODE: Sending X-Dev-Bypass-Auth header.");
   }
 
-  // Add JWT access token if exists
-  const accessToken = getAccessToken();
-  if (accessToken) {
-    headers["Authorization"] = `Bearer ${accessToken}`;
+  // Proactively refresh token if needed before making the request
+  // This will refresh the token before it expires, preventing 403 errors
+  try {
+    const validToken = await ensureValidToken();
+    if (validToken) {
+      headers["Authorization"] = `Bearer ${validToken}`;
+    }
+  } catch (err) {
+    console.error("Error ensuring valid token:", err);
+    // If proactive refresh fails, we'll still try the request with existing token
+    // and handle 401 errors as before
+    const accessToken = getAccessToken();
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
   }
 
   const config = {

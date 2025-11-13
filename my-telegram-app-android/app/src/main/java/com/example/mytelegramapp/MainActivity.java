@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
     private void loadTelegramWebApp() {
         // Set the URL to your deployed Telegram web app
         // This could be a local development URL or the production URL
-        String telegramAppUrl = "http://10.0.2.2:5173"; // Localhost address for Android emulator
+        String telegramAppUrl = "http://192.168.1.3:5173"; // Localhost address for Android emulator
         
         // You can also load from your deployed URL if available
         // String telegramAppUrl = "https://your-telegram-app-url.com"; 

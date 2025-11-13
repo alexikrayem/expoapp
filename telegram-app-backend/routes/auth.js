@@ -12,14 +12,14 @@ const generateTokens = (payload, role) => {
   const accessToken = jwt.sign(
     payload,
     process.env.JWT_SECRET || process.env[`JWT_${role}_SECRET`],
-    { expiresIn: '15m' } // Short-lived access token
+    { expiresIn: '15m' } // Short-lived access token (15 minutes)
   );
   
   // Use different secrets for different roles where possible
   const refreshToken = jwt.sign(
     { ...payload, type: 'refresh' },
     process.env.JWT_REFRESH_SECRET || process.env[`JWT_${role}_REFRESH_SECRET`] || process.env.JWT_SECRET || process.env[`JWT_${role}_SECRET`],
-    { expiresIn: '7d' } // Longer refresh token
+    { expiresIn: '7d' } // Longer refresh token (7 days)
   );
   
   return { accessToken, refreshToken };
