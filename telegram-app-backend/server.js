@@ -21,7 +21,7 @@ const searchRoutes = require('./routes/search');
 const favoritesRoutes = require('./routes/favorites');
 const featuredItemsRoutes = require('./routes/featuredItems');
 const deliveryRoutes = require('./routes/delivery');
-const adminRoutes = require('./routes/admin'); 
+const adminRoutes = require('./routes/admin');
 
 // Import Telegram Bot Service
 const telegramBotService = require('./services/telegramBot');
@@ -69,21 +69,25 @@ const corsOptions = {
       ? process.env.CORS_ORIGINS.split(',').map(url => url.trim())
       : [];
 
+    // Allow requests from Telegram's OAuth domain - this is critical for Telegram Login Widget
+    const isTelegramOauth = origin && origin.startsWith('https://oauth.telegram.org');
+
     if (process.env.NODE_ENV === 'production') {
-      // 🚫 Keep current production behavior (strict)
-      if (!origin || allowedOrigins.includes(origin)) {
+      // 🚫 Keep current production behavior (strict) but allow Telegram OAuth
+      if (!origin || allowedOrigins.includes(origin) || isTelegramOauth) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
       }
     } else {
-      // 🧩 Development: allow localhost + ngrok
+      // 🧩 Development: allow localhost + ngrok + Telegram OAuth
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
         origin.startsWith('http://localhost') ||
         origin.startsWith('http://127.0.0.1') ||
-        origin.endsWith('.ngrok-free.dev') // ✅ allow ngrok tunnels
+        origin.endsWith('.ngrok-free.dev') || // ✅ allow ngrok tunnels
+        isTelegramOauth // ✅ allow Telegram OAuth
       ) {
         callback(null, true);
       } else {
@@ -159,11 +163,11 @@ app.use((error, req, res, next) => {
 app.use((err, req, res, next) => {
     console.error('--- UNHANDLED SERVER CRASH (HIGH PRIORITY) ---');
     console.error(err.stack); // Log the full stack trace
-    
+
     // In production, send a detailed error message ONLY if debugging
     if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_MODE === 'true') {
-        return res.status(500).json({ 
-            error: 'Fatal Server Error', 
+        return res.status(500).json({
+            error: 'Fatal Server Error',
             details: err.message,
             stack: err.stack.split('\n').slice(0, 5) // Send a slice of the stack trace
         });
