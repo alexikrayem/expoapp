@@ -1,7 +1,14 @@
 import { setTokens } from '../api/apiClient';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const IS_DEVELOPMENT = import.meta.env.DEV; // Vite provides this boolean
+
+// Use a getter function to allow tests to mock this value
+const getIsDevelopment = () => {
+  return typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV;
+};
+
+// Export the function for testing purposes
+export { getIsDevelopment };
 
 export const authService = {
     // Telegram Login Widget authentication
@@ -39,7 +46,7 @@ export const authService = {
     },
 
     devBypassLogin: async () => {
-        if (!IS_DEVELOPMENT) {
+        if (!getIsDevelopment()) {
             console.error('Development bypass login is only available in development mode.');
             return null;
         }

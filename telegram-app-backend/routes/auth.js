@@ -309,8 +309,8 @@ router.post('/telegram-login-widget', async (req, res) => {
       user = updatedUser.rows[0];
     } else {
       const insertUserQuery = `
-        INSERT INTO user_profiles (user_id, full_name, created_at, updated_at)
-        VALUES ($1, $2, NOW(), NOW()) RETURNING *;
+        INSERT INTO user_profiles (user_id, full_name, profile_completed, created_at, updated_at)
+        VALUES ($1, $2, false, NOW(), NOW()) RETURNING *;
       `;
       const newUser = await db.query(insertUserQuery, [authData.id, fullName]);
       user = newUser.rows[0];
@@ -329,6 +329,7 @@ router.post('/telegram-login-widget', async (req, res) => {
         userId: user.user_id,
         fullName: user.full_name,
         selected_city_id: user.selected_city_id,
+        profileCompleted: user.profile_completed || false,
       },
     });
   } catch (error) {

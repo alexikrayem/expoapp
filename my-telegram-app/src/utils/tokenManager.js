@@ -1,10 +1,23 @@
 // my-telegram-app/src/utils/tokenManager.js
-import { getAccessToken, getRefreshToken, setTokens, clearTokens } from '../api/apiClient';
+
+// --- Token utilities (defined here to avoid circular dependencies) ---
+const getAccessToken = () => localStorage.getItem("accessToken");
+const getRefreshToken = () => localStorage.getItem("refreshToken");
+
+const setTokens = (accessToken, refreshToken) => {
+  localStorage.setItem("accessToken", accessToken);
+  localStorage.setItem("refreshToken", refreshToken);
+};
+
+const clearTokens = () => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+};
 
 // Helper to decode JWT token without verification (for expiration check)
 const decodeToken = (token) => {
   if (!token) return null;
-  
+
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -14,7 +27,7 @@ const decodeToken = (token) => {
         .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-    
+
     return JSON.parse(jsonPayload);
   } catch (error) {
     console.error('Error decoding token:', error);
@@ -26,10 +39,10 @@ const decodeToken = (token) => {
 const isTokenExpiringSoon = (token) => {
   const decoded = decodeToken(token);
   if (!decoded || !decoded.exp) return true; // If no expiration, consider expired
-  
+
   const now = Date.now() / 1000; // Current time in seconds
   const bufferTime = 5 * 60; // 5 minutes buffer in seconds
-  
+
   return decoded.exp - now < bufferTime;
 };
 
@@ -37,16 +50,16 @@ const isTokenExpiringSoon = (token) => {
 const ensureValidToken = async () => {
   const accessToken = getAccessToken();
   const refreshToken = getRefreshToken();
-  
+
   if (!refreshToken) {
     throw new Error("No refresh token available");
   }
-  
+
   if (accessToken && !isTokenExpiringSoon(accessToken)) {
     // Token is still valid, no need to refresh
     return accessToken;
   }
-  
+
   // Token is expiring soon, refresh it
   try {
     const headers = { "Content-Type": "application/json" };
@@ -72,7 +85,7 @@ const ensureValidToken = async () => {
     // Only update refresh token if the backend sends a new one
     const newRefreshToken = data.refreshToken || refreshToken;
     setTokens(data.accessToken, newRefreshToken);
-    
+
     console.log("Token proactively refreshed successfully");
     return data.accessToken;
   } catch (err) {
@@ -86,7 +99,7 @@ const ensureValidToken = async () => {
 const isAccessTokenValid = () => {
   const accessToken = getAccessToken();
   if (!accessToken) return false;
-  
+
   return !isTokenExpiringSoon(accessToken);
 };
 
@@ -100,10 +113,14 @@ const getValidAccessToken = async () => {
   }
 };
 
-export { 
-  ensureValidToken, 
-  isAccessTokenValid, 
+export {
+  ensureValidToken,
+  isAccessTokenValid,
   getValidAccessToken,
   decodeToken,
-  isTokenExpiringSoon 
+  isTokenExpiringSoon,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+  clearTokens
 };

@@ -1,0 +1,61 @@
+/* Onboarding.css */
+.onboarding-container {
+  direction: rtl;
+  font-family: Montaserat, sans-serif;
+}
+
+.onboarding-step {
+  transition: all 0.3s ease;
+}
+
+.onboarding-input {
+  @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all;
+}
+
+.onboarding-input.error {
+  @apply border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50;
+}
+
+.onboarding-select {
+  @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all appearance-none;
+}
+
+.onboarding-textarea {
+  @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all resize-none;
+}
+
+.onboarding-button {
+  @apply py-3 rounded-xl font-semibold transition-all shadow-sm;
+}
+
+.onboarding-button.primary {
+  @apply bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600;
+}
+
+.onboarding-button.secondary {
+  @apply bg-gray-100 text-gray-700 hover:bg-gray-200;
+}
+
+.onboarding-progress {
+  @apply h-2 bg-gray-200 rounded-full overflow-hidden;
+}
+
+.onboarding-progress-bar {
+  @apply h-full bg-gradient-to-r from-blue-500 to-cyan-500;
+}
+
+.onboarding-error {
+  @apply text-red-500 text-sm bg-red-50 p-2 rounded-lg;
+}
+
+.form-section {
+  @apply mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100;
+}
+
+.form-section-title {
+  @apply text-lg font-bold text-gray-800 mb-3 text-right;
+}
+
+.form-row {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4 mb-4;
+}
