@@ -1,4 +1,5 @@
 import { setTokens } from '../api/apiClient';
+import { isAccessTokenValid } from '../utils/tokenManager';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -74,8 +75,7 @@ export const authService = {
 
     // Check if user is authenticated (has valid tokens)
     isAuthenticated: () => {
-        const accessToken = localStorage.getItem('accessToken');
-        return !!accessToken;
+        return isAccessTokenValid();
     },
 
     // Get current user profile (using JWT tokens)

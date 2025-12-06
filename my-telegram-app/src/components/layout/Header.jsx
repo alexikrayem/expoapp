@@ -1,25 +1,18 @@
 // "use client" - Keep this at the very top for Next.js App Router or similar environments
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react" // --- FIX ---: Make sure 'useRef' is imported
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useOutletContext } from "react-router-dom"
 import { useModal } from "../../context/ModalContext"
-import { useCart } from "../../context/CartContext"
 import { useSearch } from "../../context/SearchContext"
 import { userService } from "../../services/userService"
 import { cityService } from "../../services/cityService"
 import appLogoImage from "/src/assets/IMG_1787.png"
 import DOMPurify from "dompurify" // sanitize user input safely
 
-import { Search, X, MapPin, Loader2, Bell, ChevronDown } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
-import ProfileIcon from "../common/ProfileIcon"
-import CityChangePopover from "../common/CityChangePopover"
-import MainSearchBar from "../search/MainSearchBar"
-import CompactSearchButton from "../search/CompactSearchButton"
 import SearchPopover from "../search/SearchPopover"
 import HeaderActions from "./HeaderActions"
-import PreHeader from "./PreHeader"
 
 // Utility: throttle (unchanged)
 const throttle = (fn, delay) => {
@@ -36,24 +29,17 @@ const throttle = (fn, delay) => {
 const Header = ({ children }) => {
   const { telegramUser, userProfile, onProfileUpdate } = useOutletContext() || {}
   const { openModal } = useModal()
-  const { getCartItemCount } = useCart()
   const { searchTerm, handleSearchTermChange, clearSearch, isSearching, searchError, searchResults } = useSearch()
 
   // State
-  const [addressFormData, setAddressFormData] = useState({})
-  const [isSavingProfile, setIsSavingProfile] = useState(false)
-  const [profileError, setProfileError] = useState(null)
   const [isCityPopoverOpen, setIsCityPopoverOpen] = useState(false)
   const [isChangingCity, setIsChangingCity] = useState(false)
-  const [isSearchFocused, setIsSearchFocused] = useState(false)
-  const [isSearchExpanded, setIsSearchExpanded] = useState(false)
   const [isCompact, setIsCompact] = useState(false)
   const [isSearchPopoverOpen, setIsSearchPopoverOpen] = useState(false)
   const [preloadedCities, setPreloadedCities] = useState(null)
   const sentinelRef = useRef(null)
-  const searchInputRef = useRef(null)
 
-  // IntersectionObserver for compact header (unchanged)
+  // IntersectionObserver for compact header
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
@@ -75,27 +61,7 @@ const Header = ({ children }) => {
     }
   }, [])
 
-  // --- FIX 1 ---: This useEffect was causing the bug. It has been REMOVED.
-  // useEffect(() => {
-  //   if (isCompact && isSearchExpanded) {
-  //     setIsSearchExpanded(false)
-  //     setIsSearchFocused(false)
-  //   }
-  // }, [isCompact, isSearchExpanded])
-
-  // --- FIX 1 ---: Add a new useEffect to FOCUS the input when it expands
-  useEffect(() => {
-    // If we just expanded the search and the input exists, focus it.
-    if (isSearchExpanded && searchInputRef.current) {
-      // Small delay to allow the animation to start
-      setTimeout(() => {
-        searchInputRef.current.focus()
-      }, 50) 
-    }
-  }, [isSearchExpanded])
-
-
-  // Load cities once safely (unchanged)
+  // Load cities once safely
   useEffect(() => {
     let isMounted = true
     cityService
@@ -109,7 +75,7 @@ const Header = ({ children }) => {
     }
   }, [])
 
-  // Telegram WebApp integration (unchanged)
+  // Telegram WebApp integration
   useEffect(() => {
     const tg = window?.Telegram?.WebApp
     if (!tg) return
@@ -129,58 +95,7 @@ const Header = ({ children }) => {
     })
   }, [])
 
-  // --- Handlers --- (unchanged)
-  const handleSaveProfileFromModal = useCallback(
-    async (e, updatedFormData) => {
-      e.preventDefault()
-      setIsSavingProfile(true)
-      setProfileError(null)
-
-      try {
-        const safeData = Object.fromEntries(
-          Object.entries(updatedFormData).map(([k, v]) => [k, DOMPurify.sanitize(v).trim()]),
-        )
-
-        await userService.updateProfile(safeData)
-        onProfileUpdate()
-        openModal(null)
-        window?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("success")
-      } catch (error) {
-        console.error("Profile save error:", error)
-        setProfileError(error.message || "Failed to save profile.")
-        window?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("error")
-      } finally {
-        setIsSavingProfile(false)
-      }
-    },
-    [onProfileUpdate, openModal],
-  )
-
-  const handleOpenProfileModal = useCallback(() => {
-    const formData = {
-      fullName: userProfile?.full_name || `${telegramUser?.first_name || ""} ${telegramUser?.last_name || ""}`.trim(),
-      phoneNumber: userProfile?.phone_number || "",
-      addressLine1: userProfile?.address_line1 || "",
-      addressLine2: userProfile?.address_line2 || "",
-      city: userProfile?.city || userProfile?.selected_city_name || "",
-    }
-    setAddressFormData(formData)
-    setProfileError(null)
-    openModal("profile", {
-      formData,
-      telegramUser,
-      onFormSubmit: handleSaveProfileFromModal,
-      error: profileError,
-      isSaving: isSavingProfile,
-    })
-    window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred("light")
-  }, [userProfile, telegramUser, openModal, handleSaveProfileFromModal, isSavingProfile, profileError])
-
-  const handleAddressFormChange = (e) => {
-    const { name, value } = e.target
-    setAddressFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
+  // --- Handlers ---
   const handleCityChange = async (city) => {
     if (!city || isChangingCity) return
     setIsChangingCity(true)
@@ -197,19 +112,6 @@ const Header = ({ children }) => {
     }
   }
 
-  const handleSearchFocus = () => {
-    setIsSearchFocused(true)
-    setIsSearchExpanded(true)
-    window?.Telegram?.WebApp?.HapticFeedback?.impactOccurred("light")
-  }
-
-  const handleSearchBlur = () => {
-    setIsSearchFocused(false)
-    if (!searchTerm) setIsSearchExpanded(false)
-  }
-
-  const cartItemCount = getCartItemCount()
-
   // --- JSX ---
   return (
     <>
@@ -225,24 +127,40 @@ const Header = ({ children }) => {
         searchError={searchError}
         searchResults={searchResults}
         onShowAllResults={() => {
-          // Logic to navigate to a full search results page
           console.log("Navigate to all results for:", searchTerm)
         }}
       />
 
       <motion.header
-        className={`sticky top-0 z-30 pt-[env(safe-area-inset-top, 16px)] ${
-          isCompact ? "bg-white/95 backdrop-blur-xl shadow-lg" : "bg-white/95 backdrop-blur-sm shadow-sm"
-        }`}
+        animate={{ height: isCompact ? 80 : 120 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className={`sticky top-0 z-30 pt-[env(safe-area-inset-top, 16px)] bg-white/95 backdrop-blur-xl ${isCompact ? 'shadow-md' : 'shadow-sm'}`}
       >
-        <div
-          className={`px-3 sm:px-4 max-w-4xl mx-auto flex flex-col items-center ${isCompact ? "py-3" : "py-6"}`}
-          style={{ gap: isCompact ? "0.75rem" : "1.25rem" }}
-        >
-          <PreHeader />
+        <div className="px-3 sm:px-4 max-w-4xl mx-auto h-full flex items-center justify-between">
+          {/* Right Side: Logo and App Name */}
+          <div className="flex items-center gap-3">
+            <motion.img
+              src={appLogoImage}
+              alt="App Logo"
+              className="object-contain rounded-xl"
+              animate={{
+                width: isCompact ? 40 : 56,
+                height: isCompact ? 40 : 56,
+              }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            />
+            <motion.div 
+              className="flex flex-col"
+              animate={{ opacity: isCompact ? 0 : 1, width: isCompact ? 0 : 'auto' }}
+              transition={{ duration: 0.2 }}
+            >
+              <span className="text-lg sm:text-xl font-bold text-gray-800 leading-tight truncate">معرض طبيب</span>
+              <span className="text-sm text-gray-500 leading-tight truncate">المستلزمات الطبية</span>
+            </motion.div>
+          </div>
+
+          {/* Left Side: Actions */}
           <HeaderActions
-            isCompact={isCompact}
-            isSearchExpanded={isSearchExpanded}
             isChangingCity={isChangingCity}
             userProfile={userProfile}
             telegramUser={telegramUser}
@@ -250,30 +168,18 @@ const Header = ({ children }) => {
             setIsCityPopoverOpen={setIsCityPopoverOpen}
             handleCityChange={handleCityChange}
             preloadedCities={preloadedCities}
-            handleOpenProfileModal={handleOpenProfileModal}
+            handleOpenProfileModal={() => openModal("profile", { telegramUser, userProfile })}
             setIsSearchPopoverOpen={setIsSearchPopoverOpen}
           />
-
-          {/* --- SEARCH COMPONENTS --- */}
-          <AnimatePresence mode="wait">
-            <MainSearchBar
-              isVisible={!isCompact || isSearchExpanded}
-              isCompact={isCompact}
-              searchTerm={searchTerm}
-              onSearchTermChange={(e) => handleSearchTermChange(DOMPurify.sanitize(e.target.value))}
-              onClearSearch={clearSearch}
-              onFocus={handleSearchFocus}
-              onBlur={handleSearchBlur}
-              onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
-              inputRef={searchInputRef}
-            />
-          </AnimatePresence>
-
-          {children}
         </div>
       </motion.header>
+      
+      {/* This is where the tab navigation below the header will be rendered */}
+      <div className="px-3 sm:px-4 max-w-4xl mx-auto">
+        {children}
+      </div>
     </>
   )
 }
 
-export default Header
+export default Header;

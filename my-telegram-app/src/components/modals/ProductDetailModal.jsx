@@ -303,7 +303,7 @@ const ProductDetailModal = ({
                 <button
                   onClick={handleAddToCart}
                   disabled={!modalData.isAvailable}
-                  className="flex-grow bg-gradient-to-r from-blue-600 to-blue-500 text-white py-4 px-6 rounded-xl font-bold hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400 flex items-center justify-center gap-2 text-lg shadow-lg hover:shadow-xl transition-all"
+                  className="flex-grow bg-gradient-to-r from-blue-600 to-blue-500 text-white py-4 px-6 rounded-full font-bold hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-400 flex items-center justify-center gap-2 text-lg shadow-lg hover:shadow-xl transition-all"
                 >
                   <ShoppingCart className="h-5 w-5" /> {modalData.isAvailable ? "إضافة للسلة" : "غير متوفر"}
                 </button>
@@ -311,7 +311,7 @@ const ProductDetailModal = ({
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleToggleFavorite}
-                  className="p-4 border-2 border-gray-300 rounded-xl text-gray-600 hover:border-red-500 hover:text-red-500 hover:bg-red-50 transition-all shadow-sm"
+                  className="p-4 border-2 border-gray-300 rounded-full text-gray-600 hover:border-red-500 hover:text-red-500 hover:bg-red-50 transition-all shadow-sm"
                 >
                   <motion.div
                     key={heartKey}

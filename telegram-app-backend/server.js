@@ -34,8 +34,6 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Apply security middleware
-app.use(helmet()); // Add security headers
-
 // Check the environment to set appropriate limits
 const IS_DEVELOPMENT = process.env.NODE_ENV === 'development';
 const DEV_MAX_REQUESTS = 5000;
@@ -58,8 +56,6 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
-
 
 // --- CORE MIDDLEWARE ---
 // ✅ Updated only for development — production remains unchanged
@@ -99,10 +95,40 @@ const corsOptions = {
   credentials: true,
   optionsSuccessStatus: 200,
 };
+const hpp = require('hpp');
+const xss = require('xss-clean');
+
+// Configure Helmet with Content Security Policy (CSP)
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://telegram.org", "https://oauth.telegram.org"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://api.telegram.org"],
+      frameSrc: ["'self'", "https://oauth.telegram.org"], // Allow Telegram Login Widget
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+}));
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// 1. High Limit for Upload Routes (Suppliers & Admin)
+// Must be applied BEFORE the global body parser to take effect
+app.use(['/api/supplier', '/api/admin'], express.json({ limit: '50mb' }));
+app.use(['/api/supplier', '/api/admin'], express.urlencoded({ extended: true, limit: '50mb' }));
+
+// 2. Global Low Limit for everything else
+app.use(express.json({ limit: '100kb' })); // Reduced from 10mb to 100kb for security
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
+app.use(hpp()); // Protect against HTTP Parameter Pollution attacks
+app.use(xss()); // Sanitize user input to prevent XSS attacks
+
+// Serve static files from 'public' directory
+app.use(express.static('public'));
 
 // --- ROUTE DEFINITIONS ---
 
@@ -129,12 +155,12 @@ app.use('/api/supplier', supplierRoutes);
 // 3. JWT AUTHENTICATION MIDDLEWARE - Apply only to routes that need protection
 // Apply validation only to routes that should be protected (not /api/auth)
 app.use('/api', (req, res, next) => {
-    // Skip JWT validation for auth routes only
-    if (req.path.startsWith('/auth')) {
-        return next();
-    }
-    // For other routes, apply the JWT validation
-    validateTelegramAuth(req, res, next);
+  // Skip JWT validation for auth routes only
+  if (req.path.startsWith('/auth')) {
+    return next();
+  }
+  // For other routes, apply the JWT validation
+  validateTelegramAuth(req, res, next);
 });
 console.log('🔒 JWT Authentication Middleware is now active for protected routes (excluding auth).');
 
@@ -154,26 +180,26 @@ app.use('/api/delivery', deliveryRoutes);
 app.all('*', (req, res) => res.status(404).json({ error: 'Route not found' }));
 
 app.use((error, req, res, next) => {
-    console.error('Global error handler:', error);
-    const statusCode = error.statusCode || 500;
-    const message = error.message || 'Internal server error';
-    res.status(statusCode).json({ error: message });
+  console.error('Global error handler:', error);
+  const statusCode = error.statusCode || 500;
+  const message = error.message || 'Internal server error';
+  res.status(statusCode).json({ error: message });
 });
 
 app.use((err, req, res, next) => {
-    console.error('--- UNHANDLED SERVER CRASH (HIGH PRIORITY) ---');
-    console.error(err.stack); // Log the full stack trace
+  console.error('--- UNHANDLED SERVER CRASH (HIGH PRIORITY) ---');
+  console.error(err.stack); // Log the full stack trace
 
-    // In production, send a detailed error message ONLY if debugging
-    if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_MODE === 'true') {
-        return res.status(500).json({
-            error: 'Fatal Server Error',
-            details: err.message,
-            stack: err.stack.split('\n').slice(0, 5) // Send a slice of the stack trace
-        });
-    }
+  // In production, send a detailed error message ONLY if debugging
+  if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_MODE === 'true') {
+    return res.status(500).json({
+      error: 'Fatal Server Error',
+      details: err.message,
+      stack: err.stack.split('\n').slice(0, 5) // Send a slice of the stack trace
+    });
+  }
 
-    res.status(500).json({ error: 'Internal Server Error.' });
+  res.status(500).json({ error: 'Internal Server Error.' });
 });
 
 // --- SERVER STARTUP ---
@@ -181,19 +207,19 @@ const server = app.listen(PORT, () => console.log(`🚀 Server running on port $
 
 // Graceful shutdown logic
 process.on('SIGTERM', () => {
-    console.log('🛑 SIGTERM received, shutting down gracefully...');
-    server.close(() => {
-        console.log('✅ Process terminated');
-        process.exit(0);
-    });
+  console.log('🛑 SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Process terminated');
+    process.exit(0);
+  });
 });
 
 process.on('SIGINT', () => {
-    console.log('🛑 SIGINT received, shutting down gracefully...');
-    server.close(() => {
-        console.log('✅ Process terminated');
-        process.exit(0);
-    });
+  console.log('🛑 SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Process terminated');
+    process.exit(0);
+  });
 });
 
 module.exports = app;

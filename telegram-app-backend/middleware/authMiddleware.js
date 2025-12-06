@@ -7,14 +7,8 @@ const validateTelegramAuth = (req, res, next) => {
     req.ip === '::1' ||
     req.ip.startsWith('::ffff:127.0.0.1');
 
-  // Development bypass
-  if (process.env.NODE_ENV === 'development' && isDevRequest && isLocalhost) {
-    if (isDevRequest === process.env.DEV_BYPASS_SECRET) {
-      console.warn('⚠️  Bypassing auth for local development.');
-      req.user = { userId: 123456789, telegramId: 123456789, first_name: 'Local', last_name: 'Dev', role: 'customer' };
-      return next();
-    }
-  }
+  // Development bypass REMOVED for security
+  // The X-Dev-Bypass-Auth header logic has been removed to prevent potential production backdoors.
 
   // Get token from header
   const authHeader = req.headers.authorization;
@@ -27,7 +21,7 @@ const validateTelegramAuth = (req, res, next) => {
   try {
     // Verify the JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || process.env.JWT_CUSTOMER_SECRET);
-    
+
     // Add user information to request object
     req.user = decoded;
     next();

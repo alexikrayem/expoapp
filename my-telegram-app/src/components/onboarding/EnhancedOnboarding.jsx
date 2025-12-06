@@ -382,22 +382,19 @@ const EnhancedOnboarding = ({ onComplete, onSkip }) => {
         </div>
 
         {/* Progress dots at bottom */}
-        <div className="w-full px-6 mb-2">
-          <div className="flex justify-center mb-3">
-            <div className="flex space-x-3">
-              {steps.map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-1.5 transition-all duration-300 ${
-                    index === step - 1
-                      ? 'w-6 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full' // Active pill shape
-                      : index < step
-                        ? 'w-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full' // Completed
-                        : 'w-3 bg-gray-300 rounded-full' // Not completed
-                  }`}
-                />
+        <div className="w-full px-6 mb-4">
+          <div className="flex justify-center items-center gap-3">
+              {steps.map((s) => (
+                  <motion.div
+                      key={s.id}
+                      className="w-2.5 h-2.5 rounded-full"
+                      animate={{
+                          scale: step === s.id ? 1.5 : 1,
+                          backgroundColor: step >= s.id ? "#3b82f6" : "#d1d5db"
+                      }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
               ))}
-            </div>
           </div>
         </div>
 

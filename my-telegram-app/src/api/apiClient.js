@@ -91,7 +91,7 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
 
   if (body) config.body = JSON.stringify(body);
 
-  const fullUrl = `${API_BASE_URL}/${endpoint}`;
+  const fullUrl = `${API_BASE_URL}/api/${endpoint}`;
 
   try {
     let response = await fetch(fullUrl, config);

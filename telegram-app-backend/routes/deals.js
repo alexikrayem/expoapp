@@ -24,10 +24,17 @@ router.get('/', async (req, res) => {
         
         const queryParams = [];
         
-        if (cityId) {
-            query += ' AND s.city_id = $1';
-            queryParams.push(cityId);
-        }
+       if (cityId) {
+    query += `
+        AND EXISTS (
+            SELECT 1
+            FROM supplier_cities sc
+            WHERE sc.supplier_id = s.id
+            AND sc.city_id = $1
+        )
+    `;
+    queryParams.push(cityId);
+}
         
         query += ' ORDER BY d.created_at DESC';
         

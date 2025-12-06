@@ -1,14 +1,13 @@
 // src/components/layout/HeaderActions.jsx
 import React from "react"
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion"
-import { MapPin, Loader2, ChevronDown, Bell } from "lucide-react"
+import { MapPin, Loader2, ChevronDown, Settings } from "lucide-react"
 import ProfileIcon from "../common/ProfileIcon"
 import CityChangePopover from "../common/CityChangePopover"
-import CompactSearchButton from "../search/CompactSearchButton"
+import HeaderSearchButton from "../search/HeaderSearchButton";
 
 const HeaderActions = ({
-  isCompact,
-  isSearchExpanded,
   isChangingCity,
   userProfile,
   telegramUser,
@@ -19,9 +18,38 @@ const HeaderActions = ({
   handleOpenProfileModal,
   setIsSearchPopoverOpen,
 }) => {
+  const navigate = useNavigate();
+
+  const handleSettingsClick = () => {
+    navigate('/settings');
+    window.Telegram?.WebApp?.HapticFeedback.impactOccurred("light");
+  };
+
   return (
     <div className="w-full flex items-center justify-between flex-shrink-0">
-      {/* City selector */}
+      {/* Left actions (in LTR), will appear on the right in RTL */}
+      <div className="flex items-center gap-1 sm:gap-2">
+        <HeaderSearchButton onClick={() => setIsSearchPopoverOpen(true)} />
+        {/* Settings Button */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleSettingsClick}
+          className="h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center 
+        bg-white/80 backdrop-blur-sm text-gray-600 rounded-xl hover:bg-white 
+        transition-all shadow-sm border border-gray-200"
+          title="الإعدادات"
+        >
+          <Settings className="h-5 w-5 text-gray-600" />
+        </motion.button>
+
+        {/* Profile */}
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <ProfileIcon user={telegramUser} onClick={handleOpenProfileModal} />
+        </motion.div>
+      </div>
+
+      {/* Right-side City selector (in LTR), will appear on the left in RTL */}
       <div className="flex items-center">
         <div className="relative">
           <motion.button
@@ -52,37 +80,6 @@ const HeaderActions = ({
             )}
           </AnimatePresence>
         </div>
-      </div>
-
-      {/* Right actions */}
-      <div className="flex items-center gap-1 sm:gap-2">
-        {/* Notifications */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="relative h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center 
-        bg-white/80 backdrop-blur-sm text-gray-600 rounded-xl hover:bg-white 
-        transition-all shadow-sm border border-gray-200"
-          title="الإشعارات"
-        >
-          <Bell className="h-5 w-5 text-gray-600" />
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] sm:text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold shadow-md"
-          >
-            3
-          </motion.span>
-        </motion.button>
-
-        <AnimatePresence mode="wait">
-          <CompactSearchButton isVisible={isCompact && !isSearchExpanded} onClick={() => setIsSearchPopoverOpen(true)} />
-        </AnimatePresence>
-
-        {/* Profile */}
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <ProfileIcon user={telegramUser} onClick={handleOpenProfileModal} />
-        </motion.div>
       </div>
     </div>
   )

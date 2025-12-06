@@ -472,7 +472,7 @@ const FeaturedListFormModal = ({ isOpen, onClose, onSave, listToEdit, isLoading,
                         type="button"
                         onClick={() => handleAddItem(item)}
                         disabled={isSelected}
-                        className={`relative p-3 rounded-lg border-2 transition-all overflow-hidden group ${
+                        className={`relative p-3 rounded-lg border-2  overflow-hidden group ${
                           isSelected
                             ? "border-teal-500 bg-teal-50"
                             : "border-gray-200 hover:border-teal-300 bg-white hover:bg-gray-50"

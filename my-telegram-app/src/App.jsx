@@ -10,6 +10,7 @@ import AppLayout from './components/layout/AppLayout';
 import HomePage from './pages/HomePage';
 import FavoritesPage from './pages/FavoritesPage';
 import OrdersPage from './pages/OrdersPage';
+import SettingsPage from './pages/SettingsPage';
 
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
                                     <Route path="/" element={<HomePage />} />
                                     <Route path="/favorites" element={<FavoritesPage />} />
                                     <Route path="/orders" element={<OrdersPage />} />
+                                    <Route path="/settings" element={<SettingsPage />} />
                                 </Route>
                             </Route>
                         </Routes>
