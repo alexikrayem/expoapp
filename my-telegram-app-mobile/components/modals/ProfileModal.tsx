@@ -123,6 +123,7 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
                                         placeholderTextColor="#94a3b8"
                                         value={formData.fullName}
                                         onChangeText={(text) => handleChange('fullName', text)}
+                                        style={{ fontFamily: 'TajawalCustom' }}
                                     />
                                 </View>
                             </View>
@@ -141,6 +142,7 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
                                         keyboardType="phone-pad"
                                         value={formData.phoneNumber}
                                         onChangeText={(text) => handleChange('phoneNumber', text)}
+                                        style={{ fontFamily: 'TajawalCustom' }}
                                     />
                                 </View>
                             </View>
@@ -158,6 +160,7 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
                                         placeholderTextColor="#94a3b8"
                                         value={formData.addressLine1}
                                         onChangeText={(text) => handleChange('addressLine1', text)}
+                                        style={{ fontFamily: 'TajawalCustom' }}
                                     />
                                 </View>
                             </View>
@@ -175,6 +178,7 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
                                         placeholderTextColor="#94a3b8"
                                         value={formData.addressLine2}
                                         onChangeText={(text) => handleChange('addressLine2', text)}
+                                        style={{ fontFamily: 'TajawalCustom' }}
                                     />
                                 </View>
                             </View>
@@ -192,6 +196,7 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
                                         placeholderTextColor="#94a3b8"
                                         value={formData.city}
                                         onChangeText={(text) => handleChange('city', text)}
+                                        style={{ fontFamily: 'TajawalCustom' }}
                                     />
                                 </View>
                             </View>

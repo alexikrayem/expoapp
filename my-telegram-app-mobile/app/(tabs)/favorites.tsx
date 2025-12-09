@@ -113,6 +113,7 @@ export default function FavoritesScreen() {
                 placeholderTextColor="#94a3b8"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                style={{ fontFamily: 'TajawalCustom' }}
               />
               {searchQuery ? (
                 <TouchableOpacity onPress={() => setSearchQuery('')} className="bg-gray-200 p-1 rounded-full">

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useCallback } from 'react';
-import { View, Modal, TouchableOpacity, Text } from 'react-native';
+import { View, Modal, TouchableOpacity } from 'react-native';
 import ProductDetailModal from '../components/modals/ProductDetailModal';
 import ProfileModal from '../components/modals/ProfileModal';
 import AddressModal from '../components/modals/AddressModal';
@@ -60,7 +60,7 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
             case 'supplierDetail':
                 return <SupplierDetailModal show={true} onClose={closeModal} {...props} />;
             case 'featuredList':
-                return <FeaturedListModal show={true} onClose={closeModal} {...props} />;
+                return <FeaturedListModal show={true} onClose={closeModal} openModal={openModal} {...props} />;
             case 'feedback':
                 return <FeedbackModal visible={true} onClose={closeModal} {...props} />;
             default:

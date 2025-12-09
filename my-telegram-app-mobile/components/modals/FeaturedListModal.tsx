@@ -5,13 +5,13 @@ import { FlashList } from '@shopify/flash-list';
 import Text from '@/components/ThemedText';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { X, Package, Zap } from 'lucide-react-native';
-import { useModal } from '@/context/ModalContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { apiClient } from '../../api/apiClient';
 
 interface FeaturedListModalProps {
     show: boolean;
     onClose: () => void;
+    openModal?: (type: string, props?: any) => void;
     list: {
         id: string;
         title: string;
@@ -20,11 +20,10 @@ interface FeaturedListModalProps {
     };
 }
 
-export default function FeaturedListModal({ show, onClose, list }: FeaturedListModalProps) {
+export default function FeaturedListModal({ show, onClose, openModal, list }: FeaturedListModalProps) {
     const [items, setItems] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const { openModal } = useModal();
     const { formatPrice } = useCurrency();
 
     useEffect(() => {
@@ -53,6 +52,8 @@ export default function FeaturedListModal({ show, onClose, list }: FeaturedListM
     };
 
     const handleItemClick = useCallback((item: any) => {
+        if (!openModal) return;
+
         // Close this modal first
         onClose();
 

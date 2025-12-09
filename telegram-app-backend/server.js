@@ -128,6 +128,32 @@ app.use(hpp()); // Protect against HTTP Parameter Pollution attacks
 app.use(xss()); // Sanitize user input to prevent XSS attacks
 
 // Serve static files from 'public' directory
+
+// Dynamic Telegram Widget Route
+// Serves the widget HTML with the correct Bot Username from environment variables
+app.get('/telegram-widget.html', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, 'public', 'telegram-widget.html');
+  
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading widget file:', err);
+      return res.status(500).send('Error loading login widget');
+    }
+    
+    const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'DentAppBot';
+    // Replace the placeholder with the actual username
+    const result = data.replace(
+      "const BOT_USERNAME = 'DentAppBot';", 
+      `const BOT_USERNAME = '${botUsername}';`
+    );
+    
+    res.set('Content-Type', 'text/html');
+    res.send(result);
+  });
+});
+
 app.use(express.static('public'));
 
 // --- ROUTE DEFINITIONS ---

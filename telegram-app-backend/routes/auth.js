@@ -260,7 +260,7 @@ router.post('/telegram-login-widget', async (req, res) => {
         }
         // --- END SECURITY FIX ---
 
-        authData = receivedAuthData;
+        const authData = receivedAuthData;
 
         const fullName = [authData.first_name, authData.last_name].filter(Boolean).join(' ');
 

@@ -3,7 +3,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts, Inter_400Regular, Inter_700Bold, Inter_500Medium } from '@expo-google-fonts/inter';
 import { Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold } from '@expo-google-fonts/tajawal';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
@@ -11,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QueryClient, QueryClientProvider, MutationCache, QueryCache } from '@tanstack/react-query';
 
 import { useColorScheme } from '@/components/useColorScheme';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { CacheProvider } from '@/context/CacheContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
 import { ModalProvider } from '@/context/ModalContext';
@@ -20,7 +20,6 @@ import { CheckoutProvider } from '@/context/CheckoutContext';
 import { MiniCartProvider } from '@/context/MiniCartContext';
 import { SearchProvider } from '@/context/SearchContext';
 import { ToastProvider, useToast } from '@/context/ToastContext';
-import WelcomeOnboardingModal from '@/components/modals/WelcomeOnboardingModal';
 import EnhancedOnboardingModal from '@/components/modals/EnhancedOnboardingModal';
 import OfflineOverlay from '@/components/OfflineOverlay';
 import { emitter } from '@/utils/emitter';
@@ -108,25 +107,14 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const { colorScheme } = useColorScheme();
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
   const { showToast } = useToast();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const checkOnboarding = async () => {
-      try {
-        const hasSeenWelcome = await AsyncStorage.getItem('hasSeenWelcome_v1');
-        if (!hasSeenWelcome) {
-          setShowOnboarding(true);
-        }
-      } catch (error) {
-        console.error('Failed to check onboarding status:', error);
-      } finally {
-        setCheckingOnboarding(false);
-      }
-    };
-
-    checkOnboarding();
+    setIsMounted(true);
   }, []);
 
   useEffect(() => {
@@ -141,25 +129,54 @@ function RootLayoutNav() {
     };
   }, [showToast]);
 
+  // Auth Guard Logic
+  useEffect(() => {
+    if (!isMounted || isLoading) return;
+
+    const inLogin = segments[0] === 'login';
+
+    if (!isAuthenticated && !inLogin) {
+      // Redirect to the login page if not authenticated and not already there
+      router.replace('/login');
+    } else if (isAuthenticated && inLogin) {
+      // Redirect to the home page if authenticated and trying to access login
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, segments, isLoading, isMounted]);
+
   const [showEnhancedOnboarding, setShowEnhancedOnboarding] = useState(false);
 
-  const handleOnboardingFinish = () => {
-    setShowOnboarding(false);
-    // Show enhanced onboarding after welcome flow
-    setShowEnhancedOnboarding(true);
-  };
+  // We can still use this for post-login onboarding checks if needed
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+        const checkEnhancedOnboarding = async () => {
+            try {
+                const hasSeenEnhanced = await AsyncStorage.getItem('hasSeenEnhancedOnboarding_v1');
+                if (!hasSeenEnhanced) {
+                    setShowEnhancedOnboarding(true);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        checkEnhancedOnboarding();
+    }
+  }, [isAuthenticated, isLoading]);
 
-  const handleEnhancedOnboardingFinish = () => {
+  const handleEnhancedOnboardingFinish = async () => {
     setShowEnhancedOnboarding(false);
+    await AsyncStorage.setItem('hasSeenEnhancedOnboarding_v1', 'true');
     showToast('تم تحديث الملف الشخصي بنجاح', 'success');
   };
 
-  const handleEnhancedOnboardingSkip = () => {
+  const handleEnhancedOnboardingSkip = async () => {
     setShowEnhancedOnboarding(false);
+    await AsyncStorage.setItem('hasSeenEnhancedOnboarding_v1', 'true');
   };
 
-  if (checkingOnboarding) {
-    return null; // Or a loading screen
+  // While loading auth state, show nothing or a splash
+  if (isLoading) {
+      return null; 
   }
 
   return (
@@ -170,12 +187,9 @@ function RootLayoutNav() {
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         <Stack.Screen name="cart" options={{ presentation: 'modal' }} />
         <Stack.Screen name="checkout" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
       </Stack>
 
-      <WelcomeOnboardingModal
-        visible={showOnboarding}
-        onFinish={handleOnboardingFinish}
-      />
       <EnhancedOnboardingModal
         visible={showEnhancedOnboarding}
         onFinish={handleEnhancedOnboardingFinish}
@@ -184,3 +198,5 @@ function RootLayoutNav() {
     </ThemeProvider>
   );
 }
+
+

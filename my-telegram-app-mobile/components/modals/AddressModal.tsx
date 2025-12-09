@@ -113,6 +113,7 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
                                         value={formData.fullName}
                                         onChangeText={(text) => handleChange('fullName', text)}
                                         editable={!isSaving}
+                                        style={{ fontFamily: 'TajawalCustom' }}
                                     />
                                 </View>
                                 {validationErrors.fullName && <Text className="text-red-500 text-xs mt-1.5 text-right font-medium">{validationErrors.fullName}</Text>}
@@ -133,6 +134,7 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
                                         value={formData.phoneNumber}
                                         onChangeText={(text) => handleChange('phoneNumber', text)}
                                         editable={!isSaving}
+                                        style={{ fontFamily: 'TajawalCustom' }}
                                     />
                                 </View>
                                 {validationErrors.phoneNumber && <Text className="text-red-500 text-xs mt-1.5 text-right font-medium">{validationErrors.phoneNumber}</Text>}
@@ -171,6 +173,7 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
                                         value={formData.addressLine1}
                                         onChangeText={(text) => handleChange('addressLine1', text)}
                                         editable={!isSaving}
+                                        style={{ fontFamily: 'TajawalCustom' }}
                                     />
                                 </View>
                                 {validationErrors.addressLine1 && <Text className="text-red-500 text-xs mt-1.5 text-right font-medium">{validationErrors.addressLine1}</Text>}
@@ -192,7 +195,7 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
                                         editable={!isSaving}
                                         multiline
                                         numberOfLines={2}
-                                        style={{ minHeight: 80, textAlignVertical: 'top' }}
+                                        style={{ minHeight: 80, textAlignVertical: 'top', fontFamily: 'TajawalCustom' }}
                                     />
                                 </View>
                             </View>

@@ -1,7 +1,6 @@
 import { storage } from '../utils/storage';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-const IS_DEVELOPMENT = __DEV__; // React Native global for dev mode
 
 // --- Token utilities ---
 export const getAccessToken = async () => await storage.getItem("accessToken");
@@ -25,11 +24,6 @@ const refreshAccessToken = async () => {
 
         const headers: Record<string, string> = { "Content-Type": "application/json" };
 
-        // In development mode, we send the bypass header
-        if (IS_DEVELOPMENT && process.env.EXPO_PUBLIC_DEV_BYPASS_SECRET) {
-
-            console.log("DEV MODE: Using bypass header for refresh token request.");
-        }
 
         const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
             method: "POST",
@@ -53,11 +47,6 @@ const refreshAccessToken = async () => {
 // --- Main API Client ---
 export async function apiClient(endpoint: string, { body, ...customConfig }: Omit<RequestInit, 'body'> & { body?: any } = {}) {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
-
-    // In development mode, we send the bypass header
-    if (IS_DEVELOPMENT && process.env.EXPO_PUBLIC_DEV_BYPASS_SECRET) {
-
-    }
 
     // Add JWT access token if exists
     const accessToken = await getAccessToken();
@@ -92,10 +81,6 @@ export async function apiClient(endpoint: string, { body, ...customConfig }: Omi
                     response = await fetch(fullUrl, config);
                 } catch (refreshErr) {
                     throw refreshErr;
-                }
-            } else {
-                if (IS_DEVELOPMENT) {
-                    console.warn("DEV MODE: 401 received and no refresh token found. Bypass might be failing.");
                 }
             }
         }

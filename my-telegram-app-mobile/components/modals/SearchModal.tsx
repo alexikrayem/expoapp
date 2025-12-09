@@ -179,6 +179,7 @@ export default function SearchModal({ visible, onClose }: SearchModalProps) {
                             onChangeText={handleSearchTermChange}
                             textAlign="right"
                             returnKeyType="search"
+                            style={{ fontFamily: 'TajawalCustom' }}
                         />
                         {searchTerm.length > 0 && (
                             <TouchableOpacity onPress={() => handleSearchTermChange('')} className="bg-gray-200 p-1 rounded-full">

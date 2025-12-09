@@ -37,6 +37,15 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
     // Animation values
     const animationProgress = useSharedValue(0);
 
+    // Animated styles - MUST be defined before any early returns
+    const addToCartButtonStyle = useAnimatedStyle(() => ({
+        opacity: interpolate(animationProgress.value, [0, 1], [1, 0]),
+    }));
+
+    const quantityControlsStyle = useAnimatedStyle(() => ({
+        opacity: interpolate(animationProgress.value, [0, 1], [0, 1]),
+    }));
+
     // Animate when quantity changes
     useEffect(() => {
         animationProgress.value = withTiming(quantity > 0 ? 1 : 0, {
@@ -205,10 +214,8 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                                 <Animated.View
                                     style={[
                                         StyleSheet.absoluteFill,
-                                        useAnimatedStyle(() => ({
-                                            opacity: interpolate(animationProgress.value, [0, 1], [1, 0]),
-                                            zIndex: quantity === 0 ? 1 : 0,
-                                        })),
+                                        addToCartButtonStyle,
+                                        { zIndex: quantity === 0 ? 1 : 0 }
                                     ]}
                                     pointerEvents={quantity === 0 ? 'auto' : 'none'}
                                 >
@@ -229,10 +236,8 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                                 <Animated.View
                                     style={[
                                         StyleSheet.absoluteFill,
-                                        useAnimatedStyle(() => ({
-                                            opacity: interpolate(animationProgress.value, [0, 1], [0, 1]),
-                                            zIndex: quantity > 0 ? 1 : 0,
-                                        })),
+                                        quantityControlsStyle,
+                                        { zIndex: quantity > 0 ? 1 : 0 }
                                     ]}
                                     pointerEvents={quantity > 0 ? 'auto' : 'none'}
                                 >

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import { useModal } from '../../context/ModalContext';
+import { useModal } from '../context/ModalContext';
 import { ChevronLeft, User, Briefcase, FileText, Shield, Share2 } from 'lucide-react';
 
 const SettingsPage = () => {

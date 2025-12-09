@@ -50,13 +50,7 @@ export const ensureValidToken = async () => {
     // Token is expiring soon, refresh it
     try {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
-        const IS_DEVELOPMENT = __DEV__;
-
-        // In development mode, we send the bypass header
-        if (IS_DEVELOPMENT && process.env.EXPO_PUBLIC_DEV_BYPASS_SECRET) {
-
-            console.log("DEV MODE: Using bypass header for proactive refresh.");
-        }
+       
 
         const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL}/auth/refresh`, {
             method: "POST",

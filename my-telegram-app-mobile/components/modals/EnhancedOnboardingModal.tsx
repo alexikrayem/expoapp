@@ -161,6 +161,7 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
                 placeholder={placeholder}
                 placeholderTextColor="#9CA3AF"
                 keyboardType={keyboardType}
+                style={{ fontFamily: 'TajawalCustom' }}
             />
         </View>
     );

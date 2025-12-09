@@ -5,9 +5,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
 import { useModal } from '@/context/ModalContext';
 import { useAuth } from '@/context/AuthContext';
-import { User, Briefcase, FileText, Shield, Share2, ChevronLeft, MessageSquare, MapPin } from 'lucide-react-native';
+import { User, Briefcase, FileText, Shield, Share2, ChevronLeft, MessageSquare, MapPin, LogOut } from 'lucide-react-native';
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import CitySelectionModal from '@/components/modals/CitySelectionModal';
+import { useRouter } from 'expo-router';
 
 const SettingItem = ({ icon: Icon, title, subtitle, onPress, color }: any) => (
   <TouchableOpacity
@@ -27,8 +28,9 @@ const SettingItem = ({ icon: Icon, title, subtitle, onPress, color }: any) => (
 
 export default function SettingsScreen() {
   const { openModal } = useModal();
-  const { userProfile, refreshProfile } = useAuth();
+  const { userProfile, refreshProfile, logout } = useAuth();
   const [isCityModalVisible, setIsCityModalVisible] = useState(false);
+  const router = useRouter();
 
   const handleEditProfile = () => {
     openModal("profile", {
@@ -123,6 +125,33 @@ export default function SettingsScreen() {
                 onPress={() => openModal('feedback')}
               />
             </View>
+          </View>
+
+          {/* Logout Section */}
+          <View className="mb-8">
+            <TouchableOpacity
+              onPress={() => {
+                Alert.alert(
+                  'تسجيل الخروج',
+                  'هل أنت متأكد من تسجيل الخروج؟',
+                  [
+                    { text: 'إلغاء', style: 'cancel' },
+                    {
+                      text: 'تسجيل الخروج',
+                      style: 'destructive',
+                      onPress: async () => {
+                        await logout();
+                        router.replace('/login');
+                      },
+                    },
+                  ]
+                );
+              }}
+              className="bg-red-50 rounded-2xl p-4 flex-row items-center justify-center border border-red-200 active:bg-red-100"
+            >
+              <Text className="text-red-600 font-bold text-base mr-2">تسجيل الخروج</Text>
+              <LogOut size={20} color="#dc2626" />
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>

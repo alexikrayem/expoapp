@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Modal } from 'react-native';
+import { View, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Text from '@/components/ThemedText';
 import { WifiOff } from 'lucide-react-native';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 

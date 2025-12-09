@@ -1,5 +1,6 @@
 import React from 'react';
-import { TextInput, View, Text, TextInputProps } from 'react-native';
+import { TextInput, View, TextInputProps, StyleSheet } from 'react-native';
+import Text from '@/components/ThemedText';
 
 
 interface InputProps extends TextInputProps {
@@ -13,6 +14,7 @@ export const Input = ({
     error,
     containerClassName = '',
     className = '',
+    style,
     ...props
 }: InputProps) => {
     return (
@@ -26,6 +28,7 @@ export const Input = ({
                 className={`w-full rounded-xl border border-border bg-surface px-4 py-3.5 text-base text-text-main placeholder:text-text-secondary focus:border-primary-500 focus:bg-white ${error ? 'border-error' : ''
                     } ${className}`}
                 placeholderTextColor="#94a3b8"
+                style={[styles.input, style]}
                 {...props}
             />
             {error && (
@@ -36,3 +39,9 @@ export const Input = ({
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    input: {
+        fontFamily: 'TajawalCustom',
+    },
+});

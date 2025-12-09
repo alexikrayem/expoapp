@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
     View,
-    Text,
     StyleSheet,
     ActivityIndicator,
+    TouchableOpacity,
 } from 'react-native';
+import Text from '@/components/ThemedText';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -13,9 +14,11 @@ import Animated, {
     interpolate,
     interpolateColor,
     Extrapolation,
+    FadeIn,
+    FadeOut,
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { Check, ChevronRight } from 'lucide-react-native';
+import { Check, ChevronRight, X } from 'lucide-react-native';
 
 const BUTTON_HEIGHT = 64;
 const PADDING = 4;
@@ -23,6 +26,8 @@ const THUMB_SIZE = BUTTON_HEIGHT - PADDING * 2;
 
 interface CheckoutSliderProps {
     onSlideComplete: () => void;
+    onDone?: () => void;
+    onCancel?: () => void;
     isLoading?: boolean;
     enabled?: boolean;
     initialText?: string;
@@ -30,12 +35,15 @@ interface CheckoutSliderProps {
 
 const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
     onSlideComplete,
+    onDone,
+    onCancel,
     isLoading = false,
     enabled = true,
     initialText = "اسحب لتأكيد الطلب",
 }) => {
     const [containerWidth, setContainerWidth] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
+    const [showActions, setShowActions] = useState(false);
 
     // Reanimated Shared Values
     const translateX = useSharedValue(0);
@@ -50,11 +58,28 @@ const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
         return containerWidth - THUMB_SIZE - PADDING * 2;
     }, [containerWidth]);
 
+    const resetSlider = () => {
+        translateX.value = withTiming(0, { duration: 300 });
+        animatedSuccess.value = withTiming(0, { duration: 300 });
+        setIsComplete(false);
+        setShowActions(false);
+    };
+
+    const handleCancel = () => {
+        resetSlider();
+        onCancel?.();
+    };
+
+    const handleDone = () => {
+        onDone?.();
+    };
+
     useEffect(() => {
         if (!enabled) {
             translateX.value = withTiming(0);
             animatedSuccess.value = withTiming(0);
             setIsComplete(false);
+            setShowActions(false);
         }
     }, [enabled]);
 
@@ -76,7 +101,7 @@ const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
                         animatedSuccess.value = withTiming(1, { duration: 300 }, (isCompleteFinished) => {
                             if (isCompleteFinished) {
                                 runOnJS(setIsComplete)(true);
-                                runOnJS(onSlideComplete)();
+                                runOnJS(setShowActions)(true);
                             }
                         });
                     }
@@ -147,10 +172,37 @@ const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
                 </View>
             </Animated.View>
 
-            {isComplete && (
-                <View style={[StyleSheet.absoluteFill, styles.successIconContainer]}>
-                    <Check color="#16a34a" size={32} />
-                </View>
+            {/* Success state with tick and action buttons */}
+            {showActions && (
+                <Animated.View
+                    entering={FadeIn.duration(200)}
+                    style={styles.actionsContainer}
+                >
+                    {/* Checkmark */}
+                    <View style={styles.successIcon}>
+                        <Check color="#16a34a" size={28} />
+                    </View>
+
+                    {/* Cancel Button - Red Pill */}
+                    <TouchableOpacity
+                        onPress={handleCancel}
+                        style={styles.cancelButton}
+                        activeOpacity={0.8}
+                    >
+                        <X color="#ffffff" size={18} />
+                        <Text style={styles.cancelButtonText}>إلغاء</Text>
+                    </TouchableOpacity>
+
+                    {/* Done Button - Blue Pill */}
+                    <TouchableOpacity
+                        onPress={handleDone}
+                        style={styles.doneButton}
+                        activeOpacity={0.8}
+                    >
+                        <Check color="#ffffff" size={18} />
+                        <Text style={styles.doneButtonText}>تأكيد</Text>
+                    </TouchableOpacity>
+                </Animated.View>
             )}
 
             <GestureDetector gesture={pan}>
@@ -200,6 +252,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         letterSpacing: 0.5,
+        fontFamily: 'TajawalCustom',
     },
     thumb: {
         width: THUMB_SIZE,
@@ -215,14 +268,69 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 2,
     },
-    successIconContainer: {
+    actionsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
         position: 'absolute',
         right: 0,
+        left: 0,
         top: 0,
-        height: BUTTON_HEIGHT,
+        bottom: 0,
+        gap: 10,
+    },
+    successIcon: {
+        width: THUMB_SIZE,
+        height: THUMB_SIZE,
+        borderRadius: THUMB_SIZE / 2,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 2,
+        borderColor: '#16a34a',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    cancelButton: {
+        flex: 1,
+        height: THUMB_SIZE,
+        backgroundColor: '#ef4444',
+        borderRadius: THUMB_SIZE / 2,
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 6,
+        shadowColor: '#ef4444',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    cancelButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+        fontFamily: 'TajawalCustom',
+    },
+    doneButton: {
+        flex: 1,
+        height: THUMB_SIZE,
+        backgroundColor: '#2563eb',
+        borderRadius: THUMB_SIZE / 2,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        shadowColor: '#2563eb',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    doneButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+        fontFamily: 'TajawalCustom',
     },
 });
 
 export default CheckoutSlider;
+

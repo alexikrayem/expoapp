@@ -186,6 +186,7 @@ export default function CheckoutScreen() {
 
                     <CheckoutSlider
                         onSlideComplete={handlePlaceOrder}
+                        onDone={() => router.back()}
                         isLoading={isPlacingOrder}
                         enabled={hasAddress}
                         initialText={isPlacingOrder ? "جاري التأكيد..." : "اسحب لتأكيد الطلب"}

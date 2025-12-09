@@ -81,6 +81,7 @@ export default function FeedbackModal({ visible, onClose }: FeedbackModalProps) 
                                     textAlignVertical="top"
                                     value={comment}
                                     onChangeText={setComment}
+                                    style={{ fontFamily: 'TajawalCustom' }}
                                 />
                             </View>
 
