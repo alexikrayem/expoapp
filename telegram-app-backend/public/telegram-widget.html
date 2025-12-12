@@ -40,6 +40,67 @@
             color: #0088cc;
             margin-top: 1rem;
         }
+
+        #error-message {
+            display: none;
+            color: #cc0000;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #ffe6e6;
+            border-radius: 8px;
+        }
+
+        #debug-info {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #666;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        /* Custom Telegram button styles as fallback */
+        .telegram-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background-color: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+        }
+
+        .telegram-btn:hover {
+            background-color: #0077b5;
+        }
+
+        .telegram-btn:active {
+            background-color: #006699;
+        }
+
+        .telegram-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        #fallback-button {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        #widget-container {
+            min-height: 50px;
+        }
     </style>
 </head>
 
@@ -49,24 +110,94 @@
         <p>Please use the button below to log in with Telegram.</p>
 
         <!-- Telegram Widget Container -->
-        <div id="telegram-login-container"></div>
+        <div id="widget-container">
+            <div id="telegram-login-container"></div>
+        </div>
+
+        <!-- Fallback custom button if widget doesn't render -->
+        <div id="fallback-button">
+            <button class="telegram-btn" onclick="openTelegramLogin()">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                </svg>
+                تسجيل الدخول عبر تيليجرام
+            </button>
+        </div>
 
         <div id="loader">Redirecting back to app...</div>
+        <div id="error-message"></div>
+        <div id="debug-info"></div>
     </div>
 
     <script>
-        // Configuration
-        // REPLACE 'YOUR_BOT_USERNAME' WITH YOUR ACTUAL BOT USERNAME
-        const BOT_USERNAME = 'MyTelegramAppBot'; 
+        const BOT_USERNAME = 'DentAppBot'; 
         const APP_SCHEME = 'mytelegramappmobile';
+        const SERVER_ORIGIN = window.location.origin;
+
+        function debugLog(message) {
+            console.log('[v0 Widget] ' + message);
+            const debugEl = document.getElementById('debug-info');
+            debugEl.innerHTML += message + '<br>';
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.style.display = 'block';
+            errorEl.textContent = message;
+        }
+
+        function showFallbackButton() {
+            debugLog('Showing fallback button');
+            document.getElementById('fallback-button').style.display = 'block';
+            
+            const btn = document.querySelector('.telegram-btn');
+            if (btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    debugLog('Button clicked via event listener');
+                    openTelegramLogin();
+                });
+                debugLog('Click listener attached to button');
+            }
+        }
+
+        function openTelegramLogin() {
+            debugLog('openTelegramLogin called');
+            
+            debugLog('ReactNativeWebView exists: ' + !!window.ReactNativeWebView);
+            
+            if (window.ReactNativeWebView) {
+                var message = JSON.stringify({
+                    type: 'open_external',
+                    url: 'https://t.me/' + BOT_USERNAME + '?start=login'
+                });
+                debugLog('Sending message: ' + message);
+                
+                try {
+                    window.ReactNativeWebView.postMessage(message);
+                    debugLog('postMessage sent successfully');
+                } catch(err) {
+                    debugLog('postMessage error: ' + err.message);
+                }
+            } else {
+                debugLog('No ReactNativeWebView, trying direct navigation');
+                window.location.href = 'https://t.me/' + BOT_USERNAME + '?start=login';
+            }
+        }
+        
+        window.openTelegramLogin = openTelegramLogin;
+
+        debugLog('Page loaded, BOT_USERNAME: ' + BOT_USERNAME);
 
         function onTelegramAuth(user) {
-            document.getElementById('telegram-login-container').style.display = 'none';
+            debugLog('onTelegramAuth called with user: ' + JSON.stringify(user));
+            
+            document.getElementById('widget-container').style.display = 'none';
+            document.getElementById('fallback-button').style.display = 'none';
             document.getElementById('loader').style.display = 'block';
 
-            // Check if we're in a React Native WebView
             if (window.ReactNativeWebView) {
-                // Send data to React Native via postMessage
+                debugLog('ReactNativeWebView detected, sending postMessage');
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                     type: 'telegram_auth',
                     user: user
@@ -75,20 +206,21 @@
                 return;
             }
 
-            // Fallback: Construct the deep link URL for external browser
+            debugLog('ReactNativeWebView NOT detected, using deep link fallback');
             const userData = encodeURIComponent(JSON.stringify(user));
             const deepLink = `${APP_SCHEME}://auth?user=${userData}`;
-
-            // Redirect to the app
             window.location.href = deepLink;
             
-            // Fallback message if redirect fails
             setTimeout(() => {
                 document.getElementById('loader').textContent = 'If the app does not open, please go back manually.';
             }, 3000);
         }
 
-        // Dynamically load the Telegram widget script
+        // Make onTelegramAuth globally available
+        window.onTelegramAuth = onTelegramAuth;
+
+        debugLog('Creating Telegram widget script...');
+        
         const script = document.createElement('script');
         script.async = true;
         script.src = 'https://telegram.org/js/telegram-widget.js?22';
@@ -98,7 +230,34 @@
         script.setAttribute('data-onauth', 'onTelegramAuth(user)');
         script.setAttribute('data-request-access', 'write');
         
+        script.onload = function() {
+            debugLog('Telegram widget script loaded successfully');
+            
+            setTimeout(function() {
+                const container = document.getElementById('telegram-login-container');
+                const iframe = container.querySelector('iframe');
+                const button = container.querySelector('button');
+                
+                debugLog('Checking for widget elements...');
+                debugLog('Container children: ' + container.children.length);
+                debugLog('Iframe found: ' + !!iframe);
+                debugLog('Button found: ' + !!button);
+                
+                if (!iframe && !button && container.children.length <= 1) {
+                    debugLog('Widget did not render, showing fallback');
+                    showFallbackButton();
+                }
+            }, 2000);
+        };
+        
+        script.onerror = function(e) {
+            debugLog('ERROR: Failed to load Telegram widget script');
+            showError('Failed to load Telegram login. Please check your internet connection.');
+            showFallbackButton();
+        };
+        
         document.getElementById('telegram-login-container').appendChild(script);
+        debugLog('Script appended to container');
     </script>
 </body>
 

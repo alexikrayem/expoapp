@@ -1,6 +1,3 @@
-"use client"
-
-// src/components/modals/DealDetailModal.jsx
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { X, Tag, Clock, Package, MapPin, Percent, Loader2, Gift, ShoppingCart, Maximize2 } from "lucide-react"
@@ -14,7 +11,7 @@ const DealDetailModal = ({
   dealId,
   onProductClick,
   onSupplierClick,
-  onAddToCart, // Added onAddToCart prop
+  onAddToCart,
 }) => {
   const [deal, setDeal] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -59,7 +56,6 @@ const DealDetailModal = ({
 
   const handleAddToCart = () => {
     if (deal && onAddToCart) {
-      // Create a product object from deal data
       const product = {
         id: deal.product_id,
         name: deal.product_name,
@@ -81,278 +77,179 @@ const DealDetailModal = ({
     <>
       <motion.div
         key="dealDetailModal"
-        initial={{ y: "100vh" }}
-        animate={{ y: 0 }}
-        exit={{ y: "100vh" }}
-        transition={{ type: "spring", stiffness: 120, damping: 20 }}
-        className="fixed inset-0 bg-gray-50 z-50 flex flex-col overflow-y-auto"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.3 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 bg-black/60 backdrop-blur-sm"
         dir="rtl"
+        onClick={onClose}
       >
-        {/* --- PREHEADER COMPONENT: Centered Logo + Brand Text --- */}
-<motion.div
-  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2"
->
-  
-  <div className="flex flex-col items-center text-center">
-    <span className="text-lg sm:text-xl font-bold text-white leading-tight truncate">
-      معرض طبيب
-    </span>
-    <span className="text-sm text-white leading-tight truncate">
-      المستلزمات الطبية
-    </span>
-  </div>
-</motion.div>
-
-        {/* Header */}
-        <div className="sticky top-0 bg-white p-4 shadow-md z-10 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800 truncate">
-            {isLoading ? "جاري التحميل..." : deal ? deal.title : "تفاصيل العرض"}
-          </h2>
+        <motion.div
+          className="bg-white md:rounded-2xl w-full h-full md:h-[85vh] md:max-w-5xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative"
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Close Button */}
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            className="absolute top-4 left-4 z-50 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors backdrop-blur-md"
           >
             <X className="h-6 w-6" />
           </button>
-        </div>
 
-        {/* Content */}
-        <div className="flex-grow">
+          {/* LOADING STATE */}
           {isLoading && (
-            <div className="flex justify-center items-center h-64">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-4" />
-                <p className="text-gray-600">جاري تحميل تفاصيل العرض...</p>
-              </div>
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/80">
+              <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
             </div>
           )}
 
-          {error && (
-            <div className="text-center py-10 px-4">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                <Tag className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                <p className="text-red-600 font-semibold text-lg mb-2">خطأ!</p>
-                <p className="text-gray-600">{error}</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-                >
-                  إعادة المحاولة
+          {/* ERROR STATE */}
+          {error && !isLoading && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-white">
+              <div className="text-center p-6">
+                <div className="bg-red-50 p-4 rounded-full inline-block mb-4">
+                  <Tag className="w-8 h-8 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">تعذر تحميل العرض</h3>
+                <p className="text-gray-600 mb-6">{error}</p>
+                <button onClick={onClose} className="px-6 py-2 bg-gray-200 rounded-lg font-medium hover:bg-gray-300">
+                  إغلاق
                 </button>
               </div>
             </div>
           )}
 
-          {!isLoading && !error && deal && (
-            <div className="p-4 sm:p-6 space-y-6">
-              {/* Deal Header */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                {/* Deal Image */}
-                <div className="relative">
-                  <div
-                    className="w-full h-48 sm:h-64 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg mb-6 flex items-center justify-center overflow-hidden"
-                    style={{
-                      backgroundImage: deal.image_url ? `url(${deal.image_url})` : undefined,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }}
-                  >
-                    {!deal.image_url && (
-                      <div className="text-center text-white">
-                        <Gift className="h-16 w-16 mx-auto mb-4 opacity-90" />
-                        <div className="text-4xl font-bold mb-2">
-                          {deal.discount_percentage ? `خصم ${deal.discount_percentage}%` : "عرض خاص"}
-                        </div>
-                        <div className="text-lg opacity-90">{deal.title}</div>
-                      </div>
-                    )}
-                  </div>
-                  {deal.image_url && (
-                    <button
-                      onClick={() => {
-                        setIsImageViewerOpen(true)
-                        window.Telegram?.WebApp?.HapticFeedback.impactOccurred("light")
-                      }}
-                      className="absolute top-3 left-3 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors backdrop-blur-sm"
-                      title="عرض بالحجم الكامل"
-                    >
-                      <Maximize2 className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Deal Info */}
-                <div className="space-y-4">
-                  <h3 className="text-2xl font-bold text-gray-900">{deal.title}</h3>
-
-                  {deal.discount_percentage && (
-                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                      <Percent className="h-5 w-5 text-red-600" />
-                      <span className="text-red-800 font-bold text-lg">خصم {deal.discount_percentage}%</span>
-                    </div>
-                  )}
-
-                  {deal.description && (
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h4 className="font-semibold text-gray-700 mb-2">تفاصيل العرض:</h4>
-                      <p className="text-gray-700 leading-relaxed">{deal.description}</p>
-                    </div>
-                  )}
-
-                  {/* Deal Timing */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {deal.start_date && (
-                      <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg p-3">
-                        <Clock className="h-4 w-4 text-green-600" />
-                        <div>
-                          <span className="text-green-800 text-sm">يبدأ في:</span>
-                          <p className="font-medium text-green-900">
-                            {new Date(deal.start_date).toLocaleDateString("ar-EG", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {deal.end_date && (
-                      <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg p-3">
-                        <Clock className="h-4 w-4 text-orange-600" />
-                        <div>
-                          <span className="text-orange-800 text-sm">ينتهي في:</span>
-                          <p className="font-medium text-orange-900">
-                            {new Date(deal.end_date).toLocaleDateString("ar-EG", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+          {/* LEFT SIDE: VISUAL (40%) */}
+          <div className="w-full md:w-[40%] bg-gradient-to-br from-orange-400 to-red-600 relative md:h-full h-[35vh] flex items-center justify-center overflow-hidden">
+            {deal && deal.image_url ? (
+              <div
+                className="w-full h-full bg-cover bg-center"
+                style={{ backgroundImage: `url(${deal.image_url})` }}
+              >
+                <div className="absolute inset-0 bg-black/20" />
               </div>
-
-              {/* Supplier Info */}
-              {deal.supplier_name && (
-                <div className="mx-4 sm:mx-6">
-                  <div
-                    onClick={handleSupplierClick}
-                    className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow"
-                  >
-                    <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <Package className="h-4 w-4 text-blue-500" />
-                      المورد
-                    </h4>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-800">{deal.supplier_name}</p>
-                        {deal.supplier_location && (
-                          <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                            <MapPin className="h-3 w-3" />
-                            {deal.supplier_location}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-blue-600 text-sm font-medium">عرض المتجر ←</div>
-                    </div>
-                  </div>
+            ) : (
+              <div className="text-center text-white p-6">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                  <Gift className="h-10 w-10 text-white" />
                 </div>
-              )}
+                <h2 className="text-3xl font-bold mb-2">عرض مميز</h2>
+                <p className="opacity-90">خصومات حصرية لفترة محدودة</p>
+              </div>
+            )}
 
-              {/* Related Product */}
-              {deal.product_id && deal.product_name && (
-                <div className="mx-4 sm:mx-6">
-                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                    <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <Package className="h-4 w-4 text-green-500" />
-                      المنتج المرتبط بالعرض
-                    </h4>
+            {/* Discount Badge */}
+            {deal?.discount_percentage && (
+              <div className="absolute bottom-6 right-6 bg-white text-red-600 px-4 py-2 rounded-full font-bold shadow-lg flex items-center gap-2">
+                <Percent size={18} />
+                <span>خصم {deal.discount_percentage}%</span>
+              </div>
+            )}
+          </div>
 
-                    <div
-                      onClick={handleProductClick}
-                      className="flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 rounded-lg cursor-pointer transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        {deal.product_image_url && (
-                          <div
-                            className="w-12 h-12 rounded-lg bg-gray-200 bg-cover bg-center"
-                            style={{ backgroundImage: `url(${deal.product_image_url})` }}
-                          />
-                        )}
-                        <div>
-                          <p className="font-medium text-blue-800">{deal.product_name}</p>
-                          {deal.product_price && (
-                            <div className="flex items-center gap-2 mt-1">
-                              {deal.discount_percentage ? (
-                                <>
-                                  <span className="text-sm text-gray-500 line-through">
-                                    {formatPrice(deal.product_price)}
-                                  </span>
-                                  <span className="text-sm font-bold text-green-600">
-                                    {formatPrice(deal.product_price * (1 - deal.discount_percentage / 100))}
-                                  </span>
-                                </>
-                              ) : (
-                                <span className="text-sm font-bold text-blue-600">
-                                  {formatPrice(deal.product_price)}
-                                </span>
-                              )}
-                            </div>
+          {/* RIGHT SIDE: CONTENT (60%) */}
+          <div className="w-full md:w-[60%] flex flex-col h-full bg-white overflow-y-auto custom-scrollbar">
+            {deal && (
+              <div className="p-6 md:p-8 flex-grow">
+                {/* Header Info */}
+                <div className="mb-6">
+                  <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold mb-3">
+                    عرض خاص
+                  </span>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 leading-tight">
+                    {deal.title}
+                  </h1>
+                  {deal.supplier_name && (
+                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                      <Package size={14} />
+                      مقدم من: <span className="font-semibold text-gray-700">{deal.supplier_name}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Timing */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  {deal.start_date && (
+                    <div className="bg-green-50 p-3 rounded-xl border border-green-100">
+                      <span className="text-green-700 text-xs font-bold block mb-1">يبدأ</span>
+                      <div className="flex items-center gap-2 text-green-900 font-medium text-sm">
+                        <Clock size={14} />
+                        {new Date(deal.start_date).toLocaleDateString('ar-EG')}
+                      </div>
+                    </div>
+                  )}
+                  {deal.end_date && (
+                    <div className="bg-red-50 p-3 rounded-xl border border-red-100">
+                      <span className="text-red-700 text-xs font-bold block mb-1">ينتهي</span>
+                      <div className="flex items-center gap-2 text-red-900 font-medium text-sm">
+                        <Clock size={14} />
+                        {new Date(deal.end_date).toLocaleDateString('ar-EG')}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Description */}
+                {deal.description && (
+                  <div className="mb-8">
+                    <h3 className="font-bold text-gray-800 mb-2">تفاصيل العرض</h3>
+                    <p className="text-gray-600 leading-relaxed text-sm bg-gray-50 p-4 rounded-xl">
+                      {deal.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Linked Product Card */}
+                {deal.product_id && (
+                  <div className="mb-8 border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer relative group" onClick={handleProductClick}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gray-100 rounded-lg bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url(${deal.product_image_url || '/placeholder.svg'})` }} />
+                      <div className="flex-grow">
+                        <h4 className="font-bold text-gray-900 mb-1">{deal.product_name}</h4>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-blue-600">{formatPrice(deal.product_price * (1 - (deal.discount_percentage || 0) / 100))}</span>
+                          {deal.discount_percentage > 0 && (
+                            <span className="text-sm text-gray-400 line-through">{formatPrice(deal.product_price)}</span>
                           )}
                         </div>
                       </div>
-                      <div className="text-blue-600 text-sm font-medium">عرض المنتج ←</div>
+                      <div className="text-blue-600 bg-blue-50 p-2 rounded-full group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <ShoppingCart size={20} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Call to Action */}
-              <div className="mx-4 sm:mx-6 pb-6">
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-6 text-white text-center">
-                  <Gift className="h-12 w-12 mx-auto mb-4 opacity-90" />
-                  <h3 className="text-xl font-bold mb-2">لا تفوت هذا العرض!</h3>
-                  <p className="opacity-90 mb-4">
-                    {deal.end_date
-                      ? `العرض ساري حتى ${new Date(deal.end_date).toLocaleDateString("ar-EG")}`
-                      : "عرض محدود لفترة قصيرة"}
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    {deal.product_id && (
-                      <button
-                        onClick={handleAddToCart}
-                        className="w-full bg-white text-blue-600 py-3 px-4 rounded-lg font-bold hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <ShoppingCart className="h-5 w-5" />
-                        <span>استفد من العرض</span>
-                      </button>
-                    )}
-                    <div className="flex gap-3">
-                      {deal.product_id && (
-                        <button
-                          onClick={handleProductClick}
-                          className="flex-1 bg-white/20 text-white py-3 px-4 rounded-lg font-bold hover:bg-white/30 transition-colors border border-white/30"
-                        >
-                          عرض المنتج
-                        </button>
-                      )}
-                      <button
-                        onClick={handleSupplierClick}
-                        className="flex-1 bg-white/20 text-white py-3 px-4 rounded-lg font-bold hover:bg-white/30 transition-colors border border-white/30"
-                      >
-                        زيارة المتجر
-                      </button>
-                    </div>
+                {/* Actions */}
+                <div className="mt-auto space-y-3">
+                  <button
+                    onClick={handleAddToCart}
+                    className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-4 rounded-xl font-bold hover:shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                  >
+                    <Gift size={20} />
+                    استفد من العرض الآن
+                  </button>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleProductClick}
+                      className="flex-1 py-3 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors border border-gray-200"
+                    >
+                      عرض المنتج
+                    </button>
+                    <button
+                      onClick={handleSupplierClick}
+                      className="flex-1 py-3 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors border border-gray-200"
+                    >
+                      زيارة المتجر
+                    </button>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </motion.div>
       </motion.div>
 
       <ImageViewer

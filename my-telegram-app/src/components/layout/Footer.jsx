@@ -34,9 +34,9 @@ const Footer = () => {
   const activePath = location.pathname
 
   // State to track intersection with top and bottom sentinels
-  const [isAtTop, setIsAtTop] = useState(true) 
-  const [isAtBottom, setIsAtBottom] = useState(false) 
-  const bottomSentinelRef = useRef(null) 
+  const [isAtTop, setIsAtTop] = useState(true)
+  const [isAtBottom, setIsAtBottom] = useState(false)
+  const bottomSentinelRef = useRef(null)
 
   // --- Core Logic: Dual Intersection Observer ---
   useEffect(() => {
@@ -84,7 +84,7 @@ const Footer = () => {
     setIsAtTop(true)
     setIsAtBottom(false)
   }, [location.pathname])
-  
+
   // Logic to determine if the footer should be compact
   // It is compact ONLY if we are NOT at the top AND NOT at the bottom.
   const isCompact = !isAtTop && !isAtBottom
@@ -107,10 +107,10 @@ const Footer = () => {
   return (
     <>
       {/* This is the BOTTOM sentinel element. It must be inside the scrollable container (e.g., your main app layout) and positioned at the very bottom of the content. */}
-      <div 
-        ref={bottomSentinelRef} 
-        style={{ height: 0, visibility: "hidden" }} 
-        aria-hidden="true" 
+      <div
+        ref={bottomSentinelRef}
+        style={{ height: 0, visibility: "hidden" }}
+        aria-hidden="true"
       />
 
       <motion.footer
@@ -119,7 +119,7 @@ const Footer = () => {
           height: isCompact ? 60 : 72,
         }}
         transition={{ duration: 0.3, type: "tween" }}
-        className="fixed bottom-0 left-0 right-0 border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40 flex-shrink-0 bg-white/95 backdrop-blur-xl overflow-hidden"
+        className="md:hidden fixed bottom-0 left-0 right-0 border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-40 flex-shrink-0 bg-white/95 backdrop-blur-xl overflow-hidden"
       >
         <nav className="flex justify-around max-w-4xl mx-auto h-full mb-[env(safe-area-inset-bottom,16px)] py-2">
           {navItems.map((item) => {
@@ -134,9 +134,8 @@ const Footer = () => {
                 <Link
                   to={item.path}
                   onClick={handleNavClick}
-                  className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 h-full relative ${
-                    isActive ? "text-blue-600" : "text-gray-500 hover:text-blue-500"
-                  }`}
+                  className={`flex flex-col items-center justify-center gap-1 transition-all duration-300 h-full relative ${isActive ? "text-blue-600" : "text-gray-500 hover:text-blue-500"
+                    }`}
                 >
                   {/* Icon with subtle highlight */}
                   <motion.div

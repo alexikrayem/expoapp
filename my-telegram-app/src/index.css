@@ -1,34 +1,95 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities; 
+@tailwind utilities;
+
+:root {
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
 
 @font-face {
-    font-family: '29tl-zawi'; /* <--- THIS IS THE NEW, UNIQUE NAME FOR YOUR LOGO FONT */
-    src: url('./assets/fonts/29tl-zawi-regular.otf') format('opentype'); /* <--- ADJUST PATH AND FORMAT FOR YOUR LOGO FONT FILE */
-    font-weight: 600;
-    font-weight: normal; /* Set to 'bold' or a numeric value like 700 if the font file is inherently bold */
-    font-style: normal;  /* Set to 'italic' if the font file is inherently italic */
-    /* If you have different files for bold/italic versions of this logo font, add more @font-face rules with the same 'AppLogoFont' family but different weight/style */
+    font-family: '29tl-zawi';
+    src: url('./assets/fonts/29tl-zawi-regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
 }
 
 @font-face {
   font-family: 'Montaserat';
-  src: url('./assets/fonts/Montserrat-Arabic Regular 400.otf') format('opentype'); /* Adjust path and format */
-  font-weight: 400; /* Regular weight */
+  src: url('./assets/fonts/Montserrat-Arabic Regular 400.otf') format('opentype');
+  font-weight: 400;
   font-style: normal;
-  font-display: swap; /* Important for performance: tells browser how to display text while font is loading */
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'Montaserat';
-  src: url('./assets/fonts/Montserrat-Arabic SemiBold 600.otf') format('opentype'); /* Adjust path and format */
-  font-weight: 600; /* Regular weight */
+  src: url('./assets/fonts/Montserrat-Arabic SemiBold 600.otf') format('opentype');
+  font-weight: 600;
   font-style: normal;
-  font-display: swap; /* Important for performance: tells browser how to display text while font is loading */
+  font-display: swap;
 }
 
 body {
-  font-family: 'Montaserat', sans-serif; /* Fallback to sans-serif if Cairo fails to load */
+  font-family: 'Montaserat', sans-serif;
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  min-height: 100vh;
+}
+
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Glassmorphism Utilities */
+@layer components {
+  .glass-panel {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] rounded-2xl;
+  }
+  
+  .glass-card {
+    @apply bg-white/20 backdrop-blur-lg border border-white/40 shadow-lg rounded-xl transition-all duration-300 ease-out;
+  }
+  
+  .glass-card:hover {
+    @apply transform -translate-y-2 shadow-2xl bg-white/40 border-white/60;
+  }
+
+  .glass-nav {
+    @apply bg-white/70 backdrop-blur-2xl border-b border-white/50 shadow-sm supports-[backdrop-filter]:bg-white/10;
+  }
+
+  .glass-sidebar {
+    @apply bg-white/30 backdrop-blur-2xl border-r border-white/20 shadow-xl h-full;
+  }
+
+  .glass-button {
+    @apply bg-white/20 hover:bg-white/40 text-gray-900 font-semibold py-2 px-4 border border-white/50 rounded-lg shadow-sm backdrop-blur-md transition-all active:scale-95;
+  }
+  
+  .glass-input {
+    @apply bg-white/20 border border-white/40 text-gray-800 placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 backdrop-blur-sm transition-all;
+  }
+
+  /* New Premium Utilities */
+  .hover-lift {
+    @apply transition-transform duration-300 ease-out hover:-translate-y-1;
+  }
+
+  .glow-effect:hover {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  }
 }
 
 /* Shimmer animation for skeleton loading */
@@ -41,25 +102,18 @@ body {
   }
 }
 
-layer base {
+@layer base {
   html {
-    @apply h-full bg-gray-50 font-sans;
+    @apply h-full font-sans;
   }
   body, #root {
     @apply h-full;
-    /* Prevent horizontal overflow */
     overflow-x: hidden;
   }
   .App {
-    /* Set up the sticky footer layout on our main App container */
     @apply min-h-full flex flex-col;
     padding-top: env(safe-area-inset-top, 0rem);
-    
-    /* ✅ Updated bottom padding to include footer height */
-    --footer-height: 4rem; /* adjust if your footer is taller */
-    padding-bottom: calc(var(--footer-height) + env(safe-area-inset-bottom, 0rem));
-    
-    /* Prevent horizontal overflow */
+    /* Footer height logic handled in Layout now */
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
@@ -99,7 +153,6 @@ layer base {
     }
   }
 
-  /* Hide scrollbar for horizontal filter bar */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -109,12 +162,10 @@ layer base {
     display: none;
   }
 
-  /* Smooth scroll behavior for filter bar */
   .scroll-smooth {
     scroll-behavior: smooth;
   }
 
-  /* Responsive container utilities */
   .container-responsive {
     width: 100%;
     max-width: 100vw;
@@ -136,75 +187,4 @@ layer base {
       max-width: 1024px;
     }
   }
-}
-/* ======================================================= */
-/* --- 1. MULTI-COLOR PULSING AURA EFFECT (FINAL) --- */
-/* ======================================================= */
-
-/* Defines the pulsing effect and color cycle for the aura */
-@keyframes multi-color-aura {
-  /* Start with a gentle pink glow */
-  0% {
-    box-shadow: 0 0 8px rgba(255, 0, 127, 0.7); /* Pink (#ff007f) */
-    opacity: 0.9;
-  }
-  
-  /* Transition to purple */
-  33% {
-    box-shadow: 0 0 12px rgba(168, 85, 247, 1); /* Purple (#a855f7) */
-    opacity: 1;
-  }
-  
-  /* Transition to blue */
-  66% {
-    box-shadow: 0 0 8px rgba(25, 118, 237, 0.7); /* Blue (#1976ed) */
-    opacity: 0.9;
-  }
-  
-  /* Return to the starting state (pink) for a seamless loop */
-  100% {
-    box-shadow: 0 0 8px rgba(255, 0, 127, 0.7);
-    opacity: 0.9;
-  }
-}
-
-/* 🎯 The primary wrapper for the input field */
-.animated-border-wrapper {
-  position: relative; 
-  overflow: hidden; 
-  /* Must MATCH the input's rounded-2xl (16px) */
-  border-radius: 16px; 
-  
-  /* Apply the pulsing animation directly to the wrapper */
-  animation: multi-color-aura 5s ease-in-out infinite; /* 5s cycle for smooth transition */
-  
-  /* Ensures smooth transition for the shadow property */
-  transition: box-shadow 0.3s ease-out;
-}
-
-/* We only need ::after for the inner fill color, which remains the same */
-
-/* 🎯 ::after: The solid fill color layer that covers the center */
-.animated-border-wrapper::after {
-  content: '';
-  position: absolute;
-  z-index: -1; 
-  
-  /* inset: 1.5px creates the visual border (the space between ::after and the wrapper edge) */
-  inset: 1.5px; 
-  
-  /* border-radius is 16px - 1.5px = 14.5px */
-  border-radius: 14.5px; 
-  
-  /* The default background color for the input area */
-  background: #f3f4f6; /* Tailwind gray-100 equivalent */
-  
-  transition: background 300ms ease;
-}
-
-/* Focus Effect: Change the inner background color on focus */
-.animated-border-wrapper:focus-within::after {
-    background: white; 
-    /* Optional: Add a subtle static shadow on focus for an extra 'pop' */
-    box-shadow: 0 0 5px rgba(25, 118, 237, 0.4); 
 }

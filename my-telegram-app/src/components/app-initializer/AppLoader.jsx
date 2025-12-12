@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { userService } from "../../services/userService";
 import { authService } from "../../services/authService";
 import CitySelectionModal from "../modals/CitySelectionModal";
 import EnhancedOnboarding from "../onboarding/EnhancedOnboarding";
 import LoadingScreen from "./LoadingScreen";
 import ErrorScreen from "./ErrorScreen";
-import WelcomeFlow from "./WelcomeFlow";
 import MainAppLayout from "./MainAppLayout";
+import LandingPage from "../../pages/LandingPage";
+import LoginPage from "../../pages/LoginPage";
 
 const AppLoader = () => {
   const [telegramUser, setTelegramUser] = useState(null);
@@ -24,6 +25,8 @@ const AppLoader = () => {
       return false;
     }
   });
+
+  const location = useLocation();
 
   // --- Helpers ---
   const fetchUserProfile = useCallback(async () => {
@@ -65,7 +68,7 @@ const AppLoader = () => {
       const isAuthenticated = authService.isAuthenticated();
 
       if (!isAuthenticated) {
-        // If not authenticated, we'll show the welcome flow
+        // If not authenticated, we'll show the welcome flow (or landing page now)
         setIsLoading(false);
         return;
       }
@@ -81,8 +84,8 @@ const AppLoader = () => {
     if (userProfile) {
       // If profileCompleted is explicitly false OR if it doesn't exist and user doesn't have required clinic info
       const isProfileIncomplete = userProfile.profileCompleted === false ||
-                                 (userProfile.profileCompleted === undefined &&
-                                  (!userProfile.clinic_name || !userProfile.clinic_phone));
+        (userProfile.profileCompleted === undefined &&
+          (!userProfile.clinic_name || !userProfile.clinic_phone));
       if (isProfileIncomplete) {
         setShowEnhancedOnboarding(true);
       }
@@ -138,7 +141,7 @@ const AppLoader = () => {
   const handleFinishWelcome = () => {
     try {
       localStorage.setItem("hasSeenWelcome_v1", "true");
-    } catch {}
+    } catch { }
     setHasSeenWelcome(true);
   };
 
@@ -186,15 +189,20 @@ const AppLoader = () => {
     );
   }
 
-  // Show welcome flow if not authenticated
+  // Show public pages if not authenticated
   if (!authService.isAuthenticated()) {
-    return (
-      <WelcomeFlow
-        hasSeenWelcome={hasSeenWelcome}
-        onFinishWelcome={handleFinishWelcome}
-        onLoginSuccess={handleLoginSuccess}
-      />
-    );
+    // If user explicitly wants to login
+    if (location.pathname === '/login') {
+      return (
+        <LoginPage
+          onLoginSuccess={handleLoginSuccess}
+          onError={(err) => setError(err.message)}
+        />
+      );
+    }
+
+    // Otherwise show landing page
+    return <LandingPage />;
   }
 
   // Show city selection if needed

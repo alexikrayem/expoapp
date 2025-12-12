@@ -198,7 +198,7 @@ router.post('/delivery/verify-telegram', async (req, res) => {
 router.post('/refresh', async (req, res) => {
     // Development bypass REMOVED for security
 
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
         return res.status(401).json({ error: 'Refresh token required' });
@@ -291,9 +291,21 @@ router.post('/telegram-login-widget', async (req, res) => {
             'CUSTOMER'
         );
 
+        // Security: Set Refresh Token in HttpOnly Cookie
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Only secure in production (HTTPS)
+            sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        });
+
+        // Check if request is from Mobile App (via WebView)
+        const isMobile = req.headers['x-client-type'] === 'mobile';
+
         res.json({
             accessToken,
-            refreshToken,
+            // Return refreshToken in body ONLY for mobile app (WebView) which needs to strip it for native storage
+            refreshToken: isMobile ? refreshToken : undefined,
             telegramUser: authData,
             userProfile: {
                 userId: user.user_id,

@@ -12,6 +12,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { orderService } from '@/services/orderService';
 import { Clock, CheckCircle, XCircle, Package, Trash2, Plus, Minus } from 'lucide-react-native';
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 const CheckoutCard = () => {
   const { cartItems, getCartTotal, actions } = useCart();
@@ -258,14 +259,39 @@ export default function OrdersScreen() {
             </>
           }
           ListEmptyComponent={
-            !isLoadingOrders ? (
+            isLoadingOrders ? (
+              <View className="px-5">
+                {[1, 2, 3].map((i) => (
+                  <View key={i} className="mb-4 bg-white p-4 rounded-2xl border border-border shadow-sm">
+                    <View className="flex-row justify-between items-center mb-4 pb-4 border-b border-gray-100">
+                      <Skeleton width={80} height={24} borderRadius={8} />
+                      <Skeleton width={60} height={20} />
+                    </View>
+                    <View className="space-y-3 mb-4">
+                      <View className="flex-row justify-end items-center gap-2">
+                        <Skeleton width={100} height={16} />
+                        <Skeleton width={16} height={16} borderRadius={8} />
+                      </View>
+                      <View className="flex-row justify-end items-center gap-2">
+                        <Skeleton width={150} height={16} />
+                        <Skeleton width={16} height={16} borderRadius={8} />
+                      </View>
+                    </View>
+                    <View className="flex-row justify-between items-center pt-2">
+                      <Skeleton width={80} height={32} borderRadius={8} />
+                      <Skeleton width={60} height={24} />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : (
               <View className="items-center py-16">
                 <View className="bg-gray-100 p-6 rounded-full mb-4">
                   <Package size={56} color="#94a3b8" />
                 </View>
                 <Text className="text-text-secondary mt-2 font-semibold text-lg">لا توجد لديك طلبات حتى الآن</Text>
               </View>
-            ) : null
+            )
           }
           refreshControl={
             <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#3b82f6" />

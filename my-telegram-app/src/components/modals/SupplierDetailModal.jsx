@@ -1,9 +1,6 @@
-"use client"
-
-// src/components/modals/SupplierDetailModal.jsx
 import { useState, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
-import { X, MapPin, Star, Package, Loader2, Maximize2 } from "lucide-react"
+import { X, MapPin, Star, Package, Loader2, Maximize2, Filter, Store } from "lucide-react"
 import ProductCard from "../common/ProductCard"
 import ProductFilterBar from "../common/ProductFilterBar"
 import { cityService } from "../../services/cityService"
@@ -23,7 +20,6 @@ const SupplierDetailModal = ({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
-  // Local filter state for category filtering within the modal
   const [categoryFilter, setCategoryFilter] = useState({ category: 'all' })
 
   useEffect(() => {
@@ -36,7 +32,6 @@ const SupplierDetailModal = ({
       try {
         const data = await cityService.getSupplierDetails(supplierId)
         setSupplier(data)
-        // Reset category filter when supplier changes
         setCategoryFilter({ category: 'all' })
       } catch (err) {
         console.error("Failed to fetch supplier details:", err)
@@ -50,9 +45,8 @@ const SupplierDetailModal = ({
   }, [supplierId, show])
 
   const handleProductClick = (product) => {
-    // Close supplier modal and open product modal
     onClose()
-    // You might want to emit an event or use a callback to open product modal
+    // Logic to open product modal would typically go here or be handled by parent
   }
 
   const handleShowMore = () => {
@@ -63,20 +57,18 @@ const SupplierDetailModal = ({
     }
   }
 
-  // Handle category filter changes
   const handleFilterChange = (newFilters) => {
     setCategoryFilter(newFilters)
     window.Telegram?.WebApp?.HapticFeedback.impactOccurred("light")
   }
 
-  // Filter products based on selected category
   const filteredProducts = useMemo(() => {
     if (!supplier?.products) return []
-    
+
     if (categoryFilter.category === 'all') {
       return supplier.products
     }
-    
+
     return supplier.products.filter(
       (product) => product.category === categoryFilter.category
     )
@@ -88,63 +80,44 @@ const SupplierDetailModal = ({
     <>
       <motion.div
         key="supplierDetailModal"
-        initial={{ x: "100vw" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100vw" }}
-        transition={{ type: "spring", stiffness: 120, damping: 20 }}
-        className="fixed inset-0 bg-gray-50 z-50 flex flex-col overflow-y-auto"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.3 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 bg-black/60 backdrop-blur-sm"
         dir="rtl"
+        onClick={onClose}
       >
-        {/* --- PREHEADER COMPONENT: Centered Logo + Brand Text --- */}
-<motion.div
-  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2"
->
-  
-  <div className="flex flex-col items-center text-center">
-    <span className="text-lg sm:text-xl font-bold text-white leading-tight truncate">
-      معرض طبيب
-    </span>
-    <span className="text-sm text-white leading-tight truncate">
-      المستلزمات الطبية
-    </span>
-  </div>
-</motion.div>
-
-        {/* Header */}
-        <div className="sticky top-0 bg-white p-4 shadow-md z-10 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800 truncate">
-            {isLoading ? "جاري التحميل..." : supplier ? supplier.name : "تفاصيل المورد"}
-          </h2>
+        <motion.div
+          className="bg-white md:rounded-2xl w-full h-full md:h-[90vh] md:max-w-7xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative"
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Close Button */}
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            className="absolute top-4 left-4 z-50 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors backdrop-blur-md"
           >
             <X className="h-6 w-6" />
           </button>
-        </div>
 
-        {/* Content */}
-        <div className="flex-grow">
+          {/* LOADING STATE */}
           {isLoading && (
-            <div className="flex justify-center items-center h-64">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-4" />
-                <p className="text-gray-600">جاري تحميل تفاصيل المورد...</p>
-              </div>
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/80">
+              <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
             </div>
           )}
 
-          {error && (
-            <div className="text-center py-10 px-4">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                <Package className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                <p className="text-red-600 font-semibold text-lg mb-2">خطأ!</p>
-                <p className="text-gray-600">{error}</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-                >
-                  إعادة المحاولة
+          {/* ERROR STATE */}
+          {error && !isLoading && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-white">
+              <div className="text-center p-6">
+                <div className="bg-red-50 p-4 rounded-full inline-block mb-4">
+                  <Package className="w-8 h-8 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">تعذر تحميل المورد</h3>
+                <p className="text-gray-600 mb-6">{error}</p>
+                <button onClick={onClose} className="px-6 py-2 bg-gray-200 rounded-lg font-medium hover:bg-gray-300">
+                  إغلاق
                 </button>
               </div>
             </div>
@@ -152,157 +125,145 @@ const SupplierDetailModal = ({
 
           {!isLoading && !error && supplier && (
             <>
-              {/* Supplier Header Image */}
-              <div className="relative">
-                <div
-                  className="w-full h-48 sm:h-64 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center"
-                  style={{
-                    backgroundImage: supplier.image_url ? `url(${supplier.image_url})` : undefined,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
-                >
+              {/* LEFT SIDE: SUPPLIER INFO (30%) - STICKY ON DESKTOP */}
+              <div className="w-full md:w-[30%] bg-gray-50 border-l border-gray-200 flex flex-col h-auto md:h-full overflow-y-auto custom-scrollbar">
+                {/* Header Image */}
+                <div className="relative h-48 md:h-64 flex-shrink-0">
+                  <div
+                    className="w-full h-full bg-cover bg-center"
+                    style={{ backgroundImage: supplier.image_url ? `url(${supplier.image_url})` : 'linear-gradient(to bottom right, #3b82f6, #4f46e5)' }}
+                  >
+                    <div className="absolute inset-0 bg-black/30" />
+                  </div>
                   {!supplier.image_url && (
-                    <div className="text-center text-white">
-                      <Package className="h-16 w-16 mx-auto mb-4 opacity-80" />
-                      <h3 className="text-2xl font-bold">{supplier.name}</h3>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Store className="w-16 h-16 text-white/80" />
                     </div>
                   )}
+                  {supplier.image_url && (
+                    <button
+                      onClick={() => setIsImageViewerOpen(true)}
+                      className="absolute bottom-3 right-3 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-sm"
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
-                {supplier.image_url && (
-                  <button
-                    onClick={() => {
-                      setIsImageViewerOpen(true)
-                      window.Telegram?.WebApp?.HapticFeedback.impactOccurred("light")
-                    }}
-                    className="absolute top-3 left-3 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors backdrop-blur-sm"
-                    title="عرض بالحجم الكامل"
-                  >
-                    <Maximize2 className="h-5 w-5" />
-                  </button>
-                )}
-              </div>
 
-              {/* Supplier Info */}
-              <div className="p-4 sm:p-6 space-y-6">
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">{supplier.name}</h3>
+                {/* Info Content */}
+                <div className="p-6 space-y-6">
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">{supplier.name}</h1>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {supplier.category && (
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-blue-500" />
-                        <span className="text-gray-600">الفئة:</span>
-                        <span className="font-medium text-gray-800">{supplier.category}</span>
-                      </div>
-                    )}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {supplier.category && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <Package size={12} /> {supplier.category}
+                        </span>
+                      )}
+                      {supplier.rating && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          <Star size={12} className="fill-yellow-800" /> {supplier.rating}
+                        </span>
+                      )}
+                    </div>
 
                     {supplier.location && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-green-500" />
-                        <span className="text-gray-600">الموقع:</span>
-                        <span className="font-medium text-gray-800">{supplier.location}</span>
-                      </div>
-                    )}
-
-                    {supplier.rating && (
-                      <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                        <span className="text-gray-600">التقييم:</span>
-                        <span className="font-medium text-gray-800">{supplier.rating}/5</span>
-                      </div>
-                    )}
-
-                    {supplier.product_count && (
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-purple-500" />
-                        <span className="text-gray-600">المنتجات:</span>
-                        <span className="font-medium text-gray-800">{supplier.product_count} منتج</span>
-                      </div>
+                      <p className="text-gray-600 text-sm flex items-start gap-2">
+                        <MapPin size={16} className="mt-0.5 text-gray-400 flex-shrink-0" />
+                        {supplier.location}
+                      </p>
                     )}
                   </div>
 
                   {supplier.description && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <h4 className="font-semibold text-gray-700 mb-2">نبذة عن المورد:</h4>
-                      <p className="text-gray-600 leading-relaxed">{supplier.description}</p>
+                    <div className="pt-4 border-t border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-900 mb-2">نبذة عن المورد</h3>
+                      <p className="text-sm text-gray-600 leading-relaxed text-justify">
+                        {supplier.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Contact / Action Buttons could go here */}
+                </div>
+              </div>
+
+              {/* RIGHT SIDE: PRODUCTS GRID (70%) */}
+              <div className="w-full md:w-[70%] bg-white flex flex-col h-full overflow-hidden">
+                {/* Filter Header */}
+                <div className="p-4 border-b border-gray-100 bg-white z-10 sticky top-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                      <Package className="text-blue-500" />
+                      منتجات المورد
+                      <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                        {supplier.products?.length || 0}
+                      </span>
+                    </h2>
+                  </div>
+
+                  {/* Horizontal Filter Scroll */}
+                  <div className="-mx-2">
+                    <ProductFilterBar
+                      currentFilters={categoryFilter}
+                      onFiltersChange={handleFilterChange}
+                      selectedCityId={selectedCityId}
+                    />
+                  </div>
+                </div>
+
+                {/* Products Grid */}
+                <div className="flex-grow overflow-y-auto p-4 custom-scrollbar bg-gray-50/50">
+                  {filteredProducts.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {filteredProducts.map((product) => (
+                          <ProductCard
+                            key={product.id}
+                            product={product}
+                            onShowDetails={handleProductClick} // Note: This needs to be hooked up to open ProductDetailModal
+                            onAddToCart={onAddToCart}
+                            onToggleFavorite={onToggleFavorite}
+                            isFavorite={favoriteIds && favoriteIds.has(product.id)}
+                            compact={true}
+                          />
+                        ))}
+                      </div>
+
+                      {supplier.hasMoreProducts && (
+                        <div className="text-center mt-8 pb-4">
+                          <button
+                            onClick={handleShowMore}
+                            className="bg-white border border-gray-300 text-gray-700 px-6 py-2 rounded-full font-medium hover:bg-gray-50 hover:border-blue-300 hover:text-blue-600 transition-all shadow-sm"
+                          >
+                            عرض المزيد من المنتجات
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <div className="bg-gray-100 p-4 rounded-full mb-4">
+                        <Filter className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">لا توجد منتجات</h3>
+                      <p className="text-gray-500 max-w-xs mx-auto mb-4">
+                        لا توجد منتجات مطابقة للفلتر المحدد في هذا القسم.
+                      </p>
+                      <button
+                        onClick={() => setCategoryFilter({ category: 'all' })}
+                        className="text-blue-600 font-medium hover:underline"
+                      >
+                        مسح الفلتر
+                      </button>
                     </div>
                   )}
                 </div>
-
-                {/* Products Section */}
-                {supplier.products && supplier.products.length > 0 && (
-                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <Package className="h-5 w-5 text-blue-500" />
-                      منتجات من هذا المورد
-                      {filteredProducts.length !== supplier.products.length && (
-                        <span className="text-sm text-gray-500 font-normal">
-                          ({filteredProducts.length} من {supplier.products.length})
-                        </span>
-                      )}
-                    </h4>
-
-                    {/* Category Filter Bar */}
-                    <div className="mb-4 -mx-2">
-                      <ProductFilterBar
-                        currentFilters={categoryFilter}
-                        onFiltersChange={handleFilterChange}
-                        selectedCityId={selectedCityId}
-                      />
-                    </div>
-
-                    {filteredProducts.length > 0 ? (
-                      <>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          {filteredProducts.map((product) => (
-                            <ProductCard
-                              key={product.id}
-                              product={product}
-                              onShowDetails={handleProductClick}
-                              onAddToCart={onAddToCart}
-                              onToggleFavorite={onToggleFavorite}
-                              isFavorite={favoriteIds.has(product.id)}
-                            />
-                          ))}
-                        </div>
-
-                        {supplier.hasMoreProducts && (
-                          <div className="text-center mt-6">
-                            <button
-                              onClick={handleShowMore}
-                              className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium"
-                            >
-                              عرض جميع المنتجات ({supplier.product_count})
-                            </button>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="bg-gray-50 rounded-lg p-8 text-center">
-                        <Package className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-600">لا توجد منتجات في هذه الفئة</p>
-                        <button
-                          onClick={() => setCategoryFilter({ category: 'all' })}
-                          className="mt-3 text-blue-500 hover:text-blue-600 text-sm font-medium"
-                        >
-                          عرض جميع المنتجات
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {(!supplier.products || supplier.products.length === 0) && (
-                  <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 text-center">
-                    <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">لا توجد منتجات متاحة من هذا المورد حالياً</p>
-                  </div>
-                )}
               </div>
             </>
           )}
-        </div>
+        </motion.div>
       </motion.div>
 
       <ImageViewer

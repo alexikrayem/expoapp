@@ -1,10 +1,11 @@
 export const API_CONFIG = {
     BASE_URL: process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001',
-    TIMEOUT: 10000,
+    TIMEOUT: 30000,
+    MAX_RETRIES: 3,
 };
 
 export const PAGINATION = {
-    PRODUCTS_PER_PAGE: 12,
+    PRODUCTS_PER_PAGE: 10,
     SEARCH_LIMIT: 10,
 };
 

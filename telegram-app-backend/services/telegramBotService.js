@@ -232,7 +232,7 @@ ${items.map((item, index) => `${index + 1}. ${item.name} × ${item.quantity}`).j
                     break;
                 case 'preparing':
                     statusEmoji = '👨‍🍳';
-                    statusText = 'جاري التحضير';
+                    statusText = 'جاري ال��حضير';
                     break;
                 case 'out_for_delivery':
                     statusEmoji = '🚚';

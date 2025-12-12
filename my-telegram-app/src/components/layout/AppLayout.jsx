@@ -1,26 +1,40 @@
 "use client"
-import { Outlet, useOutletContext } from "react-router-dom"
-import { motion } from "framer-motion"
+import { Outlet, useOutletContext, useLocation } from "react-router-dom"
+import { motion, AnimatePresence } from "framer-motion"
 import Footer from "./Footer"
+import Sidebar from "./Sidebar"
 import FloatingUI from "./FloatingUI" // FIX: Import the new wrapper component
 
 const AppLayout = () => {
   const context = useOutletContext() || {}
+  const location = useLocation()
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-      <main className="flex-grow min-h-screen">
-        <Outlet context={context} />
-      </main>
+    <div className="flex min-h-screen bg-gray-50/50">
+      {/* Desktop Sidebar (hidden on mobile) */}
+      <Sidebar />
 
-      {/* 
-              FIX: Render the FloatingUI component here. It will internally
-              render the MiniCartBar with all the correct props.
-            */}
-      <FloatingUI />
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col md:mr-64 relative min-h-screen transition-all duration-300">
+        <main className="flex-grow pb-24 md:pb-8 pt-4 px-2 md:px-8 overflow-x-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="h-full"
+            >
+              <Outlet context={context} />
+            </motion.div>
+          </AnimatePresence>
+        </main>
 
-      <Footer />
-    </motion.div>
+        <Footer />
+        <FloatingUI />
+      </div>
+    </div>
   )
 }
 

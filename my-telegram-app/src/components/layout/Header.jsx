@@ -50,7 +50,7 @@ const Header = ({ children }) => {
       },
       {
         threshold: [0],
-        rootMargin: "0px", 
+        rootMargin: "0px",
       },
     )
 
@@ -134,7 +134,7 @@ const Header = ({ children }) => {
       <motion.header
         animate={{ height: isCompact ? 80 : 120 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className={`sticky top-0 z-30 pt-[env(safe-area-inset-top, 16px)] bg-white/95 backdrop-blur-xl ${isCompact ? 'shadow-md' : 'shadow-sm'}`}
+        className={`sticky top-0 z-30 pt-[env(safe-area-inset-top, 16px)] glass-nav transition-all duration-300 ${isCompact ? 'shadow-md py-2' : 'shadow-sm py-4'}`}
       >
         <div className="px-3 sm:px-4 max-w-4xl mx-auto h-full flex items-center justify-between">
           {/* Right Side: Logo and App Name */}
@@ -149,7 +149,7 @@ const Header = ({ children }) => {
               }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             />
-            <motion.div 
+            <motion.div
               className="flex flex-col"
               animate={{ opacity: isCompact ? 0 : 1, width: isCompact ? 0 : 'auto' }}
               transition={{ duration: 0.2 }}
@@ -173,7 +173,7 @@ const Header = ({ children }) => {
           />
         </div>
       </motion.header>
-      
+
       {/* This is where the tab navigation below the header will be rendered */}
       <div className="px-3 sm:px-4 max-w-4xl mx-auto">
         {children}

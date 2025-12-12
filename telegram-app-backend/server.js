@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 
 // Import our security middleware
 const { validateTelegramAuth } = require('./middleware/authMiddleware');
@@ -114,6 +115,7 @@ app.use(helmet({
   },
 }));
 
+app.use(cookieParser());
 app.use(cors(corsOptions));
 
 // 1. High Limit for Upload Routes (Suppliers & Admin)
@@ -135,20 +137,20 @@ app.get('/telegram-widget.html', (req, res) => {
   const fs = require('fs');
   const path = require('path');
   const filePath = path.join(__dirname, 'public', 'telegram-widget.html');
-  
+
   fs.readFile(filePath, 'utf8', (err, data) => {
     if (err) {
       console.error('Error reading widget file:', err);
       return res.status(500).send('Error loading login widget');
     }
-    
+
     const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'DentAppBot';
     // Replace the placeholder with the actual username
     const result = data.replace(
-      "const BOT_USERNAME = 'DentAppBot';", 
+      "const BOT_USERNAME = 'DentAppBot';",
       `const BOT_USERNAME = '${botUsername}';`
     );
-    
+
     res.set('Content-Type', 'text/html');
     res.send(result);
   });

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Animated, TouchableOpacity } from 'react-native';
+import { BlurView } from 'expo-blur';
 import Text from '@/components/ThemedText';
 import { CheckCircle, XCircle, Info, X } from 'lucide-react-native';
 
@@ -77,9 +78,9 @@ export default function Toast({
 
     const getStyles = () => {
         switch (type) {
-            case 'success': return 'bg-green-50 border-green-200';
-            case 'error': return 'bg-red-50 border-red-200';
-            default: return 'bg-blue-50 border-blue-200';
+            case 'success': return 'bg-green-50/70 border-green-200/60';
+            case 'error': return 'bg-red-50/70 border-red-200/60';
+            default: return 'bg-blue-50/70 border-blue-200/60';
         }
     };
 
@@ -103,16 +104,18 @@ export default function Toast({
                 zIndex: 9999,
             }}
         >
-            <View className={`flex-row items-center p-4 rounded-xl border shadow-sm ${getStyles()}`}>
-                <View className="mr-3">
-                    {getIcon()}
-                </View>
-                <Text className={`flex-1 font-medium text-right ${getTextStyles()}`}>
-                    {message}
-                </Text>
-                <TouchableOpacity onPress={hideToast} className="ml-3">
-                    <X size={16} color="#6B7280" />
-                </TouchableOpacity>
+            <View className="rounded-xl overflow-hidden shadow-sm">
+                <BlurView intensity={95} tint="light" className={`flex-row items-center p-4 border ${getStyles()}`}>
+                    <View className="mr-3">
+                        {getIcon()}
+                    </View>
+                    <Text className={`flex-1 font-medium text-right ${getTextStyles()}`}>
+                        {message}
+                    </Text>
+                    <TouchableOpacity onPress={hideToast} className="ml-3">
+                        <X size={16} color="#6B7280" />
+                    </TouchableOpacity>
+                </BlurView>
             </View>
         </Animated.View>
     );

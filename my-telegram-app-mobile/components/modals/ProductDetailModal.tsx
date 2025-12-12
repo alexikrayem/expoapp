@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Image, ScrollView, TouchableOpacity, Modal, StyleSheet, Platform, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -19,6 +20,10 @@ import { useCurrency } from '@/context/CurrencyContext';
 import ImageViewer from './ImageViewer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptics } from '@/utils/haptics';
+import { useModal } from '@/context/ModalContext';
+import { useRelatedProducts } from '@/hooks/useRelatedProducts';
+import ProductCard from '@/components/ProductCard';
+import { RelatedProductsSection } from '@/components/RelatedProductsSection';
 
 
 export default function ProductDetailModal({ show, onClose, product }: any) {
@@ -97,13 +102,16 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
             >
                 <View className="relative flex-1">
                     {/* Close Button */}
-                    <TouchableOpacity
-                        onPress={onClose}
-                        className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-md p-2.5 rounded-full shadow-sm"
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                        <X size={22} color="#0f172a" />
-                    </TouchableOpacity>
+                    <View className="absolute top-4 right-4 z-10 rounded-full overflow-hidden shadow-sm">
+                        <BlurView intensity={80} tint="light" className="p-2.5">
+                            <TouchableOpacity
+                                onPress={onClose}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            >
+                                <X size={22} color="#0f172a" />
+                            </TouchableOpacity>
+                        </BlurView>
+                    </View>
 
                     <ScrollView
                         className="flex-1"
@@ -179,6 +187,12 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                                             {displayProduct.description || "لا يوجد وصف متاح لهذا المنتج."}
                                         </Text>
                                     </View>
+
+                                    {/* Related Products */}
+                                    <RelatedProductsSection
+                                        currentProductId={displayProduct.id}
+                                        category={displayProduct.category} // Assuming category name or ID is here. If ID needed, adjust.
+                                    />
                                 </View>
                             </>
                         )}
@@ -186,9 +200,11 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
 
                     {/* Actions */}
                     {!isLoading && (
-                        <View
-                            className="absolute left-0 right-0 p-4 bg-white border-t border-gray-200 flex-row gap-4"
-                            style={{ bottom: insets.bottom + 8 }} // ⭐ 8px extra space above nav bar
+                        <BlurView
+                            intensity={90}
+                            tint="light"
+                            className="absolute left-0 right-0 p-4 border-t border-gray-200/50 flex-row gap-4"
+                            style={{ bottom: 0, paddingBottom: insets.bottom + 16 }}
                         >
                             <TouchableOpacity
                                 onPress={() => {
@@ -197,7 +213,7 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                                 }}
                                 className={`w-14 h-14 rounded-full flex items-center justify-center border ${isFavorite(displayProduct.id)
                                     ? 'bg-red-50 border-red-200'
-                                    : 'bg-white border-gray-300'
+                                    : 'bg-white/80 border-gray-300'
                                     }`}
                                 activeOpacity={0.8}
                             >
@@ -224,7 +240,7 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                                             haptics.medium();
                                             setQuantity(1);
                                         }}
-                                        className="bg-blue-600 rounded-full flex-row justify-center items-center h-full active:opacity-80"
+                                        className="bg-blue-600 rounded-full flex-row justify-center items-center h-full active:opacity-80 shadow-lg shadow-blue-600/30"
                                     >
                                         <ShoppingCart size={20} color="white" style={{ marginRight: 8 }} />
                                         <Text className="text-white font-bold text-lg">إضافة للسلة</Text>
@@ -244,7 +260,7 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                                     <View className="flex-row gap-3 h-full">
 
                                         {/* Quantity Control Bar */}
-                                        <View className="flex-1 bg-white rounded-full border border-gray-300 flex-row items-center overflow-hidden">
+                                        <View className="flex-1 bg-white/90 rounded-full border border-gray-300 flex-row items-center overflow-hidden shadow-sm">
                                             <TouchableOpacity
                                                 onPress={() => {
                                                     haptics.selection();
@@ -276,7 +292,7 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                                                 haptics.success();
                                                 handleAddToCart();
                                             }}
-                                            className="bg-blue-600 px-6 rounded-full flex-row items-center justify-center active:bg-blue-700 h-full"
+                                            className="bg-blue-600 px-6 rounded-full flex-row items-center justify-center active:bg-blue-700 h-full shadow-lg shadow-blue-600/30"
                                             activeOpacity={0.9}
                                         >
                                             <Check size={20} color="white" style={{ marginLeft: 4 }} />
@@ -287,7 +303,7 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                                 </Animated.View>
 
                             </View>
-                        </View>
+                        </BlurView>
                     )}
                 </View>
             </View>

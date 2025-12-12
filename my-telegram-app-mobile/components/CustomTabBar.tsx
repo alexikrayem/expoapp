@@ -9,6 +9,7 @@ import Animated, {
 import { Home, Heart, ShoppingBag, Settings } from 'lucide-react-native';
 import Text from '@/components/ThemedText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { haptics } from '@/utils/haptics';
 
 const { width } = Dimensions.get('window');
 
@@ -43,6 +44,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
                     const label = TAB_LABELS[route.name] || route.name;
 
                     const onPress = () => {
+                        haptics.selection();
                         const event = navigation.emit({
                             type: 'tabPress',
                             target: route.key,

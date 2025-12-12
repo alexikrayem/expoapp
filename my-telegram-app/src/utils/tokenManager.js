@@ -2,16 +2,13 @@
 
 // --- Token utilities (defined here to avoid circular dependencies) ---
 const getAccessToken = () => localStorage.getItem("accessToken");
-const getRefreshToken = () => localStorage.getItem("refreshToken");
 
-const setTokens = (accessToken, refreshToken) => {
+const setTokens = (accessToken) => {
   localStorage.setItem("accessToken", accessToken);
-  localStorage.setItem("refreshToken", refreshToken);
 };
 
 const clearTokens = () => {
   localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
 };
 
 // Helper to decode JWT token without verification (for expiration check)
@@ -49,42 +46,37 @@ const isTokenExpiringSoon = (token) => {
 // Proactively refresh the access token if it's about to expire
 const ensureValidToken = async () => {
   const accessToken = getAccessToken();
-  const refreshToken = getRefreshToken();
-
-  if (!refreshToken) {
-    throw new Error("No refresh token available");
-  }
 
   if (accessToken && !isTokenExpiringSoon(accessToken)) {
     // Token is still valid, no need to refresh
     return accessToken;
   }
 
-  // Token is expiring soon, refresh it
+  // Token is expiring soon or missing, try to refresh it using the HttpOnly cookie
   try {
     const headers = { "Content-Type": "application/json" };
-    const IS_DEVELOPMENT = import.meta.env.DEV;
-
-    // In development mode, we send the bypass header
-    if (IS_DEVELOPMENT) {
-      headers["X-Dev-Bypass-Auth"] = import.meta.env.VITE_DEV_BYPASS_SECRET;
-      console.log("DEV MODE: Using bypass header for proactive refresh.");
-    }
-
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/refresh`, {
+    // Include credentials to send cookies
+    const fetchOptions = {
       method: "POST",
       headers,
-      body: JSON.stringify({ refreshToken }),
-    });
+      credentials: 'include' // IMPORTANT: This allows sending HttpOnly cookies
+    };
+
+    const IS_DEVELOPMENT = import.meta.env.DEV;
+
+    // In development mode, we send the bypass header if needed (though cookies should work if origin matches)
+    if (IS_DEVELOPMENT) {
+      headers["X-Dev-Bypass-Auth"] = import.meta.env.VITE_DEV_BYPASS_SECRET;
+    }
+
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/refresh`, fetchOptions);
 
     if (!response.ok) {
       throw new Error(`Token refresh failed with status ${response.status}`);
     }
 
     const data = await response.json();
-    // Only update refresh token if the backend sends a new one
-    const newRefreshToken = data.refreshToken || refreshToken;
-    setTokens(data.accessToken, newRefreshToken);
+    setTokens(data.accessToken);
 
     console.log("Token proactively refreshed successfully");
     return data.accessToken;
@@ -120,7 +112,6 @@ export {
   decodeToken,
   isTokenExpiringSoon,
   getAccessToken,
-  getRefreshToken,
   setTokens,
   clearTokens
 };

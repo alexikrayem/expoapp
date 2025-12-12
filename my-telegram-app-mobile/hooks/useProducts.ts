@@ -2,6 +2,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { productService } from '../services/productService';
 import { useMemo } from 'react';
 import { PAGINATION } from '../utils/constants';
+import { Product } from '@/types';
 
 export const useProducts = (cityId: string | null | undefined, externalFilters: any = {}) => {
     const effectiveFilters = useMemo(() => ({
@@ -62,7 +63,7 @@ export const useProducts = (cityId: string | null | undefined, externalFilters: 
     });
 
     const products = useMemo(() => {
-        return data?.pages.flatMap(page => page.items || []) || [];
+        return (data?.pages.flatMap(page => page.items || []) || []) as Product[];
     }, [data]);
 
     return {

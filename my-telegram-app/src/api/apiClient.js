@@ -1,53 +1,45 @@
 // my-telegram-app/src/api/apiClient.js
 import { ensureValidToken } from '../utils/tokenManager';
+import { logger } from '../utils/logger';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const IS_DEVELOPMENT = import.meta.env.DEV; // true in vite dev mode
 
 // --- Token utilities ---
 const getAccessToken = () => localStorage.getItem("accessToken");
-const getRefreshToken = () => localStorage.getItem("refreshToken");
 
-const setTokens = (accessToken, refreshToken) => {
+const setTokens = (accessToken) => {
   localStorage.setItem("accessToken", accessToken);
-  localStorage.setItem("refreshToken", refreshToken);
 };
 
 const clearTokens = () => {
   localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
 };
 
 // --- Refresh Access Token ---
 const refreshAccessToken = async () => {
   try {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) throw new Error("No refresh token available");
-
     const headers = { "Content-Type": "application/json" };
-    
+
     // In development mode, we send the bypass header
     if (IS_DEVELOPMENT) {
       headers["X-Dev-Bypass-Auth"] = import.meta.env.VITE_DEV_BYPASS_SECRET;
-      console.log("DEV MODE: Using bypass header for refresh token request.");
     }
 
-    // ✅ Always hit your actual backend route, adjust prefix if needed
+    // ✅ Hit backend refresh route with cookies
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ refreshToken }),
+      credentials: 'include', // IMPORTANT: Send HttpOnly cookies
     });
 
     if (!response.ok) throw new Error("Token refresh failed");
 
     const data = await response.json();
-    // Only update refresh token if the backend sends a new one
-    const newRefreshToken = data.refreshToken || refreshToken;
-    setTokens(data.accessToken, newRefreshToken);
+    setTokens(data.accessToken);
     return data.accessToken;
   } catch (err) {
-    console.error("Token refresh error:", err);
+    logger.error("Token refresh error:", err);
     clearTokens();
     throw err;
   }
@@ -60,7 +52,7 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
   // In development mode, we send the bypass header
   if (IS_DEVELOPMENT) {
     headers["X-Dev-Bypass-Auth"] = import.meta.env.VITE_DEV_BYPASS_SECRET;
-    console.log("DEV MODE: Sending X-Dev-Bypass-Auth header.");
+    logger.log("DEV MODE: Sending X-Dev-Bypass-Auth header.");
   }
 
   // Proactively refresh token if needed before making the request
@@ -71,7 +63,7 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
       headers["Authorization"] = `Bearer ${validToken}`;
     }
   } catch (err) {
-    console.error("Error ensuring valid token:", err);
+    logger.error("Error ensuring valid token:", err);
     // If proactive refresh fails, we'll still try the request with existing token
     // and handle 401 errors as before
     const accessToken = getAccessToken();
@@ -87,6 +79,7 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
       ...headers,
       ...customConfig.headers,
     },
+    credentials: 'include', // Send cookies with every request
   };
 
   if (body) config.body = JSON.stringify(body);
@@ -111,7 +104,7 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
       let error = { message: `Request failed with status ${response.status}` };
       try {
         error = await response.json();
-      } catch (_) {}
+      } catch (_) { }
       error.status = response.status;
       return Promise.reject(error);
     }
@@ -123,18 +116,18 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
       const data = await response.json();
 
       // Save tokens if the response includes them
-      if (data.accessToken && data.refreshToken) {
-        setTokens(data.accessToken, data.refreshToken);
+      if (data.accessToken) {
+        setTokens(data.accessToken);
       }
 
       return data;
     }
 
-    return null;
+    return null
   } catch (err) {
-    console.error("API Client Error:", err);
+    logger.error("API Client Error:", err);
     return Promise.reject(err);
   }
 }
 
-export { apiClient, setTokens, clearTokens, getAccessToken, getRefreshToken };
+export { apiClient, setTokens, clearTokens, getAccessToken };
