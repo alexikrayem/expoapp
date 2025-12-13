@@ -108,52 +108,54 @@ export default function WelcomeOnboardingModal({
     return (
       <div
         dir="rtl"
-        className="fixed inset-0 flex items-center justify-center z-50 bg-[#F8FAFC] font-[Montaserat]"
+        className="fixed inset-0 flex items-center justify-center z-50 bg-slate-100/50 backdrop-blur-sm font-['Inter',_sans-serif]"
       >
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-100/50 rounded-full blur-3xl mix-blend-multiply animate-blob"></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-100/50 rounded-full blur-3xl mix-blend-multiply animate-blob animation-delay-2000"></div>
-        </div>
-
-        <div className="relative w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 p-8 flex flex-col items-center justify-center text-center mx-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative w-full max-w-sm bg-white rounded-3xl shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)] border border-slate-100 p-8 flex flex-col items-center justify-center text-center mx-4"
+        >
           {/* Logo or App Icon */}
           <div className="mb-8">
-            <div className="w-20 h-20 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-blue-500/20 transform hover:scale-105 transition-transform duration-300">
-              <span className="text-3xl filter drop-shadow-md">🩺</span>
+            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm ring-1 ring-blue-100/50">
+              <span className="text-2xl">🩺</span>
             </div>
           </div>
 
           {/* Welcome Title */}
-          <h2 className="text-2xl font-bold text-slate-800 mb-3 leading-snug tracking-tight">
-            مرحباً بكم في معرض المستلزمات الطبية
+          <h2 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">
+            مرحباً بك
           </h2>
 
-          <p className="text-slate-500 text-sm leading-relaxed mb-8 max-w-sm">
-            سجّل الدخول باستخدام حساب تيليجرام للوصول إلى أفضل العروض والمنتجات الطبية
+          <p className="text-slate-500 text-sm leading-relaxed mb-8 px-4">
+            للمتابعة، يرجى تسجيل الدخول باستخدام حسابك في تيليجرام
           </p>
 
           {/* Telegram Login Widget */}
-          <div className="w-full max-w-xs mx-auto mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-inner">
-            <div className="flex justify-center">
-              <TelegramLoginWidget
-                onLoginSuccess={handleLoginSuccess}
-                onError={handleLoginError}
-              />
+          <div className="w-full mb-6">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-blue-100 rounded-xl opacity-0 group-hover:opacity-50 transition duration-300"></div>
+              <div className="relative bg-white border border-slate-200 rounded-xl p-4 flex justify-center shadow-sm">
+                <TelegramLoginWidget
+                  onLoginSuccess={handleLoginSuccess}
+                  onError={handleLoginError}
+                />
+              </div>
             </div>
           </div>
 
           {/* Error Message */}
           {loginError && (
-            <div className="bg-red-50 text-red-600 text-sm py-2 px-4 rounded-lg mb-4 flex items-center gap-2">
+            <div className="bg-red-50 text-red-600 text-xs py-2 px-3 rounded-lg mb-4 w-full flex items-center justify-center gap-2 border border-red-100">
               <span>⚠️</span> {loginError}
             </div>
           )}
 
           {/* Instructions */}
-          <p className="text-slate-400 text-xs mt-2 max-w-xs">
-            بالضغط على تسجيل الدخول، فإنك توافق على شروط الخدمة وسياسة الخصوصية
+          <p className="text-slate-300 text-[10px] mt-2">
+            بالمتابعة أنت توافق على الشروط والأحكام
           </p>
-        </div>
+        </motion.div>
       </div>
     );
   }

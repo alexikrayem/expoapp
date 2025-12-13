@@ -9,7 +9,7 @@ const LandingPage = () => {
     const features = [
         {
             icon: Search,
-            title: 'بحث متقدم وشامل',
+            title: 'بحث متقدم',
             description: 'ابحث عن المنتجات والموردين وأحدث العروض بسهولة تامة مع خيارات تصفية دقيقة.'
         },
         {
@@ -25,57 +25,72 @@ const LandingPage = () => {
     ];
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden" dir="rtl">
+        <div className="min-h-screen flex flex-col font-['Inter',_sans-serif] bg-white text-slate-900" dir="rtl">
+
+            {/* Header / Nav Mock */}
+            <header className="w-full p-6 flex justify-between items-center max-w-7xl mx-auto">
+                <div className="flex items-center gap-2">
+                    <span className="text-2xl">🩺</span>
+                    <span className="font-bold text-lg tracking-tight">Medical Expo</span>
+                </div>
+                <button
+                    onClick={() => navigate('/login')}
+                    className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors"
+                >
+                    تسجيل الدخول
+                </button>
+            </header>
 
             {/* Hero Section */}
-            <main className="w-full max-w-6xl mx-auto z-10 flex flex-col items-center justify-center text-center mt-12 mb-20">
+            <main className="flex-grow flex flex-col items-center justify-center text-center px-4 mt-10 md:mt-20 mb-20">
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                    className="glass-panel p-8 md:p-16 mb-12 max-w-4xl w-full"
+                    transition={{ duration: 0.6 }}
+                    className="max-w-3xl mx-auto"
                 >
-                    <div className="w-32 h-32 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
-                        <span className="text-6xl">🩺</span>
+                    <div className="inline-block px-4 py-1.5 mb-8 rounded-full bg-blue-50 border border-blue-100/50">
+                        <span className="text-xs font-semibold text-blue-600 tracking-wide uppercase">المنصة الأولى للمستلزمات الطبية</span>
                     </div>
 
-                    <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 drop-shadow-md">
-                        معرض المستلزمات الطبية
+                    <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-8 tracking-tight leading-[1.1]">
+                        كل ماتحتاجه عيادتك <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">في مكان واحد</span>
                     </h1>
 
-                    <p className="text-lg md:text-2xl text-white/90 mb-10 leading-relaxed max-w-2xl mx-auto drop-shadow-sm">
+                    <p className="text-lg md:text-xl text-slate-500 mb-10 leading-relaxed max-w-2xl mx-auto">
                         منصتك الأولى لاكتشاف أحدث المنتجات الطبية، التواصل مع الموردين، وإتمام الصفقات بكل سهولة وأمان.
                     </p>
 
                     <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => navigate('/login')}
-                        className="group relative px-8 py-4 bg-white text-blue-600 font-bold text-lg rounded-full shadow-lg overflow-hidden"
+                        className="group relative px-8 py-4 bg-blue-600 text-white font-semibold text-lg rounded-full shadow-[0_10px_20px_-10px_rgba(37,99,235,0.4)] hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.3)] hover:bg-blue-700 transition-all"
                     >
-                        <span className="relative z-10 flex items-center justify-center gap-2">
-                            ابدأ الآن
-                            <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+                        <span className="flex items-center justify-center gap-2">
+                            ابدأ التصفح الآن
+                            <ChevronLeft className="w-5 h-5" />
                         </span>
-                        <div className="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </motion.button>
                 </motion.div>
 
                 {/* Features Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl px-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl px-4 mt-24">
                     {features.map((feature, index) => (
                         <motion.div
                             key={index}
                             initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
                             transition={{ delay: 0.2 + (index * 0.1), duration: 0.5 }}
-                            className="glass-card p-6 text-center text-white flex flex-col items-center"
+                            className="p-8 text-center bg-white rounded-3xl border border-slate-100 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] hover:border-blue-100 hover:shadow-[0_10px_30px_-15px_rgba(0,0,255,0.1)] transition-all duration-300"
                         >
-                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4 text-white">
-                                <feature.icon size={32} strokeWidth={1.5} />
+                            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 mx-auto text-blue-600">
+                                <feature.icon size={28} strokeWidth={1.5} />
                             </div>
-                            <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                            <p className="text-white/80 text-sm leading-relaxed">
+                            <h3 className="text-lg font-bold text-slate-900 mb-3">{feature.title}</h3>
+                            <p className="text-slate-500 text-sm leading-relaxed">
                                 {feature.description}
                             </p>
                         </motion.div>
@@ -84,7 +99,7 @@ const LandingPage = () => {
             </main>
 
             {/* Footer Copyright */}
-            <footer className="w-full text-center py-6 text-white/60 text-sm z-10">
+            <footer className="w-full text-center py-8 text-slate-400 text-sm border-t border-slate-100 mt-auto">
                 &copy; {new Date().getFullYear()} Medical Expo. جميع الحقوق محفوظة.
             </footer>
         </div>

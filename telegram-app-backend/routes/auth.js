@@ -265,25 +265,26 @@ router.post('/telegram-login-widget', async (req, res) => {
         const fullName = [authData.first_name, authData.last_name].filter(Boolean).join(' ');
 
         // user lookup / creation logic remains unchanged
+        // user lookup logic
         const findUserQuery = 'SELECT * FROM user_profiles WHERE user_id = $1';
         const userResult = await db.query(findUserQuery, [authData.id]);
 
         let user;
         if (userResult.rows.length > 0) {
             const updateQuery = `
-        UPDATE user_profiles
-        SET full_name = $1, updated_at = NOW()
-        WHERE user_id = $2 RETURNING *;
-      `;
+                UPDATE user_profiles
+                SET full_name = $1, updated_at = NOW()
+                WHERE user_id = $2 RETURNING *;
+            `;
             const updatedUser = await db.query(updateQuery, [fullName, authData.id]);
             user = updatedUser.rows[0];
         } else {
-            const insertUserQuery = `
-        INSERT INTO user_profiles (user_id, full_name, profile_completed, address_line1, city, created_at, updated_at)
-        VALUES ($1, $2, false, '', '', NOW(), NOW()) RETURNING *;
-      `;
-            const newUser = await db.query(insertUserQuery, [authData.id, fullName]);
-            user = newUser.rows[0];
+            // User not found - strict registration required
+            return res.status(404).json({
+                error: 'User not registered',
+                message: 'Please complete your profile to continue.',
+                telegramUser: authData
+            });
         }
 
         const { accessToken, refreshToken } = generateTokens(
@@ -294,7 +295,7 @@ router.post('/telegram-login-widget', async (req, res) => {
         // Security: Set Refresh Token in HttpOnly Cookie
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Only secure in production (HTTPS)
+            secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
@@ -304,7 +305,6 @@ router.post('/telegram-login-widget', async (req, res) => {
 
         res.json({
             accessToken,
-            // Return refreshToken in body ONLY for mobile app (WebView) which needs to strip it for native storage
             refreshToken: isMobile ? refreshToken : undefined,
             telegramUser: authData,
             userProfile: {
@@ -317,6 +317,114 @@ router.post('/telegram-login-widget', async (req, res) => {
     } catch (error) {
         console.error('Telegram Login Widget error:', error);
         res.status(500).json({ error: 'Internal server error during Telegram Login Widget authentication.' });
+    }
+});
+
+// --- NEW Endpoint: Registration with Profile Data ---
+router.post('/telegram-register-widget', async (req, res) => {
+    try {
+        const { authData: receivedAuthData, profileData } = req.body;
+        if (!receivedAuthData || !profileData) {
+            return res.status(400).json({ error: 'Missing authData or profileData' });
+        }
+
+        // 1. Verify Hash Again (Security)
+        const validation = validateTelegramLoginWidgetData(receivedAuthData, process.env.TELEGRAM_BOT_TOKEN);
+        if (!validation.ok) {
+            return res.status(403).json({ error: 'Invalid Telegram authentication data' });
+        }
+
+        const authData = receivedAuthData;
+
+        // 2. Validate Required Profile Fields (Server-Side)
+        if (!profileData.phone_number || !profileData.address_line1 || !profileData.city) {
+            return res.status(400).json({ error: 'Missing required profile fields (Phone, Address, City)' });
+        }
+
+        const fullName = profileData.full_name || [authData.first_name, authData.last_name].filter(Boolean).join(' ');
+
+        // 3. Create User
+        // Check if exists first to prevent duplicates
+        const findUserQuery = 'SELECT * FROM user_profiles WHERE user_id = $1';
+        const existingUser = await db.query(findUserQuery, [authData.id]);
+
+        if (existingUser.rows.length > 0) {
+            return res.status(409).json({ error: 'User already registered' });
+        }
+
+        const insertUserQuery = `
+        INSERT INTO user_profiles (
+            user_id, full_name, phone_number, address_line1, address_line2, city, 
+            selected_city_id, date_of_birth, gender, professional_license_number,
+            clinic_name, clinic_phone, clinic_address_line1, clinic_address_line2,
+            clinic_city, clinic_country, clinic_license_number, clinic_specialization,
+            professional_role, years_of_experience, education_background,
+            clinic_coordinates,
+            profile_completed, created_at, updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, true, NOW(), NOW()) 
+        RETURNING *;
+        `;
+
+        const newUser = await db.query(insertUserQuery, [
+            authData.id,
+            fullName,
+            profileData.phone_number,
+            profileData.address_line1,
+            profileData.address_line2 || null,
+            profileData.city,
+            profileData.selected_city_id || null,
+            profileData.date_of_birth || null,
+            profileData.gender || null,
+            profileData.professional_license_number || null,
+            // Clinic Info
+            profileData.clinic_name || null,
+            profileData.clinic_phone || null,
+            profileData.clinic_address_line1 || null,
+            profileData.clinic_address_line2 || null,
+            profileData.clinic_city || null,
+            profileData.clinic_country || null,
+            profileData.clinic_license_number || null,
+            profileData.clinic_specialization || null,
+            // Professional Info
+            profileData.professional_role || null,
+            profileData.years_of_experience || null,
+            profileData.education_background || null,
+            // JSON fields
+            profileData.clinic_coordinates ? JSON.stringify(profileData.clinic_coordinates) : null
+        ]);
+
+        const user = newUser.rows[0];
+
+        // 4. Generate Tokens (Login immediately)
+        const { accessToken, refreshToken } = generateTokens(
+            { userId: user.user_id, telegramId: user.user_id, role: 'customer' },
+            'CUSTOMER'
+        );
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        const isMobile = req.headers['x-client-type'] === 'mobile';
+
+        res.json({
+            accessToken,
+            refreshToken: isMobile ? refreshToken : undefined,
+            telegramUser: authData,
+            userProfile: user,
+            message: "Registration successful"
+        });
+
+    } catch (error) {
+        console.error('Telegram Register Widget error:', error);
+        res.status(500).json({
+            error: 'Internal server error during registration.',
+            details: error.message
+        });
     }
 });
 // --- END Telegram Login Widget Endpoint ---
