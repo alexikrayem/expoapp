@@ -108,42 +108,49 @@ export default function WelcomeOnboardingModal({
     return (
       <div
         dir="rtl"
-        className="fixed inset-0 flex items-center justify-center z-50 bg-gradient-to-b from-[#E3F3FF] via-[#F5FAFF] to-white font-[Montaserat]"
+        className="fixed inset-0 flex items-center justify-center z-50 bg-[#F8FAFC] font-[Montaserat]"
       >
-        <div className="relative w-full max-w-md h-[70vh] flex flex-col items-center justify-center text-center px-8 py-12 select-none">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-100/50 rounded-full blur-3xl mix-blend-multiply animate-blob"></div>
+          <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-100/50 rounded-full blur-3xl mix-blend-multiply animate-blob animation-delay-2000"></div>
+        </div>
+
+        <div className="relative w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 p-8 flex flex-col items-center justify-center text-center mx-4">
           {/* Logo or App Icon */}
           <div className="mb-8">
-            <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center mx-auto">
-              <span className="text-3xl">🩺</span>
+            <div className="w-20 h-20 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-blue-500/20 transform hover:scale-105 transition-transform duration-300">
+              <span className="text-3xl filter drop-shadow-md">🩺</span>
             </div>
           </div>
 
           {/* Welcome Title */}
-          <h2 className="text-2xl font-semibold text-gray-900 mb-3 leading-snug">
+          <h2 className="text-2xl font-bold text-slate-800 mb-3 leading-snug tracking-tight">
             مرحباً بكم في معرض المستلزمات الطبية
           </h2>
 
-          <p className="text-gray-600 text-sm leading-relaxed mb-8 max-w-sm">
+          <p className="text-slate-500 text-sm leading-relaxed mb-8 max-w-sm">
             سجّل الدخول باستخدام حساب تيليجرام للوصول إلى أفضل العروض والمنتجات الطبية
           </p>
 
           {/* Telegram Login Widget */}
-          <div className="w-full max-w-xs mx-auto mb-6">
-            <TelegramLoginWidget
-              onLoginSuccess={handleLoginSuccess}
-              onError={handleLoginError}
-            />
+          <div className="w-full max-w-xs mx-auto mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 shadow-inner">
+            <div className="flex justify-center">
+              <TelegramLoginWidget
+                onLoginSuccess={handleLoginSuccess}
+                onError={handleLoginError}
+              />
+            </div>
           </div>
 
           {/* Error Message */}
           {loginError && (
-            <div className="text-red-500 text-sm mb-4">
-              {loginError}
+            <div className="bg-red-50 text-red-600 text-sm py-2 px-4 rounded-lg mb-4 flex items-center gap-2">
+              <span>⚠️</span> {loginError}
             </div>
           )}
 
           {/* Instructions */}
-          <p className="text-gray-500 text-xs mt-6 max-w-xs">
+          <p className="text-slate-400 text-xs mt-2 max-w-xs">
             بالضغط على تسجيل الدخول، فإنك توافق على شروط الخدمة وسياسة الخصوصية
           </p>
         </div>
