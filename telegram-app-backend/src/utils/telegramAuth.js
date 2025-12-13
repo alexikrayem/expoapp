@@ -23,22 +23,13 @@ function validateTelegramLoginWidgetData(authData, botToken) {
     .map(key => (`${key}=${authData[key]}`))
     .join('\n');
 
-  console.log('--- Telegram Auth Debug ---');
-  console.log('Received AuthData:', JSON.stringify(authData, null, 2));
-  console.log('Data Check String:', JSON.stringify(dataCheckString));
-
   const secretKey = crypto.createHash('sha256').update(botToken).digest();
 
   const calculatedHash = crypto.createHmac('sha256', secretKey)
     .update(dataCheckString)
     .digest('hex');
 
-  console.log('Bot Token (prefix):', botToken.substring(0, 5) + '...');
-  console.log('Calculated Hash:', calculatedHash);
-  console.log('Received Hash:  ', authData.hash);
-
   if (calculatedHash !== authData.hash) {
-    console.error('Hash mismatch!');
     return { ok: false, error: 'Hash mismatch' };
   }
 

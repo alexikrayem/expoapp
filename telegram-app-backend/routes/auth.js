@@ -279,8 +279,8 @@ router.post('/telegram-login-widget', async (req, res) => {
             user = updatedUser.rows[0];
         } else {
             const insertUserQuery = `
-        INSERT INTO user_profiles (user_id, full_name, profile_completed, created_at, updated_at)
-        VALUES ($1, $2, false, NOW(), NOW()) RETURNING *;
+        INSERT INTO user_profiles (user_id, full_name, profile_completed, address_line1, city, created_at, updated_at)
+        VALUES ($1, $2, false, '', '', NOW(), NOW()) RETURNING *;
       `;
             const newUser = await db.query(insertUserQuery, [authData.id, fullName]);
             user = newUser.rows[0];
@@ -315,11 +315,8 @@ router.post('/telegram-login-widget', async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Detailed Telegram Login Widget error:', error);
-        res.status(500).json({
-            error: 'Internal server error during Telegram Login Widget authentication.',
-            details: error.message // Sending details to frontend for debugging (temporary)
-        });
+        console.error('Telegram Login Widget error:', error);
+        res.status(500).json({ error: 'Internal server error during Telegram Login Widget authentication.' });
     }
 });
 // --- END Telegram Login Widget Endpoint ---
