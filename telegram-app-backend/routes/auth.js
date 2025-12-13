@@ -315,8 +315,11 @@ router.post('/telegram-login-widget', async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Telegram Login Widget error:', error);
-        res.status(500).json({ error: 'Internal server error during Telegram Login Widget authentication.' });
+        console.error('Detailed Telegram Login Widget error:', error);
+        res.status(500).json({
+            error: 'Internal server error during Telegram Login Widget authentication.',
+            details: error.message // Sending details to frontend for debugging (temporary)
+        });
     }
 });
 // --- END Telegram Login Widget Endpoint ---
