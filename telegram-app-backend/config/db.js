@@ -8,10 +8,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false // Required for Neon, Heroku, etc. Adjust if your provider needs differently.
-  }
+  connectionString: process.env.DATABASE_URL
 });
 
 // Optional: Test the connection on startup
