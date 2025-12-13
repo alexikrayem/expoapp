@@ -15,7 +15,7 @@ const TelegramLoginWidget = ({ onLoginSuccess, onError }) => {
     // Define the callback function that the Telegram script will call
     const onTelegramAuth = async (user) => {
       try {
-        const authData = { ...user, auth_date: Math.floor(Date.now() / 1000) };
+        const authData = user;
         const result = await authService.telegramLoginWidget(authData);
         if (onLoginSuccess) {
           onLoginSuccess(result);
