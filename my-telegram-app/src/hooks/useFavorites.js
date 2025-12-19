@@ -2,11 +2,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { userService } from '../services/userService';
 import { authService } from '../services/authService';
+import { useToast } from '../context/ToastContext';
 
 export const useFavorites = (telegramUser) => {
     const [favoriteIds, setFavoriteIds] = useState(new Set());
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { showToast } = useToast();
 
     const fetchFavoriteIds = useCallback(async () => {
         // Check if user is authenticated using JWT tokens instead of telegramUser
@@ -50,14 +52,16 @@ export const useFavorites = (telegramUser) => {
         try {
             if (isCurrentlyFavorite) {
                 await userService.removeFavorite(productId);
+                showToast("تمت الإزالة من المفضلة", "info");
             } else {
                 await userService.addFavorite(productId);
+                showToast("تمت الإضافة إلى المفضلة", "success");
             }
         } catch (error) {
             console.error("Error toggling favorite:", error);
             // Revert UI on failure
             setFavoriteIds(favoriteIds);
-            alert(`Error: ${error.message}`);
+            showToast(`فشل في تحديث المفضلة: ${error.message}`, "error");
         }
     }, [favoriteIds]);
 

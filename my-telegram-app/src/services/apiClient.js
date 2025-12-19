@@ -32,9 +32,11 @@ const refreshAccessToken = async () => {
     }
 
     // ✅ Always hit your actual backend route, adjust prefix if needed
-    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+    // URL fixed to remove double /api prefix
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",
       headers,
+      credentials: 'include', // Enable cookies for refresh token
       body: JSON.stringify({ refreshToken }),
     });
 
@@ -70,6 +72,7 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
   const config = {
     method: body ? "POST" : "GET",
     ...customConfig,
+    credentials: 'include', // Ensure cookies are sent/received
     headers: {
       ...headers,
       ...customConfig.headers,
@@ -98,7 +101,7 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
       let error = { message: `Request failed with status ${response.status}` };
       try {
         error = await response.json();
-      } catch (_) {}
+      } catch (_) { }
       error.status = response.status;
       return Promise.reject(error);
     }

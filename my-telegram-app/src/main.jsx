@@ -6,11 +6,14 @@ import React from 'react';
 import App from './App.jsx'
 import './index.css';
 import { CurrencyProvider } from './context/CurrencyContext.jsx';
+import GlobalErrorBoundary from './components/common/GlobalErrorBoundary.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <CurrencyProvider>  {/* <-- WRAPPER START */}
-      <App />
-    </CurrencyProvider> {/* <-- WRAPPER END */}
+    <GlobalErrorBoundary>
+      <CurrencyProvider>
+        <App />
+      </CurrencyProvider>
+    </GlobalErrorBoundary>
   </React.StrictMode>,
 );

@@ -25,6 +25,7 @@ export interface UserProfile {
     language_code?: string;
     role?: string;
     phone_number?: string;
+    selected_city_id?: string;
 }
 
 export interface Supplier {

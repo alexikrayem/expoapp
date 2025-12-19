@@ -1,8 +1,9 @@
 // routes/products.js (UPGRADED WITH SMARTER ALTERNATIVES)
 const express = require('express');
-const { query, param, body, validationResult } = require('express-validator');
+const { query, param, body } = require('express-validator');
 const router = express.Router();
 const db = require('../config/db');
+const validateRequest = require('../middleware/validateRequest');
 
 
 // Get all products with filtering, search, and pagination
@@ -14,19 +15,17 @@ router.get('/', [
     query('searchTerm').optional().trim().isLength({ max: 100 }).withMessage('Search term must be at most 100 characters'),
     query('minPrice').optional().isFloat({ min: 0 }).withMessage('Min price must be a positive number'),
     query('maxPrice').optional().isFloat({ min: 0 }).withMessage('Max price must be a positive number'),
-    query('onSale').optional().isIn(['true', 'false']).withMessage('onSale must be true or false')
+    query('onSale').optional().isIn(['true', 'false']).withMessage('onSale must be true or false'),
+    validateRequest
 ], async (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
-        }
-        
+        // Validation handled by middleware
+
         const { page = 1, limit = 12, cityId, category, searchTerm, minPrice, maxPrice, onSale } = req.query;
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
         const offset = (pageNum - 1) * limitNum;
-        
+
         let whereConditions = ['s.is_active = true'];
         let queryParams = [];
         let paramIndex = 1;
@@ -44,16 +43,16 @@ router.get('/', [
             queryParams.push(`%${searchTerm}%`);
             paramIndex++;
         }
-        if (minPrice) { 
-            whereConditions.push(`p.price >= $${paramIndex++}`); 
-            queryParams.push(parseFloat(minPrice)); 
+        if (minPrice) {
+            whereConditions.push(`p.price >= $${paramIndex++}`);
+            queryParams.push(parseFloat(minPrice));
         }
-        if (maxPrice) { 
-            whereConditions.push(`p.price <= $${paramIndex++}`); 
-            queryParams.push(parseFloat(maxPrice)); 
+        if (maxPrice) {
+            whereConditions.push(`p.price <= $${paramIndex++}`);
+            queryParams.push(parseFloat(maxPrice));
         }
-        if (onSale === 'true') { 
-            whereConditions.push('p.is_on_sale = true'); 
+        if (onSale === 'true') {
+            whereConditions.push('p.is_on_sale = true');
         }
 
         const whereClause = `WHERE ${whereConditions.join(' AND ')}`;
@@ -68,7 +67,7 @@ router.get('/', [
             LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
 
         const countQuery = `SELECT COUNT(*) as total FROM products p JOIN suppliers s ON p.supplier_id = s.id ${whereClause}`;
-        
+
         const [productsResult, countResult] = await Promise.all([
             db.query(productsQuery, [...queryParams, limitNum, offset]),
             db.query(countQuery, queryParams)
@@ -87,14 +86,10 @@ router.get('/', [
 
 // Get product categories for filter options
 router.get('/categories', [
-    query('cityId').optional().isInt({ min: 1 }).withMessage('City ID must be a positive integer')
+    query('cityId').optional().isInt({ min: 1 }).withMessage('City ID must be a positive integer'),
+    validateRequest
 ], async (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
-        }
-        
         const { cityId } = req.query;
         let query = `
             SELECT p.category, COUNT(*) as product_count
@@ -122,16 +117,17 @@ router.get('/categories', [
 
 // Get products by batch of IDs (for favorites tab)
 router.get('/batch', [
-    query('ids').optional().trim().matches(/^[\d,]+$/).withMessage('IDs must be comma-separated integers')
+    query('ids').optional().trim().matches(/^[\d,]+$/).withMessage('IDs must be comma-separated integers'),
+    validateRequest
 ], async (req, res) => {
     try {
         const { ids } = req.query;
         if (!ids) return res.json([]);
-        
+
         const productIds = ids.split(',')
             .map(id => parseInt(id))
             .filter(id => !isNaN(id) && id > 0);
-        
+
         if (productIds.length === 0 || productIds.length > 50) {
             return res.status(400).json({ error: 'Invalid product IDs provided' });
         }
@@ -155,14 +151,10 @@ router.get('/batch', [
 
 // Get favorite product details with alternatives (used in ProductDetailModal)
 router.get('/favorite-details/:productId', [
-    param('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer')
+    param('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
+    validateRequest
 ], async (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
-        }
-        
         const { productId } = req.params;
 
         // Step 1: Fetch the main product and its supplier in a single, efficient query.
@@ -213,7 +205,7 @@ router.get('/favorite-details/:productId', [
                 alternatives = alternativesResult.rows;
             }
         }
-        
+
         const responseData = {
             originalProduct: {
                 ...product,
@@ -224,7 +216,7 @@ router.get('/favorite-details/:productId', [
         };
 
         res.json(responseData);
-        
+
     } catch (error) {
         console.error('Error fetching product details:', error);
         res.status(500).json({ error: 'Failed to fetch product details' });
@@ -234,14 +226,10 @@ router.get('/favorite-details/:productId', [
 
 // Get individual product by ID
 router.get('/:id', [
-    param('id').isInt({ min: 1 }).withMessage('Product ID must be a positive integer')
+    param('id').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
+    validateRequest
 ], async (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
-        }
-        
         const productId = parseInt(req.params.id);
 
         const query = `
@@ -254,7 +242,7 @@ router.get('/:id', [
         const result = await db.query(query, [productId]);
 
         if (result.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
-        
+
         res.json(result.rows[0]);
     } catch (error) {
         console.error('Error fetching product:', error);

@@ -1,122 +1,58 @@
-// "use client" - Keep this at the very top for Next.js App Router or similar environments
-"use client"
-
-import { useState, useEffect, useCallback, useRef } from "react"
-import { useOutletContext } from "react-router-dom"
-import { useModal } from "../../context/ModalContext"
 import { useSearch } from "../../context/SearchContext"
-import { userService } from "../../services/userService"
-import { cityService } from "../../services/cityService"
-import appLogoImage from "/src/assets/IMG_1787.png"
-import DOMPurify from "dompurify" // sanitize user input safely
-
-import { AnimatePresence, motion } from "framer-motion"
+import { useCart } from "../../context/CartContext"
+import { useFavorites } from "../../hooks/useFavorites"
+import { useModal } from "../../context/ModalContext"
+import { useOutletContext } from "react-router-dom"
+import { motion } from "framer-motion"
 import SearchPopover from "../search/SearchPopover"
-import HeaderActions from "./HeaderActions"
 
-// Utility: throttle (unchanged)
-const throttle = (fn, delay) => {
-  let last = 0
-  return (...args) => {
-    const now = Date.now()
-    if (now - last >= delay) {
-      last = now
-      fn(...args)
-    }
-  }
-}
+const Header = ({ title, description, children }) => {
+  const { searchTerm, handleSearchTermChange, clearSearch, isSearching, searchError, searchResults, isSearchPopoverOpen, setIsSearchPopoverOpen } = useSearch()
 
-const Header = ({ children }) => {
-  const { telegramUser, userProfile, onProfileUpdate } = useOutletContext() || {}
+  // Hooks for SearchResultsView functionality
+  const { telegramUser } = useOutletContext() || {}
+  const { actions: { addToCart } } = useCart()
+  const { favoriteIds, toggleFavorite } = useFavorites(telegramUser)
   const { openModal } = useModal()
-  const { searchTerm, handleSearchTermChange, clearSearch, isSearching, searchError, searchResults } = useSearch()
 
-  // State
-  const [isCityPopoverOpen, setIsCityPopoverOpen] = useState(false)
-  const [isChangingCity, setIsChangingCity] = useState(false)
-  const [isCompact, setIsCompact] = useState(false)
-  const [isSearchPopoverOpen, setIsSearchPopoverOpen] = useState(false)
-  const [preloadedCities, setPreloadedCities] = useState(null)
-  const sentinelRef = useRef(null)
-
-  // IntersectionObserver for compact header
-  useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsCompact(!entry.isIntersecting)
-      },
-      {
-        threshold: [0],
-        rootMargin: "0px",
-      },
-    )
-
-    observer.observe(sentinel)
-
-    return () => {
-      if (sentinel) observer.unobserve(sentinel)
-    }
-  }, [])
-
-  // Load cities once safely
-  useEffect(() => {
-    let isMounted = true
-    cityService
-      .getCities()
-      .then((data) => {
-        if (isMounted) setPreloadedCities(data)
-      })
-      .catch((err) => console.error("Failed to preload cities:", err))
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  // Telegram WebApp integration
-  useEffect(() => {
-    const tg = window?.Telegram?.WebApp
-    if (!tg) return
-    tg.ready()
-    tg.expand()
-    tg.setHeaderColor("#ffffff")
-    tg.setBackgroundColor("#f8fafc")
-    tg.enableClosingConfirmation()
-    tg.MainButton.hide()
-
-    tg.BackButton.onClick(() => {
-      if (window.history.length > 1) {
-        window.history.back()
-      } else {
-        tg.close()
-      }
+  // Handlers for Opening Modals
+  const handleShowProductDetails = (product) => {
+    if (!product || !product.id) return
+    window.Telegram?.WebApp?.HapticFeedback.impactOccurred("light")
+    openModal("productDetail", {
+      product: product,
+      productId: product.id,
+      onAddToCart: addToCart,
+      favoriteIds: favoriteIds,
+      onToggleFavorite: toggleFavorite,
+      onSelectAlternative: (alternativeId) => handleShowProductDetails({ id: alternativeId }),
     })
-  }, [])
-
-  // --- Handlers ---
-  const handleCityChange = async (city) => {
-    if (!city || isChangingCity) return
-    setIsChangingCity(true)
-    setIsCityPopoverOpen(false)
-    try {
-      await userService.updateProfile({ selected_city_id: city.id })
-      onProfileUpdate()
-      window?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("success")
-    } catch {
-      console.warn("City change failed")
-      window?.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("error")
-    } finally {
-      setIsChangingCity(false)
-    }
   }
 
-  // --- JSX ---
-  return (
-    <>
-      <div ref={sentinelRef} id="page-top-sentinel" style={{ height: 0, visibility: "hidden" }} aria-hidden="true" />
+  const handleShowDealDetails = (dealId) => {
+    if (!dealId) return
+    window.Telegram?.WebApp?.HapticFeedback.impactOccurred("light")
+    openModal("dealDetail", {
+      dealId,
+      onProductClick: (productId) => handleShowProductDetails({ id: productId }),
+      onSupplierClick: (supplierId) => handleShowSupplierDetails(supplierId),
+      onAddToCart: addToCart
+    })
+  }
 
+  const handleShowSupplierDetails = (supplierId) => {
+    if (!supplierId) return
+    window.Telegram?.WebApp?.HapticFeedback.impactOccurred("light")
+    openModal("supplierDetail", {
+      supplierId,
+      onAddToCart: addToCart,
+      onToggleFavorite: toggleFavorite,
+      favoriteIds
+    })
+  }
+
+  return (
+    <div className="w-full">
       <SearchPopover
         isOpen={isSearchPopoverOpen}
         onClose={() => setIsSearchPopoverOpen(false)}
@@ -126,59 +62,43 @@ const Header = ({ children }) => {
         isSearching={isSearching}
         searchError={searchError}
         searchResults={searchResults}
-        onShowAllResults={() => {
-          console.log("Navigate to all results for:", searchTerm)
-        }}
+        // Passed props for SearchResultsView
+        onShowProductDetails={handleShowProductDetails}
+        onShowDealDetails={handleShowDealDetails}
+        onShowSupplierDetails={handleShowSupplierDetails}
+        onAddToCart={addToCart}
+        onToggleFavorite={toggleFavorite}
+        favoriteIds={favoriteIds}
       />
 
-      <motion.header
-        animate={{ height: isCompact ? 80 : 120 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className={`sticky top-0 z-30 pt-[env(safe-area-inset-top, 16px)] glass-nav transition-all duration-300 ${isCompact ? 'shadow-md py-2' : 'shadow-sm py-4'}`}
-      >
-        <div className="px-3 sm:px-4 max-w-4xl mx-auto h-full flex items-center justify-between">
-          {/* Right Side: Logo and App Name */}
-          <div className="flex items-center gap-3">
-            <motion.img
-              src={appLogoImage}
-              alt="App Logo"
-              className="object-contain rounded-xl"
-              animate={{
-                width: isCompact ? 40 : 56,
-                height: isCompact ? 40 : 56,
-              }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            />
-            <motion.div
-              className="flex flex-col"
-              animate={{ opacity: isCompact ? 0 : 1, width: isCompact ? 0 : 'auto' }}
-              transition={{ duration: 0.2 }}
+      <header className="pt-8 pb-4 px-4 sm:px-0">
+        <div className="flex flex-col gap-1">
+          <motion.h1
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-3xl font-bold text-slate-900 tracking-tight"
+          >
+            {title || "الرئيسية"}
+          </motion.h1>
+          {description && (
+            <motion.p
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-slate-500 text-sm md:text-base font-medium"
             >
-              <span className="text-lg sm:text-xl font-bold text-gray-800 leading-tight truncate">معرض طبيب</span>
-              <span className="text-sm text-gray-500 leading-tight truncate">المستلزمات الطبية</span>
-            </motion.div>
-          </div>
-
-          {/* Left Side: Actions */}
-          <HeaderActions
-            isChangingCity={isChangingCity}
-            userProfile={userProfile}
-            telegramUser={telegramUser}
-            isCityPopoverOpen={isCityPopoverOpen}
-            setIsCityPopoverOpen={setIsCityPopoverOpen}
-            handleCityChange={handleCityChange}
-            preloadedCities={preloadedCities}
-            handleOpenProfileModal={() => openModal("profile", { telegramUser, userProfile })}
-            setIsSearchPopoverOpen={setIsSearchPopoverOpen}
-          />
+              {description}
+            </motion.p>
+          )}
         </div>
-      </motion.header>
 
-      {/* This is where the tab navigation below the header will be rendered */}
-      <div className="px-3 sm:px-4 max-w-4xl mx-auto">
-        {children}
-      </div>
-    </>
+        {children && (
+          <div className="mt-6">
+            {children}
+          </div>
+        )}
+      </header>
+    </div>
   )
 }
 

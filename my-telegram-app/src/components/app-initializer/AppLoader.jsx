@@ -64,11 +64,23 @@ const AppLoader = () => {
   // --- Initialize authentication and profile ---
   useEffect(() => {
     const init = async () => {
-      setStep("Authenticating...");
-      const isAuthenticated = authService.isAuthenticated();
+      setStep("تحقق من الجلسة...");
+
+      // Proactively try to restore session if no valid access token
+      let isAuthenticated = authService.isAuthenticated();
 
       if (!isAuthenticated) {
-        // If not authenticated, we'll show the welcome flow (or landing page now)
+        try {
+          const { getValidAccessToken } = await import("../../utils/tokenManager");
+          const token = await getValidAccessToken();
+          isAuthenticated = !!token;
+        } catch (err) {
+          console.log("No previous session found or refresh failed.");
+        }
+      }
+
+      if (!isAuthenticated) {
+        // If still not authenticated, we'll show the welcome flow (or landing page now)
         setIsLoading(false);
         return;
       }

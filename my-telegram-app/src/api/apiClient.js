@@ -84,7 +84,22 @@ async function apiClient(endpoint, { body, ...customConfig } = {}) {
 
   if (body) config.body = JSON.stringify(body);
 
-  const fullUrl = `${API_BASE_URL}/api/${endpoint}`;
+  // Ensure no double slash or missing slash between base and endpoint
+  const baseURL = API_BASE_URL.replace(/\/$/, ""); // Remove trailing slash if present
+  const apiPath = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+  // If API_BASE_URL already ends with /api, don't append it again if the endpoint doesn't need it.
+  // Actually, the simplest fix for the user's report is:
+  // If API_BASE_URL contains /api, assume it's the full base.
+  // BUT the existing code hardcoded /api/.
+  // Let's make it smart:
+
+  let fullUrl;
+  if (baseURL.endsWith('/api')) {
+    fullUrl = `${baseURL}${apiPath}`;
+  } else {
+    fullUrl = `${baseURL}/api${apiPath}`;
+  }
 
   try {
     let response = await fetch(fullUrl, config);

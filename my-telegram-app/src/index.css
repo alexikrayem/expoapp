@@ -5,8 +5,10 @@
 :root {
   --glass-border: rgba(255, 255, 255, 0.2);
   --glass-bg: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --glass-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --primary-blue: #2563eb;
+  --bg-minimal: #FBFBFB;
+  --text-main: #0f172a;
 }
 
 @font-face {
@@ -33,45 +35,35 @@
 }
 
 body {
-  font-family: 'Montaserat', sans-serif;
-  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-  background-size: 400% 400%;
-  animation: gradientBG 15s ease infinite;
+  font-family: 'Inter', 'Montaserat', sans-serif;
+  background-color: var(--bg-minimal);
+  color: var(--text-main);
   min-height: 100vh;
+  margin: 0;
 }
 
-@keyframes gradientBG {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
+/* Removed gradientBG keyframes */
 
 /* Glassmorphism Utilities */
 @layer components {
   .glass-panel {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] rounded-2xl;
+    @apply bg-white border border-slate-100 shadow-[0_8px_24px_rgba(0,0,0,0.04)] rounded-2xl;
   }
   
   .glass-card {
-    @apply bg-white/20 backdrop-blur-lg border border-white/40 shadow-lg rounded-xl transition-all duration-300 ease-out;
+    @apply bg-white border border-slate-100 shadow-sm rounded-xl transition-all duration-300 ease-out;
   }
   
   .glass-card:hover {
-    @apply transform -translate-y-2 shadow-2xl bg-white/40 border-white/60;
+    @apply -translate-y-1 shadow-md border-blue-100;
   }
 
   .glass-nav {
-    @apply bg-white/70 backdrop-blur-2xl border-b border-white/50 shadow-sm supports-[backdrop-filter]:bg-white/10;
+    @apply bg-white/80 backdrop-blur-xl border-b border-slate-100 shadow-sm supports-[backdrop-filter]:bg-white/80;
   }
 
   .glass-sidebar {
-    @apply bg-white/30 backdrop-blur-2xl border-r border-white/20 shadow-xl h-full;
+    @apply bg-slate-50 border-r border-slate-100 shadow-sm h-full;
   }
 
   .glass-button {

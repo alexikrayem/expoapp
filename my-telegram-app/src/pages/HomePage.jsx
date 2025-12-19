@@ -19,12 +19,10 @@ import { productService } from "../services/productService"
 import { motion, AnimatePresence } from "framer-motion"
 
 // Components
-import Header from "../components/layout/Header"
 import FeaturedSlider from "../components/FeaturedSlider"
 import ProductsTab from "../components/tabs/ProductsTab"
 import DealsTab from "../components/tabs/DealsTab"
 import SuppliersTab from "../components/tabs/SuppliersTab"
-import SearchResultsView from "../components/search/SearchResultsView"
 
 const HomePage = () => {
   // --- CONTEXT & GLOBAL DATA ---
@@ -153,131 +151,113 @@ const HomePage = () => {
   // --- RENDER METHOD ---
   return (
     <div className="pb-24">
-      <Header>
-        {!showSearchResults && (
-          <nav className="w-full flex justify-between gap-2 px-4 mt-4">
-            {tabs.map(({ id, label, icon: Icon }) => (
-              <motion.button
-                key={id}
-                onClick={() => handleSectionChange(id)}
-                whileTap={{ scale: 0.97 }}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
-                                    ${
-                                      activeSection === id
-                                        ? "bg-blue-600 text-white shadow"
-                                        : "bg-white text-gray-800 border border-gray-300 hover:bg-gray-100"
-                                    }`}
-              >
-                <Icon size={18} />
-                <span>{label}</span>
-              </motion.button>
-            ))}
-          </nav>
-        )}
-      </Header>
-
       <motion.main
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="p-4 max-w-4xl mx-auto"
+        className="p-0 max-w-4xl mx-auto"
       >
-        {showSearchResults ? (
-          <SearchResultsView
-            searchTerm={debouncedSearchTerm}
-            isSearching={isSearching}
-            error={searchError}
-            results={searchResults}
-            onShowProductDetails={handleShowProductDetails}
-            onShowDealDetails={handleShowDealDetails}
-            onShowSupplierDetails={handleShowSupplierDetails}
-            onAddToCart={addToCart}
-            onToggleFavorite={toggleFavorite}
-            favoriteIds={favoriteIds}
-          />
-        ) : (
-          <>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="my-6"
+        {/* Tabs Navigation - Always Visible */}
+        <nav className="w-full flex justify-between gap-2 mb-6">
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <motion.button
+              key={id}
+              onClick={() => handleSectionChange(id)}
+              whileTap={{ scale: 0.97 }}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300
+                                    ${activeSection === id
+                  ? "bg-blue-600 text-white shadow-[0_8px_16px_-4px_rgba(37,99,235,0.4)]"
+                  : "bg-white text-slate-500 border border-slate-100 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
+                }`}
             >
-              <FeaturedSlider
-                isLoading={isLoadingFeatured}
-                items={featuredItems}
-                onSlideClick={(item) => {
-                  if (item.type === "product") handleShowProductDetails(item)
-                  if (item.type === "deal") handleShowDealDetails(item.id)
-                  if (item.type === "supplier") handleShowSupplierDetails(item.id)
-                }}
-              />
-            </motion.div>
+              <Icon size={18} strokeWidth={activeSection === id ? 2.5 : 2} />
+              <span>{label}</span>
+            </motion.button>
+          ))}
+        </nav>
 
-            <AnimatePresence mode="wait">
-              {activeSection === "exhibitions" && (
-                <motion.div
-                  key="exhibitions"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <DealsTab
-                    deals={deals}
-                    isLoading={isLoadingDeals}
-                    error={dealError}
-                    onShowDetails={handleShowDealDetails}
-                  />
-                </motion.div>
-              )}
+        {/* Main Content Sections */}
+        <>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="my-6"
+          >
+            <FeaturedSlider
+              isLoading={isLoadingFeatured}
+              items={featuredItems}
+              onSlideClick={(item) => {
+                if (item.type === "product") handleShowProductDetails(item)
+                if (item.type === "deal") handleShowDealDetails(item.id)
+                if (item.type === "supplier") handleShowSupplierDetails(item.id)
+              }}
+            />
+          </motion.div>
 
-              {activeSection === "products" && (
-                <motion.div
-                  key="products"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ProductsTab
-                    products={products}
-                    isLoading={isLoadingProducts}
-                    error={productError}
-                    onLoadMore={loadMoreProducts}
-                    hasMorePages={hasMorePages}
-                    isLoadingMore={isLoadingMore}
-                    onAddToCart={addToCart}
-                    onToggleFavorite={toggleFavorite}
-                    onShowDetails={handleShowProductDetails}
-                    favoriteProductIds={favoriteIds}
-                    onFiltersChange={handleLocalFiltersChange} // Pass the single filter handler
-                    currentFilters={currentFilters} // Pass currentFilters as prop
-                    selectedCityId={userProfile?.selected_city_id}
-                    refreshProducts={refreshProducts}
-                  />
-                </motion.div>
-              )}
+          <AnimatePresence mode="wait">
+            {activeSection === "exhibitions" && (
+              <motion.div
+                key="exhibitions"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <DealsTab
+                  deals={deals}
+                  isLoading={isLoadingDeals}
+                  error={dealError}
+                  onShowDetails={handleShowDealDetails}
+                />
+              </motion.div>
+            )}
 
-              {activeSection === "suppliers" && (
-                <motion.div
-                  key="suppliers"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <SuppliersTab
-                    suppliers={suppliers}
-                    isLoading={isLoadingSuppliers}
-                    error={supplierError}
-                    onShowDetails={handleShowSupplierDetails}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </>
-        )}
+            {activeSection === "products" && (
+              <motion.div
+                key="products"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ProductsTab
+                  products={products}
+                  isLoading={isLoadingProducts}
+                  error={productError}
+                  onLoadMore={loadMoreProducts}
+                  hasMorePages={hasMorePages}
+                  isLoadingMore={isLoadingMore}
+                  onAddToCart={addToCart}
+                  onToggleFavorite={toggleFavorite}
+                  onShowDetails={handleShowProductDetails}
+                  favoriteProductIds={favoriteIds}
+                  onFiltersChange={handleLocalFiltersChange} // Pass the single filter handler
+                  currentFilters={currentFilters} // Pass currentFilters as prop
+                  selectedCityId={userProfile?.selected_city_id}
+                  refreshProducts={refreshProducts}
+                />
+              </motion.div>
+            )}
+
+            {activeSection === "suppliers" && (
+              <motion.div
+                key="suppliers"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <SuppliersTab
+                  suppliers={suppliers}
+                  isLoading={isLoadingSuppliers}
+                  error={supplierError}
+                  onShowDetails={handleShowSupplierDetails}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
       </motion.main>
     </div>
   )

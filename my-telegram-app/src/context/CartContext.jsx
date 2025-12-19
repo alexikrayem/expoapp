@@ -1,6 +1,7 @@
 // src/context/CartContext.jsx (NEW LOCAL STORAGE VERSION)
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useMiniCart } from './MiniCartContext';
+import { useToast } from './ToastContext';
 
 const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
@@ -9,6 +10,7 @@ const CART_STORAGE_KEY = 'my_app_cart';
 
 export const CartProvider = ({ children }) => {
     const { showMiniCartBar } = useMiniCart();
+    const { showToast } = useToast();
     const [cartItems, setCartItems] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -53,7 +55,10 @@ export const CartProvider = ({ children }) => {
             };
             return [...prevItems, newItem];
         });
-    }, [showMiniCartBar]);
+
+        // Show toast notification
+        showToast(`تمت إضافة ${product.name} إلى السلة`, 'success');
+    }, [showMiniCartBar, showToast]);
 
     const increaseQuantity = useCallback((productId) => {
         setCartItems(prev => prev.map(item => item.product_id === productId ? { ...item, quantity: item.quantity + 1 } : item));

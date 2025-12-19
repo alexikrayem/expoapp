@@ -73,70 +73,35 @@ const FavoritesPage = () => {
 
   return (
     <div className="pb-24">
-      {/* Sticky Header with Search + Filters */}
-      <div
-   className={`sticky top-0 z-20 pt-[env(safe-area-inset-top, 16px)] bg-white/95 backdrop-blur-sm transition-all ${
-     isCompact ? "shadow-md py-2" : "shadow-sm py-4"
-   }`}
->
-        <div className="max-w-4xl mx-auto px-4 flex flex-col gap-3">
-          {/* --- PREHEADER COMPONENT: Centered Logo + Brand Text --- */}
-<motion.div
-  className="flex items-center justify-center gap-2 sm:gap-3 w-full py-2 mt-4"
->
-  <img
-    src={appLogoImage}
-    alt="App Logo"
-    className="object-contain rounded-xl w-10 h-10 sm:w-12 sm:h-12 mt-6"
-  />
-  <div className="flex flex-col items-center text-center mt-6">
-    <span className="text-lg sm:text-xl font-bold text-gray-800 leading-tight truncate">
-      معرض طبيب
-    </span>
-    <span className="text-sm text-gray-500 leading-tight truncate">
-      المستلزمات الطبية
-    </span>
-  </div>
-</motion.div>
-
-          {/* Title */}
-          <div
-            className={`flex flex-col transition-all duration-300 ${
-              isCompact ? "text-gray-800 text-xl" : "text-gray-800 text-3xl"
-            }`}
-          >
-            <h1 className="font-bold text-gray-800 leading-tight">المفضلة</h1>
-            <p className="text-gray-500 text-sm">المنتجات التي قمت بحفظها.</p>
-          </div>
-
-          {/* --- Standard Search Input --- */}
-          <div className="relative w-full">
-            <input
-              type="text"
-              placeholder="ابحث في المفضلة..."
-              value={localSearchTerm}
-              onChange={(e) => setLocalSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
-              className="w-full h-10 pl-10 pr-10 border border-gray-300 rounded-2xl bg-gray-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-sm placeholder-gray-500"
-            />
-            <Search className="absolute right-3 top-0 bottom-0 m-auto h-5 w-5 text-gray-400" />
-            {localSearchTerm && (
-              <button
-                onClick={() => setLocalSearchTerm("")}
-                className="absolute left-3 top-0 bottom-0 m-auto h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-700"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Filter Bar */}
-          <ProductFilterBar
-            currentFilters={localFilters}
-            onFiltersChange={handleFiltersChange}
-            selectedCityId={userProfile?.selected_city_id}
+      {/* Search + Filters (retained local but simplified) */}
+      <div className="max-w-4xl mx-auto px-4 flex flex-col gap-4 mt-6">
+        {/* --- Standard Search Input --- */}
+        <div className="relative w-full">
+          <input
+            type="text"
+            placeholder="ابحث في المفضلة..."
+            value={localSearchTerm}
+            onChange={(e) => setLocalSearchTerm(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
+            className="w-full h-12 pl-12 pr-12 border border-slate-100 rounded-2xl bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-base placeholder-slate-400 shadow-sm"
           />
+          <Search className="absolute right-4 top-0 bottom-0 m-auto h-5 w-5 text-slate-400" />
+          {localSearchTerm && (
+            <button
+              onClick={() => setLocalSearchTerm("")}
+              className="absolute left-4 top-0 bottom-0 m-auto h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
+
+        {/* Filter Bar */}
+        <ProductFilterBar
+          currentFilters={localFilters}
+          onFiltersChange={handleFiltersChange}
+          selectedCityId={userProfile?.selected_city_id}
+        />
       </div>
 
       {/* --- Main Favorites Content --- */}

@@ -36,11 +36,10 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite, onShowDetails, is
 
     return (
         <motion.div
-            className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm overflow-hidden cursor-pointer flex flex-col z-0 border border-white/60 hover:border-blue-200/50 transition-colors"
+            className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden cursor-pointer flex flex-col z-0 border border-slate-100 hover:border-blue-200 transition-colors"
             whileHover={{
-                y: -6,
-                scale: 1.01,
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 15px rgba(255, 255, 255, 0.5)'
+                y: -4,
+                boxShadow: '0 12px 24px -10px rgba(0, 0, 0, 0.1)'
             }}
             whileTap={{ scale: 0.98 }}
             onClick={handleShowDetails}
@@ -64,25 +63,21 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite, onShowDetails, is
                 )}
                 <span className="text-xs text-gray-500 p-2 text-center image-placeholder-text" style={{ display: 'none', alignItems: 'center', justifyContent: 'center', height: '100%' }}>لا يمكن تحميل الصورة</span>
 
-                {/* Sale badge with animation */}
+                {/* Sale badge */}
                 {product.is_on_sale && (
-                    <motion.div
-                        initial={{ scale: 0, rotate: -12 }}
-                        animate={{ scale: 1, rotate: -12 }}
-                        className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg"
-                    >
+                    <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-0.5 rounded-lg text-[10px] font-bold shadow-sm">
                         تخفيض
-                    </motion.div>
+                    </div>
                 )}
 
-                {/* Enhanced favorite button */}
+                {/* Favorite button */}
                 <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={handleToggleFavorite}
-                    className="absolute top-2 right-2 p-2 bg-white/90 hover:bg-white rounded-full shadow-lg z-10 backdrop-blur-sm"
+                    className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white rounded-lg shadow-sm z-10 backdrop-blur-sm border border-slate-100"
                 >
-                    <Heart className={`h-5 w-5 transition-colors ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-400'}`} />
+                    <Heart className={`h-4 w-4 transition-colors ${isFavorite ? 'text-red-500 fill-red-500' : 'text-slate-400'}`} />
                 </motion.button>
             </div>
 
@@ -92,8 +87,6 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite, onShowDetails, is
                 </h3>
 
                 {/* Supplier name */}
-                <p className="text-xs text-gray-500 mb-2 truncate">{product.supplier_name}</p>
-
                 <div className="flex items-end justify-between mt-auto">
                     <div>
                         {product.is_on_sale && product.discount_price && (
@@ -107,10 +100,10 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite, onShowDetails, is
                     </div>
 
                     <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={handleAddToCart}
-                        className="p-2.5 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-600 rounded-full hover:from-blue-500 hover:to-indigo-500 hover:text-white transition-all duration-200 shadow-sm"
+                        className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200 border border-blue-100"
                     >
                         <ShoppingCart className="h-4 w-4" />
                     </motion.button>

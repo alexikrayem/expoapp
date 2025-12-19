@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { X, Heart, ShoppingCart, Share2, Info, ChevronRight, Check, AlertCircle, Loader2, Maximize2, Tag, Truck, ShieldCheck, Box } from "lucide-react"
+import { X, Heart, ShoppingCart, Share2, Info, ChevronRight, Check, AlertCircle, Loader2, Maximize2, Tag, Truck, ShieldCheck, Box, AlertTriangle, Store, Package, ChevronsRight } from "lucide-react"
 import { useCurrency } from "../../context/CurrencyContext"
 import { productService } from "../../services/productService"
 import { cityService } from "../../services/cityService"

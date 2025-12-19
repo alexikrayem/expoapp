@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import TelegramLoginWidget from '../components/TelegramLoginWidget';
 import LoginCarousel from '../components/LoginCarousel';
 import PersonalInfoForm from '../components/onboarding/PersonalInfoForm';
 import ProfessionalInfoForm from '../components/onboarding/ProfessionalInfoForm';
@@ -8,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
-// Mock Cities (Replace with useQueries or API call in real implementation if needed)
+// Mock Cities 
 const CITIES = [
     { id: 1, name: 'Dubai' },
     { id: 2, name: 'Abu Dhabi' },
@@ -21,13 +20,18 @@ const CITIES = [
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    const [view, setView] = useState('login'); // 'login' | 'register'
-    const [step, setStep] = useState(1); // 1: Personal, 2: Professional, 3: Clinic
-    const [authData, setAuthData] = useState(null);
-    const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(false);
 
-    // Consolidated Form State
+    // Auth Flow State: 'phone' -> 'otp' -> 'register'
+    const [view, setView] = useState('phone');
+    const [step, setStep] = useState(1); // Registration Wizard Step: 1, 2, 3
+
+    // Auth Data
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [otpCode, setOtpCode] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // Consolidated Registration Form Data
     const [formData, setFormData] = useState({
         // Personal
         full_name: '',
@@ -57,71 +61,87 @@ const LoginPage = () => {
         clinic_specialization: '',
         clinic_coordinates: null
     });
-
     const [formErrors, setFormErrors] = useState({});
 
-    const handleLoginSuccess = async (user) => {
+    // --- OTP Handlers ---
+
+    const handleSendOtp = async (e) => {
+        e.preventDefault();
+        setError(null);
+        if (!phoneNumber || phoneNumber.length < 9) {
+            setError("يرجى إدخال رقم هاتف صحيح");
+            return;
+        }
+
+        setLoading(true);
         try {
-            console.log("Telegram Auth Success:", user);
-            // Try to login directly
-            await authService.telegramLoginWidget(user);
-
-            // If checking user succeeds (200 OK), redirect
-            handleAuthSuccess(user);
+            const res = await authService.sendOtp(phoneNumber);
+            // In Dev, show code in alert or console for convenience
+            if (res.dev_code) console.log("Dev OTP Code:", res.dev_code);
+            setView('otp');
         } catch (err) {
-            console.error("Login Check Failed:", err);
+            console.error("Send OTP Error:", err);
+            setError(err.message || "فشل إرسال الرمز. يرجى المحاولة لاحقاً.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-            // Check if User Not Found (404) -> Register
-            if (err.response && err.response.status === 404) {
-                console.log("User not found, prompt registration");
-                setAuthData(user);
-                // Pre-fill name from Telegram
-                setFormData(prev => ({
-                    ...prev,
-                    full_name: [user.first_name, user.last_name].filter(Boolean).join(' ')
-                }));
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        setError(null);
+        if (!otpCode || otpCode.length !== 6) {
+            setError("يرجى إدخال الرمز المكون من 6 أرقام");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await authService.verifyOtp(phoneNumber, otpCode);
+
+            if (res.isNew) {
+                // New User -> Go to Registration Wizard
+                setFormData(prev => ({ ...prev, phone_number: phoneNumber })); // Pre-fill phone
                 setView('register');
-                setStep(1); // Start at step 1
+                setStep(1);
             } else {
-                setError("حدث خطأ في تسجيل الدخول. يرجى المحاولة مرة أخرى.");
+                // Existing User -> Success
+                handleAuthSuccess(res.userProfile);
             }
+        } catch (err) {
+            console.error("Verify OTP Error:", err);
+            setError(err.message || "رمز التحقق غير صحيح");
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleAuthSuccess = (user) => {
         if (window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'telegram_auth', user: user }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'auth_success', user }));
         } else {
             navigate('/');
         }
     };
 
-    const handleLoginError = (err) => {
-        console.error('Login Widget Error:', err);
-        setError("فشل الاتصال بتيليجرام");
-    };
+    // --- Registration Wizard Handlers ---
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-        // Clear error for field
-        if (formErrors[field]) {
-            setFormErrors(prev => ({ ...prev, [field]: null }));
-        }
+        if (formErrors[field]) setFormErrors(prev => ({ ...prev, [field]: null }));
     };
 
     const validateStep = (currentStep) => {
         const newErrors = {};
         if (currentStep === 1) {
             if (!formData.full_name) newErrors.full_name = "الاسم الكامل مطلوب";
-            if (!formData.phone_number) newErrors.phone_number = "رقم الهاتف مطلوب";
             if (!formData.address_line1) newErrors.address_line1 = "العنوان مطلوب";
             if (!formData.city) newErrors.city = "المدينة مطلوبة";
         }
-        if (currentStep === 3) { // Clinic Step
+        if (currentStep === 3) {
             if (!formData.clinic_name) newErrors.clinic_name = "اسم العيادة مطلوب";
             if (!formData.clinic_phone) newErrors.clinic_phone = "هاتف العيادة مطلوب";
         }
-
         setFormErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -136,40 +156,40 @@ const LoginPage = () => {
         if (step > 1) {
             setStep(prev => prev - 1);
         } else {
-            setView('login');
+            // Cancel registration, go back to login? Or logout?
+            // For now, reload to restart flow
+            window.location.reload();
         }
     };
 
     const handleRegister = async () => {
-        if (!validateStep(step)) return; // Validate final step
+        if (!validateStep(step)) return;
 
         setLoading(true);
         setError(null);
 
         try {
-            await authService.telegramRegister(authData, formData);
-            handleAuthSuccess(authData);
+            const res = await authService.registerWithPhone(phoneNumber, otpCode, formData);
+            handleAuthSuccess(res.userProfile);
         } catch (err) {
             console.error("Registration Error:", err);
-            setError(err.response?.data?.error || "فشل إنشاء الحساب. تأكد من البيانات.");
+            setError(err.message || "فشل إنشاء الحساب. تأكد من البيانات.");
         } finally {
             setLoading(false);
         }
     };
 
-    // Render Steps
     const renderStep = () => {
         switch (step) {
-            case 1:
-                return <PersonalInfoForm formData={formData} onInputChange={handleInputChange} errors={formErrors} cities={CITIES} />;
-            case 2:
-                return <ProfessionalInfoForm formData={formData} onInputChange={handleInputChange} errors={formErrors} cities={CITIES} />;
-            case 3:
-                return <ClinicInfoForm formData={formData} onInputChange={handleInputChange} errors={formErrors} cities={CITIES} />;
-            default:
-                return null;
+            case 1: return <PersonalInfoForm formData={formData} onInputChange={handleInputChange} errors={formErrors} cities={CITIES} />;
+            case 2: return <ProfessionalInfoForm formData={formData} onInputChange={handleInputChange} errors={formErrors} cities={CITIES} />;
+            case 3: return <ClinicInfoForm formData={formData} onInputChange={handleInputChange} errors={formErrors} cities={CITIES} />;
+            default: return null;
         }
     };
+
+    // --- UI Components ---
+    const inputClassName = `w-full px-5 py-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400 text-lg text-slate-900 bg-slate-50/50 hover:bg-white text-center tracking-wide`;
 
     return (
         <div className="min-h-screen flex font-['Inter',_sans-serif] bg-white text-slate-900" dir="rtl">
@@ -179,59 +199,112 @@ const LoginPage = () => {
                 <LoginCarousel />
             </div>
 
-            {/* Right Side: Form */}
+            {/* Right Side: Auth Forms */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 overflow-y-auto">
                 <AnimatePresence mode="wait">
-                    {view === 'login' ? (
+
+                    {/* View: Phone Input */}
+                    {view === 'phone' && (
                         <motion.div
-                            key="login"
+                            key="phone"
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.4 }}
-                            className="w-full max-w-sm flex flex-col"
+                            className="w-full max-w-sm flex flex-col items-center"
                         >
-                            {/* Login View Content */}
-                            <div className="mb-12 text-center lg:text-right">
-                                <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-50 text-blue-600 rounded-xl mb-6 shadow-sm ring-1 ring-blue-100">
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                </div>
-                                <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-2">تسجيل الدخول</h1>
-                                <p className="text-slate-500 text-sm leading-relaxed">
-                                    مرحباً بك! يرجى تسجيل الدخول للوصول إلى لوحة التحكم.
-                                </p>
+                            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 mb-8 shadow-sm ring-1 ring-blue-100">
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                             </div>
+                            <h1 className="text-3xl font-bold text-slate-900 mb-2">تسجيل الدخول</h1>
+                            <p className="text-slate-500 mb-8 text-center">أدخل رقم هاتفك للمتابعة</p>
 
-                            <div className="w-full mb-8">
-                                <div className="relative group">
-                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl opacity-20 group-hover:opacity-30 transition duration-500 blur"></div>
-                                    <div className="relative bg-white p-6 rounded-2xl ring-1 ring-slate-200 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] flex flex-col items-center justify-center min-h-[160px]">
-                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-6">الدخول السريع</p>
-                                        <TelegramLoginWidget
-                                            onLoginSuccess={handleLoginSuccess}
-                                            onError={handleLoginError}
-                                        />
-                                    </div>
+                            <form onSubmit={handleSendOtp} className="w-full space-y-6">
+                                <div>
+                                    <input
+                                        type="tel"
+                                        value={phoneNumber}
+                                        onChange={(e) => setPhoneNumber(e.target.value)}
+                                        placeholder="09xx xxx xxx"
+                                        className={inputClassName}
+                                        dir="ltr"
+                                        autoFocus
+                                    />
                                 </div>
-                            </div>
 
-                            {error && <p className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-lg border border-red-100">{error}</p>}
-                            <div className="text-center lg:text-right mt-auto">
-                                <p className="text-xs text-slate-400">
-                                    بالتسجيل، أنت توافق على <a href="#" className="text-blue-600 hover:text-blue-700 transition-colors">شروط الخدمة</a>.
-                                </p>
-                            </div>
+                                {error && <p className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-xl">{error}</p>}
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+                                >
+                                    {loading ? 'جاري الإرسال...' : 'إرسال رمز التحقق'}
+                                </button>
+                            </form>
+                            <p className="mt-8 text-xs text-slate-400">ستصلك رسالة نصية تحتوي على رمز التحقق</p>
                         </motion.div>
-                    ) : (
+                    )}
+
+                    {/* View: OTP Verification */}
+                    {view === 'otp' && (
+                        <motion.div
+                            key="otp"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="w-full max-w-sm flex flex-col items-center"
+                        >
+                            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 mb-8 shadow-sm ring-1 ring-blue-100">
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
+                            <h1 className="text-3xl font-bold text-slate-900 mb-2">تأكيد الرمز</h1>
+                            <p className="text-slate-500 mb-8 text-center">أدخل الرمز المرسل إلى {phoneNumber}</p>
+
+                            <form onSubmit={handleVerifyOtp} className="w-full space-y-6">
+                                <div>
+                                    <input
+                                        type="text"
+                                        value={otpCode}
+                                        onChange={(e) => setOtpCode(e.target.value)}
+                                        placeholder="---- --"
+                                        className={`${inputClassName} tracking-[0.5em] text-2xl font-mono`}
+                                        maxLength="6"
+                                        dir="ltr"
+                                        autoFocus
+                                        autoComplete="one-time-code"
+                                    />
+                                </div>
+
+                                {error && <p className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-xl">{error}</p>}
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all disabled:opacity-70"
+                                >
+                                    {loading ? 'جاري التحقق...' : 'دخول'}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setView('phone')}
+                                    className="w-full py-3 text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors"
+                                >
+                                    تغيير رقم الهاتف
+                                </button>
+                            </form>
+                        </motion.div>
+                    )}
+
+                    {/* View: Registration Wizard (Same as before) */}
+                    {view === 'register' && (
                         <motion.div
                             key="register"
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.4 }}
                             className="w-full max-w-lg"
                         >
-                            {/* Registration Wizard Header */}
                             <div className="mb-8 border-b border-slate-100 pb-4 flex justify-between items-center">
                                 <div>
                                     <h2 className="text-2xl font-bold text-slate-900">إكمال التسجيل</h2>
@@ -242,7 +315,6 @@ const LoginPage = () => {
                                 </button>
                             </div>
 
-                            {/* Step Content */}
                             <div className="bg-white rounded-2xl p-1 mb-6 min-h-[400px]">
                                 {renderStep()}
                             </div>
@@ -251,24 +323,18 @@ const LoginPage = () => {
 
                             <div className="flex gap-4">
                                 {step < 3 ? (
-                                    <button
-                                        onClick={handleNext}
-                                        className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all"
-                                    >
+                                    <button onClick={handleNext} className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all">
                                         متابعة
                                     </button>
                                 ) : (
-                                    <button
-                                        onClick={handleRegister}
-                                        disabled={loading}
-                                        className="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-all disabled:opacity-70"
-                                    >
+                                    <button onClick={handleRegister} disabled={loading} className="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-all disabled:opacity-70">
                                         {loading ? 'جاري الإنشاء...' : 'إتمام التسجيل'}
                                     </button>
                                 )}
                             </div>
                         </motion.div>
                     )}
+
                 </AnimatePresence>
             </div>
         </div>

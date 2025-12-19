@@ -1,6 +1,5 @@
 import { ensureValidToken } from "../utils/tokenManager"
-import { setTokens } from "../api/apiClient"
-import { apiClient } from "../api/apiClient"
+import { setTokens, apiClient } from "../api/apiClient"
 import * as WebBrowser from "expo-web-browser"
 import * as Linking from "expo-linking"
 
@@ -13,7 +12,40 @@ const getServerBaseUrl = () => {
 }
 
 export const authService = {
-  // Telegram Login Widget authentication
+  // --- Phone Number OTP Auth ---
+
+  sendOtp: async (phoneNumber: string) => {
+    // Note: apiClient automatically appends API_BASE_URL
+    // so we pass 'auth/send-otp' -> ${API_BASE_URL}/auth/send-otp
+    // This assumes API_BASE_URL ends with /api. 
+    // If not, we might need to adjust, but based on apiClient.ts it seems generic.
+    // However, apiClient is a wrapper that does JSON stringify etc.
+    // Let's use apiClient directly.
+    return apiClient("auth/send-otp", {
+      method: "POST",
+      body: { phone_number: phoneNumber },
+    })
+  },
+
+  verifyOtp: async (phoneNumber: string, code: string) => {
+    const data = await apiClient("auth/verify-otp", {
+      method: "POST",
+      body: { phone_number: phoneNumber, code },
+    })
+
+    // If successful and tokens returned (existing user), they are auto-saved by apiClient
+    return data
+  },
+
+  registerWithPhone: async (phoneNumber: string, code: string, profileData: any) => {
+    const data = await apiClient("auth/register-phone", {
+      method: "POST",
+      body: { phone_number: phoneNumber, code, profileData },
+    })
+    return data
+  },
+
+  // Telegram Login Widget authentication (Legacy/Web View Handoff)
   telegramLoginWidget: async (authData: any) => {
     const headers: Record<string, string> = { "Content-Type": "application/json" }
 
@@ -28,7 +60,7 @@ export const authService = {
       let error: any = { message: `Request failed with status ${response.status}` }
       try {
         error = await response.json()
-      } catch (_) {}
+      } catch (_) { }
       error.status = response.status
       console.log("[v0] Login error:", error)
       throw error
@@ -44,7 +76,7 @@ export const authService = {
     return data
   },
 
-  // Production: Open hosted Telegram Widget in WebBrowser
+  // Production: Open hosted Telegram Widget in WebBrowser (Legacy)
   loginWithTelegram: async () => {
     try {
       const serverBaseUrl = getServerBaseUrl()
@@ -77,7 +109,6 @@ export const authService = {
   // Check if user is authenticated (has valid tokens)
   isAuthenticated: async () => {
     try {
-      // Much cleaner!
       const token = await ensureValidToken()
       return !!token
     } catch (error) {
@@ -87,7 +118,6 @@ export const authService = {
 
   // Get current user profile (using JWT tokens)
   getProfile: () => {
-    // This will use the stored JWT tokens
     return apiClient("user/profile")
   },
 }

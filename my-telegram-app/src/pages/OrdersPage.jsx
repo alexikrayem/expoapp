@@ -29,12 +29,12 @@ const OrderFilterBar = ({ activeFilter, setActiveFilter }) => {
             <button
               key={filter.key}
               onClick={() => setActiveFilter(filter.key)}
-              className={`relative flex-shrink-0 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isSelected ? "text-white" : "text-gray-600 bg-gray-100 hover:bg-gray-200"}`}
+              className={`relative flex-shrink-0 px-5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isSelected ? "text-white" : "text-slate-600 bg-white border border-slate-100 hover:bg-slate-50"}`}
             >
               {isSelected && (
                 <motion.div
                   layoutId="activeOrderStatusPill"
-                  className="absolute inset-0 bg-blue-600 rounded-full"
+                  className="absolute inset-0 bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20"
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               )}
@@ -66,10 +66,10 @@ const CheckoutCard = () => {
   const isAuthenticated = (hasTelegramUser || hasUserProfile) && hasItems;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8 border border-blue-200">
-      <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <h2 className="text-xl font-bold text-gray-800">سلة التسوق الحالية</h2>
-        <p className="text-sm text-gray-600">جاهزة للإرسال</p>
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-8 border border-slate-100">
+      <div className="p-5 border-b border-slate-100">
+        <h2 className="text-xl font-bold text-slate-900">سلة التسوق الحالية</h2>
+        <p className="text-sm text-slate-500">جاهزة للإرسال</p>
       </div>
       <div className="p-4 space-y-3 max-h-60 overflow-y-auto">
         {cartItems.map((item) => (
@@ -109,8 +109,8 @@ const CheckoutCard = () => {
         <div className="space-y-2">
           {!isAuthenticated && hasItems && (
             <div className="text-center text-xs text-red-600 mb-2">
-              {!hasTelegramUser && !hasUserProfile 
-                ? "يرجى تسجيل الدخول أولاً" 
+              {!hasTelegramUser && !hasUserProfile
+                ? "يرجى تسجيل الدخول أولاً"
                 : "سلة التسوق فارغة"}
             </div>
           )}
@@ -155,16 +155,14 @@ const OrdersPage = () => {
   }
 
   return (
-    <div className="p-4 max-w-4xl mx-auto pb-24">
-      <header className="mb-6 mt-4">
-        <h1 className="text-3xl font-bold text-gray-800">الطلبات</h1>
-        <p className="text-gray-500 mt-1">راجع طلباتك الحالية والسابقة.</p>
-      </header>
-
+    <div className="p-0 max-w-4xl mx-auto pb-24 min-h-screen">
       <CheckoutCard />
 
-      <div className="my-4">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">سجل الطلبات</h2>
+      <div className="my-8">
+        <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+          سجل الطلبات
+          <div className="h-px flex-1 bg-slate-100"></div>
+        </h2>
         <OrderFilterBar activeFilter={activeFilter} setActiveFilter={setActiveFilter} />
       </div>
 

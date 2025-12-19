@@ -183,11 +183,16 @@ app.use('/api/supplier', supplierRoutes);
 // 3. JWT AUTHENTICATION MIDDLEWARE - Apply only to routes that need protection
 // Apply validation only to routes that should be protected (not /api/auth)
 app.use('/api', (req, res, next) => {
+  // Debug logging
+  console.log(`[Middleware] Path: ${req.path}, Method: ${req.method}, Url: ${req.url}, BaseUrl: ${req.baseUrl}`);
+
   // Skip JWT validation for auth routes only
   if (req.path.startsWith('/auth')) {
+    console.log('[Middleware] Skipping JWT for auth route');
     return next();
   }
   // For other routes, apply the JWT validation
+  console.log('[Middleware] Validating JWT for:', req.path);
   validateTelegramAuth(req, res, next);
 });
 console.log('🔒 JWT Authentication Middleware is now active for protected routes (excluding auth).');

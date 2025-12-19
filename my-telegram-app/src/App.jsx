@@ -16,6 +16,9 @@ const OrdersPage = React.lazy(() => import('./pages/OrdersPage'));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 
+import { ToastProvider } from './context/ToastContext';
+import ToastContainer from './components/common/Toast';
+
 // Create a client
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -42,27 +45,28 @@ function App() {
     return (
         <div className="App">
             <QueryClientProvider client={queryClient}>
-                {/* These providers do NOT depend on user data, so they can live on the outside. */}
-                <CurrencyProvider>
-                    <ModalProvider>
-                        <Router>
-                            <Suspense fallback={<PageLoader />}>
-                                <Routes>
-                                    {/* AppInitializer will now render the rest of the providers inside it */}
-                                    <Route element={<AppInitializer />}>
-                                        <Route path="/login" element={<LoginPage />} />
-                                        <Route element={<AppLayout />}>
-                                            <Route path="/" element={<HomePage />} />
-                                            <Route path="/favorites" element={<FavoritesPage />} />
-                                            <Route path="/orders" element={<OrdersPage />} />
-                                            <Route path="/settings" element={<SettingsPage />} />
+                <ToastProvider>
+                    <CurrencyProvider>
+                        <ModalProvider>
+                            <Router>
+                                <Suspense fallback={<PageLoader />}>
+                                    <ToastContainer />
+                                    <Routes>
+                                        <Route element={<AppInitializer />}>
+                                            <Route path="/login" element={<LoginPage />} />
+                                            <Route element={<AppLayout />}>
+                                                <Route path="/" element={<HomePage />} />
+                                                <Route path="/favorites" element={<FavoritesPage />} />
+                                                <Route path="/orders" element={<OrdersPage />} />
+                                                <Route path="/settings" element={<SettingsPage />} />
+                                            </Route>
                                         </Route>
-                                    </Route>
-                                </Routes>
-                            </Suspense>
-                        </Router>
-                    </ModalProvider>
-                </CurrencyProvider>
+                                    </Routes>
+                                </Suspense>
+                            </Router>
+                        </ModalProvider>
+                    </CurrencyProvider>
+                </ToastProvider>
             </QueryClientProvider>
         </div>
     );

@@ -83,15 +83,15 @@ const MiniCartBar = () => {
   }
 
   return (
-    <div className="fixed bottom-16 left-0 right-0 z-40 flex flex-col items-center pointer-events-none" dir="rtl">
-      <div className="w-full max-w-4xl px-3 sm:px-4 pointer-events-auto">
+    <div className="fixed bottom-16 md:bottom-12 left-0 right-0 md:right-64 z-40 flex flex-col items-center pointer-events-none transition-all duration-300" dir="rtl">
+      <div className="w-full max-w-4xl px-3 sm:px-4 md:px-12 pointer-events-auto">
         <AnimatePresence>
           {isExpanded && (
             <motion.div
               initial={{ opacity: 0, y: 20, height: 0 }}
               animate={{ opacity: 1, y: 0, height: "auto" }}
               exit={{ opacity: 0, y: 20, height: 0 }}
-              className="bg-white rounded-t-xl shadow-xl w-full mb-2 overflow-hidden"
+              className="bg-white rounded-t-2xl shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.15)] w-full mb-0 overflow-hidden border border-slate-100 border-b-0"
             >
               <div className="max-h-64 overflow-y-auto p-4">
                 <div className="space-y-3">

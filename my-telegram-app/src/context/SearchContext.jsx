@@ -13,7 +13,8 @@ export const SearchProvider = ({ children, cityId }) => {
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState({ products: { items: [], totalItems: 0 }, deals: [], suppliers: [] });
     const [searchError, setSearchError] = useState(null);
-    const [showResults, setShowResults] = useState(false); // The state variable
+    const [showResults, setShowResults] = useState(false);
+    const [isSearchPopoverOpen, setIsSearchPopoverOpen] = useState(false);
 
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
@@ -57,8 +58,9 @@ export const SearchProvider = ({ children, cityId }) => {
         isSearching,
         searchResults,
         searchError,
-        // FIX: The property name is `showSearchResults`, and its value is the state `showResults`.
         showSearchResults: showResults,
+        isSearchPopoverOpen,
+        setIsSearchPopoverOpen,
         handleSearchTermChange,
         clearSearch,
         debouncedSearchTerm,

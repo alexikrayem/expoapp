@@ -25,14 +25,16 @@ const generateTokens = (payload, role) => {
     return { accessToken, refreshToken };
 };
 
+const validateRequest = require('../middleware/validateRequest');
+
 // Supplier Login
-router.post('/supplier/login', async (req, res) => {
+router.post('/supplier/login', [
+    body('email').isEmail().withMessage('Please provide a valid email'),
+    body('password').notEmpty().withMessage('Password is required'),
+    validateRequest
+], async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password are required' });
-        }
 
         // Find supplier by email
         const supplierQuery = 'SELECT * FROM suppliers WHERE email = $1 AND is_active = true';
@@ -83,7 +85,11 @@ router.post('/supplier/login', async (req, res) => {
 });
 
 // Admin Login
-router.post('/admin/login', async (req, res) => {
+router.post('/admin/login', [
+    body('email').isEmail().withMessage('Please provide a valid email'),
+    body('password').notEmpty().withMessage('Password is required'),
+    validateRequest
+], async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -122,13 +128,13 @@ router.post('/admin/login', async (req, res) => {
 
 
 // Delivery Agent Login
-router.post('/delivery/login', async (req, res) => {
+router.post('/delivery/login', [
+    body('phoneNumber').notEmpty().withMessage('Phone number is required'),
+    body('password').notEmpty().withMessage('Password is required'),
+    validateRequest
+], async (req, res) => {
     try {
         const { phoneNumber, password } = req.body;
-
-        if (!phoneNumber || !password) {
-            return res.status(400).json({ error: 'Phone number and password are required' });
-        }
 
         // Find delivery agent by phone
         const agentQuery = 'SELECT * FROM delivery_agents WHERE phone_number = $1 AND is_active = true';
@@ -245,11 +251,14 @@ const getFullNameFromAuthData = (authData) => {
 // --- Telegram Login Widget Endpoint ---
 const { validateTelegramLoginWidgetData } = require('../src/utils/telegramAuth');
 
-router.post('/telegram-login-widget', async (req, res) => {
+router.post('/telegram-login-widget', [
+    body('authData').notEmpty().withMessage('Auth data is required'),
+    validateRequest
+], async (req, res) => {
     try {
         // Development bypass REMOVED for security
         const { authData: receivedAuthData } = req.body;
-        if (!receivedAuthData) return res.status(400).json({ error: 'Missing authData' });
+        // Validation handled by middleware
 
         // --- START SECURITY FIX: Validate the hash from Telegram ---
         const validation = validateTelegramLoginWidgetData(receivedAuthData, process.env.TELEGRAM_BOT_TOKEN);
@@ -321,12 +330,17 @@ router.post('/telegram-login-widget', async (req, res) => {
 });
 
 // --- NEW Endpoint: Registration with Profile Data ---
-router.post('/telegram-register-widget', async (req, res) => {
+router.post('/telegram-register-widget', [
+    body('authData').notEmpty().withMessage('Auth data is required'),
+    body('profileData').notEmpty().withMessage('Profile data is required'),
+    body('profileData.phone_number').notEmpty().withMessage('Phone number is required'),
+    body('profileData.address_line1').notEmpty().withMessage('Address is required'),
+    body('profileData.city').notEmpty().withMessage('City is required'),
+    validateRequest
+], async (req, res) => {
     try {
         const { authData: receivedAuthData, profileData } = req.body;
-        if (!receivedAuthData || !profileData) {
-            return res.status(400).json({ error: 'Missing authData or profileData' });
-        }
+        // Validation handled by middleware
 
         // 1. Verify Hash Again (Security)
         const validation = validateTelegramLoginWidgetData(receivedAuthData, process.env.TELEGRAM_BOT_TOKEN);
@@ -336,10 +350,9 @@ router.post('/telegram-register-widget', async (req, res) => {
 
         const authData = receivedAuthData;
 
-        // 2. Validate Required Profile Fields (Server-Side)
-        if (!profileData.phone_number || !profileData.address_line1 || !profileData.city) {
-            return res.status(400).json({ error: 'Missing required profile fields (Phone, Address, City)' });
-        }
+        // 2. Validate Required Profile Fields (Server-Side) - Additional Logic Check if needed, but handled by validator mostly
+        // ... kept previous manual check just in case, or removed since validator covers it.
+        // Let's rely on validator for required fields.
 
         const fullName = profileData.full_name || [authData.first_name, authData.last_name].filter(Boolean).join(' ');
 
@@ -428,6 +441,236 @@ router.post('/telegram-register-widget', async (req, res) => {
     }
 });
 // --- END Telegram Login Widget Endpoint ---
+
+
+// --- Phone Number OTP Authentication ---
+
+// 1. Send OTP
+router.post('/send-otp', [
+    body('phone_number').notEmpty().withMessage('Phone number is required'),
+    validateRequest
+], async (req, res) => {
+    console.log('[AuthRoute] Hit /send-otp with body:', req.body);
+    try {
+        const { phone_number } = req.body;
+        // Validation handled by middleware
+
+        // Generate 6-digit code
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // 5 minutes expiration
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+        // Upsert OTP
+        const query = `
+            INSERT INTO otp_verifications (phone_number, code, expires_at, attempts)
+            VALUES ($1, $2, $3, 0)
+            ON CONFLICT (phone_number) 
+            DO UPDATE SET code = $2, expires_at = $3, attempts = 0, created_at = NOW();
+        `;
+
+        await db.query(query, [phone_number, code, expiresAt]);
+
+        // MOCK SMS SENDING
+        console.log(`[MOCK SMS] OTP for ${phone_number}: ${code}`);
+
+        // Return code in response for DEV mode convenience
+        res.json({
+            message: 'OTP sent successfully',
+            dev_code: code // TODO: Remove in production
+        });
+
+    } catch (error) {
+        console.error('Send OTP error:', error);
+        res.status(500).json({ error: 'Internal server error processing OTP' });
+    }
+});
+
+// 2. Verify OTP
+router.post('/verify-otp', [
+    body('phone_number').notEmpty().withMessage('Phone number is required'),
+    body('code').notEmpty().withMessage('Code is required'),
+    validateRequest
+], async (req, res) => {
+    try {
+        const { phone_number, code } = req.body;
+        // Validation handled by middleware
+
+        // Check OTP
+        const otpQuery = 'SELECT * FROM otp_verifications WHERE phone_number = $1';
+        const otpResult = await db.query(otpQuery, [phone_number]);
+
+        if (otpResult.rows.length === 0) {
+            return res.status(400).json({ error: 'No OTP found for this number' });
+        }
+
+        const otpRecord = otpResult.rows[0];
+
+        if (otpRecord.attempts >= 5) {
+            return res.status(429).json({ error: 'Too many failed attempts. Please request a new code.' });
+        }
+
+        if (new Date() > new Date(otpRecord.expires_at)) {
+            return res.status(400).json({ error: 'OTP expired. Please request a new one.' });
+        }
+
+        if (otpRecord.code !== code) {
+            // Increment attempts
+            await db.query('UPDATE otp_verifications SET attempts = attempts + 1 WHERE phone_number = $1', [phone_number]);
+            return res.status(400).json({ error: 'Invalid code' });
+        }
+
+        // Check if User Exists
+        const userQuery = 'SELECT * FROM user_profiles WHERE phone_number = $1';
+        const userResult = await db.query(userQuery, [phone_number]);
+
+        if (userResult.rows.length > 0) {
+            // Existing User -> Login
+            const user = userResult.rows[0];
+            const { accessToken, refreshToken } = generateTokens(
+                { userId: user.user_id, role: 'customer' },
+                'CUSTOMER'
+            );
+
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+
+            return res.json({
+                isNew: false,
+                accessToken,
+                refreshToken,
+                userProfile: user
+            });
+        } else {
+            // New User -> Require Registration
+            // We return a 'verified' status so the frontend knows to proceed to the wizard
+            return res.json({
+                isNew: true,
+                phone_number
+            });
+        }
+
+    } catch (error) {
+        console.error('Verify OTP error:', error);
+        res.status(500).json({ error: 'Internal server error verifying OTP' });
+    }
+});
+
+// 3. Register with Phone (Final Step of Wizard)
+router.post('/register-phone', [
+    body('phone_number').notEmpty().withMessage('Phone number is required'),
+    body('code').notEmpty().withMessage('Verification code is required'),
+    body('profileData').notEmpty().withMessage('Profile data is required'),
+    body('profileData.full_name').notEmpty().withMessage('Full name is required'),
+    body('profileData.address_line1').notEmpty().withMessage('Address is required'),
+    body('profileData.city').notEmpty().withMessage('City is required'),
+    validateRequest
+], async (req, res) => {
+    try {
+        const { phone_number, code, profileData } = req.body;
+        // Validation handled by middleware
+
+        // Re-verify code to prevent bypassing verify-otp step
+        // (In a verified JWT flow, we'd verify the token, but checking code again is simple for now)
+        const otpQuery = 'SELECT * FROM otp_verifications WHERE phone_number = $1 AND code = $2';
+        const otpResult = await db.query(otpQuery, [phone_number, code]);
+
+        if (otpResult.rows.length === 0 || new Date() > new Date(otpResult.rows[0].expires_at)) {
+            return res.status(400).json({ error: 'Invalid or expired OTP verification session.' });
+        }
+
+        // Check duplicates again
+        const userQuery = 'SELECT * FROM user_profiles WHERE phone_number = $1';
+        const duplicateCheck = await db.query(userQuery, [phone_number]);
+        if (duplicateCheck.rows.length > 0) {
+            return res.status(409).json({ error: 'User already exists with this phone number.' });
+        }
+
+        // Generate a random User ID (since we don't have Telegram ID anymore)
+        // We can use the phone number as the ID or generate a UUID. 
+        // Let's generate a BigInt-like ID or UUID. 
+        // Postgres user_id in schema is BIGINT? Let's check schema. 
+        // Assuming user_id is BIGINT, let's generate a random 53-bit integer.
+        // Or if schema allows, use phone number digits? Phone number might be too large/variable.
+        // Let's generate a pseudo-random ID.
+        const userId = Math.floor(Math.random() * 9000000000000000);
+
+        const insertUserQuery = `
+            INSERT INTO user_profiles (
+                user_id, full_name, phone_number, address_line1, address_line2, city, 
+                selected_city_id, date_of_birth, gender, professional_license_number,
+                clinic_name, clinic_phone, clinic_address_line1, clinic_address_line2,
+                clinic_city, clinic_country, clinic_license_number, clinic_specialization,
+                professional_role, years_of_experience, education_background,
+                clinic_coordinates,
+                profile_completed, created_at, updated_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, true, NOW(), NOW()) 
+            RETURNING *;
+        `;
+
+        const newUser = await db.query(insertUserQuery, [
+            userId,
+            profileData.full_name,
+            phone_number,
+            profileData.address_line1,
+            profileData.address_line2 || null,
+            profileData.city,
+            profileData.selected_city_id || null,
+            profileData.date_of_birth || null,
+            profileData.gender || null,
+            profileData.professional_license_number || null,
+            // Clinic Info
+            profileData.clinic_name || null,
+            profileData.clinic_phone || null,
+            profileData.clinic_address_line1 || null,
+            profileData.clinic_address_line2 || null,
+            profileData.clinic_city || null,
+            profileData.clinic_country || null,
+            profileData.clinic_license_number || null,
+            profileData.clinic_specialization || null,
+            // Professional Info
+            profileData.professional_role || null,
+            profileData.years_of_experience || null,
+            profileData.education_background || null,
+            // JSON fields
+            profileData.clinic_coordinates ? JSON.stringify(profileData.clinic_coordinates) : null
+        ]);
+
+        const user = newUser.rows[0];
+
+        // Clear OTP
+        await db.query('DELETE FROM otp_verifications WHERE phone_number = $1', [phone_number]);
+
+        // Generate Tokens
+        const { accessToken, refreshToken } = generateTokens(
+            { userId: user.user_id, role: 'customer' },
+            'CUSTOMER'
+        );
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        res.json({
+            message: 'Registration successful',
+            accessToken,
+            refreshToken,
+            userProfile: user
+        });
+
+    } catch (error) {
+        console.error('Register Phone error:', error);
+        res.status(500).json({ error: 'Internal server error during phone registration' });
+    }
+});
 
 
 

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext } from 'react';
 import { useModal } from './ModalContext';
 import { useCart } from './CartContext';
+import { useToast } from './ToastContext';
 import { userService } from '../services/userService';
 import { orderService } from '../services/orderService';
 import { emitter } from '../utils/emitter';
@@ -11,17 +12,18 @@ export const useCheckout = () => useContext(CheckoutContext);
 export const CheckoutProvider = ({ children }) => {
     const { openModal, closeModal } = useModal();
     const { cartItems, actions: cartActions, getCartTotal } = useCart();
+    const { showToast } = useToast();
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
     const [checkoutError, setCheckoutError] = useState(null);
-    
+
     const startCheckout = async (userProfile, telegramUser, onProfileUpdate) => {
         // Check if user is authenticated by checking for both telegramUser.id and userProfile.userId
         const isAuthenticated = telegramUser?.id || (userProfile && userProfile.userId);
         if (!isAuthenticated || cartItems.length === 0) {
-            alert('سلة التسوق فارغة أو لم يتم تسجيل الدخول');
+            showToast('سلة التسوق فارغة أو لم يتم تسجيل الدخول', 'error');
             return;
         }
-        
+
         // Prepare initial form data from user profile and Telegram data
         const initialFormData = {
             fullName: userProfile?.full_name || `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
@@ -30,13 +32,13 @@ export const CheckoutProvider = ({ children }) => {
             addressLine2: userProfile?.address_line2 || '',
             city: userProfile?.city || userProfile?.selected_city_name || '',
         };
-        
+
         // Check if user has complete profile
-        const hasCompleteProfile = userProfile?.full_name && 
-                                 userProfile?.phone_number && 
-                                 userProfile?.address_line1 && 
-                                 userProfile?.city;
-        
+        const hasCompleteProfile = userProfile?.full_name &&
+            userProfile?.phone_number &&
+            userProfile?.address_line1 &&
+            userProfile?.city;
+
         if (hasCompleteProfile) {
             // Show confirmation with option to edit
             openModal('addressConfirmation', {
@@ -53,7 +55,7 @@ export const CheckoutProvider = ({ children }) => {
 
     const showAddressModal = (initialFormData, onProfileUpdate) => {
         setCheckoutError(null);
-        
+
         openModal('address', {
             initialData: initialFormData,
             onSaveAndProceed: (addressData) => handleSaveAddressAndProceed(addressData, onProfileUpdate),
@@ -66,7 +68,7 @@ export const CheckoutProvider = ({ children }) => {
     const handleSaveAddressAndProceed = async (addressData, onProfileUpdate) => {
         setIsPlacingOrder(true);
         setCheckoutError(null);
-        
+
         try {
             // Save profile first
             await userService.updateProfile({
@@ -76,16 +78,16 @@ export const CheckoutProvider = ({ children }) => {
                 address_line2: addressData.addressLine2,
                 city: addressData.city
             });
-            
+
             // Update profile in parent component
             if (onProfileUpdate) {
                 await onProfileUpdate();
             }
-            
+
             // Close address modal and proceed with order
             closeModal();
             await proceedWithOrder(addressData, onProfileUpdate);
-            
+
         } catch (err) {
             console.error('Error saving profile:', err);
             setCheckoutError(err.message || 'فشل في حفظ البيانات');
@@ -97,7 +99,7 @@ export const CheckoutProvider = ({ children }) => {
     const proceedWithOrder = async (addressData, onProfileUpdate) => {
         setIsPlacingOrder(true);
         setCheckoutError(null);
-        
+
         try {
             const orderData = {
                 items: cartItems.map(item => ({
@@ -115,28 +117,30 @@ export const CheckoutProvider = ({ children }) => {
                     city: addressData.city
                 }
             };
-            
+
             const orderResult = await orderService.createOrderFromCart(orderData);
-            
+
             // Clear cart
             cartActions.clearCart();
-            
+
             // Emit order placed event for other components
             emitter.emit('order-placed', orderResult);
-            
+
+            showToast('تم إرسال طلبك بنجاح', 'success');
+
             // Show success modal
-            openModal('orderConfirmation', { 
+            openModal('orderConfirmation', {
                 orderDetails: orderResult,
                 customerInfo: addressData
             });
-            
+
             // Telegram haptic feedback
             window.Telegram?.WebApp?.HapticFeedback.notificationOccurred('success');
-            
+
         } catch (err) {
             console.error('Order creation error:', err);
             setCheckoutError(err.message || 'فشل في إنشاء الطلب');
-            
+
             // Show error and allow retry
             openModal('address', {
                 initialData: addressData,
@@ -145,19 +149,19 @@ export const CheckoutProvider = ({ children }) => {
                 isSaving: false,
                 availableCities: ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al-Quwain', 'Ras Al-Khaimah', 'Fujairah']
             });
-            
+
             window.Telegram?.WebApp?.HapticFeedback.notificationOccurred('error');
         } finally {
             setIsPlacingOrder(false);
         }
     };
 
-    const value = { 
-        isPlacingOrder, 
+    const value = {
+        isPlacingOrder,
         startCheckout,
-        checkoutError 
+        checkoutError
     };
-    
+
     return (
         <CheckoutContext.Provider value={value}>
             {children}

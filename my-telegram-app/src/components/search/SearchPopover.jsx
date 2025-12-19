@@ -1,9 +1,8 @@
-// src/components/search/SearchPopover.jsx
 import React, { useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import DOMPurify from "dompurify"
 import MainSearchBar from "./MainSearchBar"
-import QuickSearchResults from "./QuickSearchResults"
+import SearchResultsView from "./SearchResultsView"
 
 const SearchPopover = ({
   isOpen,
@@ -14,7 +13,12 @@ const SearchPopover = ({
   isSearching,
   searchError,
   searchResults,
-  onShowAllResults,
+  onShowProductDetails,
+  onShowDealDetails,
+  onShowSupplierDetails,
+  onAddToCart,
+  onToggleFavorite,
+  favoriteIds,
 }) => {
   const searchInputRef = useRef(null)
 
@@ -35,48 +39,37 @@ const SearchPopover = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/40 z-40"
-            aria-hidden="true"
-          />
-          <motion.div
-            key="search-popover"
-            initial={{ opacity: 0, y: -40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -40 }}
-            transition={{ type: "spring", stiffness: 350, damping: 30 }}
-            className="fixed top-0 left-0 right-0 z-50 p-3 pt-[calc(env(safe-area-inset-top,0.75rem)+0.75rem)]"
+            className="fixed inset-0 z-50 p-4 pt-4 flex flex-col pointer-events-none"
           >
-            <div className="bg-white rounded-2xl shadow-xl max-w-4xl mx-auto flex flex-col">
-              <div className="p-3 border-b border-gray-200">
+            {/* Backdrop logic handles click outside if needed, but the container below covers most */}
+            <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col h-full max-h-[90vh] pointer-events-auto border border-white/20">
+              <div className="p-4 border-b border-gray-100 flex-shrink-0">
                 <MainSearchBar
                   isVisible={true}
-                  isCompact={true}
+                  isCompact={false}
                   searchTerm={searchTerm}
                   onSearchTermChange={(e) => onSearchTermChange(DOMPurify.sanitize(e.target.value))}
                   onClearSearch={onClearSearch}
-                  onFocus={() => {}}
-                  onBlur={() => {}}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      onShowAllResults()
-                      onClose()
-                    }
-                  }}
+                  onFocus={() => { }}
+                  onBlur={() => { }}
+                  onKeyDown={(e) => { }} // Remove enter to navigation logic
                   inputRef={searchInputRef}
                 />
               </div>
 
-              <div className="min-h-[200px]">
-                <QuickSearchResults
+              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <SearchResultsView
+                  searchTerm={searchTerm}
                   isSearching={isSearching}
                   error={searchError}
                   results={searchResults}
-                  searchTerm={searchTerm}
-                  onShowAllResults={() => {
-                    onShowAllResults()
-                    onClose()
-                  }}
+                  // Pass through the props we added to Header
+                  onShowProductDetails={onShowProductDetails}
+                  onShowDealDetails={onShowDealDetails}
+                  onShowSupplierDetails={onShowSupplierDetails}
+                  onAddToCart={onAddToCart}
+                  onToggleFavorite={onToggleFavorite}
+                  favoriteIds={favoriteIds}
                 />
               </div>
             </div>
