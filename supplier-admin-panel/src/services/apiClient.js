@@ -161,3 +161,4 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+export { getAccessToken, getRefreshToken, setTokens, clearTokens };

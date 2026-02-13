@@ -1,5 +1,6 @@
 "use client"
 
+import "react-native-reanimated"
 import "../global.css"
 import FontAwesome from "@expo/vector-icons/FontAwesome"
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native"
@@ -8,7 +9,6 @@ import { Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold } from "@expo-go
 import { Stack, useRouter, useSegments } from "expo-router"
 import * as SplashScreen from "expo-splash-screen"
 import { useEffect, useState } from "react"
-import "react-native-reanimated"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { QueryClient, QueryClientProvider, MutationCache, QueryCache } from "@tanstack/react-query"
 
@@ -26,6 +26,8 @@ import EnhancedOnboardingModal from "@/components/modals/EnhancedOnboardingModal
 import OfflineOverlay from "@/components/OfflineOverlay"
 import ErrorBoundary from "@/components/ErrorBoundary"
 import { emitter } from "@/utils/emitter"
+import { logDevDiagnostics } from "@/utils/devDiagnostics"
+import LoadingScreen from "@/components/ui/LoadingScreen"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,19 +91,27 @@ export default function RootLayout() {
   }, [error])
 
   useEffect(() => {
+    logDevDiagnostics()
+  }, [])
+
+  useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync()
 
       // Set default font for all Text components using defaultProps
-      const { Text } = require("react-native")
+      const { Text, TextInput } = require("react-native")
       const defaultFontFamily = { fontFamily: "TajawalCustom" }
 
-      // Store original defaultProps
-      const oldDefaultProps = Text.defaultProps
-      Text.defaultProps = {
-        ...(oldDefaultProps || {}),
-        style: [defaultFontFamily, oldDefaultProps?.style],
+      const applyDefaultFont = (Component: any) => {
+        const oldDefaultProps = Component.defaultProps
+        Component.defaultProps = {
+          ...(oldDefaultProps || {}),
+          style: [defaultFontFamily, oldDefaultProps?.style],
+        }
       }
+
+      applyDefaultFont(Text)
+      applyDefaultFont(TextInput)
     }
   }, [loaded])
 
@@ -201,19 +211,19 @@ function RootLayoutNav() {
   }
 
   if (isLoading) {
-    return null
+    return <LoadingScreen message="جاري التحقق من الحساب..." />
   }
 
   const inLogin = segments[0] === "login"
   if (!isAuthenticated && !inLogin) {
-    return null
+    return <LoadingScreen message="جاري تحويلك لصفحة تسجيل الدخول..." />
   }
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <OfflineOverlay />
       <Stack>
-        {isAuthenticated && <Stack.Screen name="(tabs)" options={{ headerShown: false }} />}
+        {isAuthenticated ? <Stack.Screen name="(tabs)" options={{ headerShown: false }} /> : null}
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
         <Stack.Screen name="cart" options={{ presentation: "modal" }} />
         <Stack.Screen name="checkout" options={{ presentation: "modal" }} />

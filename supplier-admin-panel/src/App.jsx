@@ -29,7 +29,7 @@ const initializeTelegramWebApp = () => {
 
 // Helper to check authentication status
 const isAuthenticated = () => {
-    const token = localStorage.getItem('supplierToken');
+    const token = localStorage.getItem('supplierAccessToken') || localStorage.getItem('supplierToken');
     // TODO: Add token validation/expiry check here for more security
     return !!token;
 };

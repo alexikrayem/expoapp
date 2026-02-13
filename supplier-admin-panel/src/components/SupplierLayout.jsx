@@ -10,6 +10,7 @@ import {
     Menu,
     X
 } from 'lucide-react';
+import apiClient, { clearTokens, getRefreshToken } from '../services/apiClient';
 
 const SupplierLayout = () => {
     const navigate = useNavigate();
@@ -37,16 +38,26 @@ const SupplierLayout = () => {
         }
     }, [navigate]);
 
-    const handleLogout = () => {
-        localStorage.removeItem('supplierToken');
-        localStorage.removeItem('supplierInfo');
+    const handleLogout = async () => {
+        try {
+            const refreshToken = getRefreshToken();
+            if (refreshToken) {
+                await apiClient.post('/api/auth/logout', { refreshToken });
+            }
+        } catch (error) {
+            // Ignore logout failures, clear local session anyway
+            console.error('Logout error:', error);
+        } finally {
+            clearTokens();
+            localStorage.removeItem('supplierInfo');
 
-        const tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.close();
+            const tg = window.Telegram?.WebApp;
+            if (tg) {
+                tg.close();
+            }
+
+            navigate('/login');
         }
-
-        navigate('/login');
     };
 
     const navItems = [

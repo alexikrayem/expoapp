@@ -45,6 +45,8 @@ class TelegramBotService {
         }
 
         try {
+            const senderOnly = process.env.TELEGRAM_SENDER_ONLY === 'true';
+
             // Create bot instance
             this.bot = new TelegramBot(token, { 
                 polling: false, // Never use polling initially
@@ -55,14 +57,19 @@ class TelegramBotService {
             const botInfo = await this.bot.getMe();
             console.log(`✅ Telegram Bot connected: @${botInfo.username}`);
             
-            // Choose initialization method based on environment
-            if (this.useWebhook && this.webhookUrl) {
-                await this.initializeWebhook();
+            if (!senderOnly) {
+                // Choose initialization method based on environment
+                if (this.useWebhook && this.webhookUrl) {
+                    await this.initializeWebhook();
+                } else {
+                    await this.initializePolling();
+                }
+                
+                this.setupBotHandlers();
             } else {
-                await this.initializePolling();
+                console.log('✅ Telegram Bot initialized in sender-only mode');
             }
-            
-            this.setupBotHandlers();
+
             this.isInitialized = true;
             console.log(`✅ Telegram Bot fully initialized (${this.useWebhook ? 'webhook' : 'polling'} mode)`);
             

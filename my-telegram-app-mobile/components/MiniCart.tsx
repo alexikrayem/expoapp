@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useCallback } from "react"
-import { View, TouchableOpacity, ScrollView } from "react-native"
+import { View, ScrollView } from "react-native"
 import { Image } from "expo-image"
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated"
 import Text from "@/components/ThemedText"
@@ -9,6 +9,7 @@ import { useCart } from "@/context/CartContext"
 import { useCurrency } from "@/context/CurrencyContext"
 import { ArrowRight, ChevronUp, ChevronDown } from "lucide-react-native"
 import { useRouter } from "expo-router"
+import PressableScale from "@/components/ui/PressableScale"
 
 const CartItem = React.memo(({ item, formatPrice }: { item: any; formatPrice: (price: number) => string }) => (
   <View className="flex-row items-center p-3 border-b border-border last:border-0">
@@ -72,13 +73,14 @@ export default function MiniCart() {
         >
           <View className="p-4 border-b border-border bg-gray-50/50 flex-row justify-between items-center">
             <Text className="font-bold text-text-main">محتويات السلة ({itemCount})</Text>
-            <TouchableOpacity
+            <PressableScale
               onPress={toggleExpand}
+              scaleTo={0.92}
               className="p-1"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <ChevronDown size={20} color="#64748b" />
-            </TouchableOpacity>
+            </PressableScale>
           </View>
 
           <ScrollView className="max-h-64" showsVerticalScrollIndicator={true}>
@@ -90,15 +92,16 @@ export default function MiniCart() {
       )}
 
       {/* Main Bar */}
-      <TouchableOpacity
+      <PressableScale
         onPress={handleNavigateToCart}
-        activeOpacity={0.9}
+        scaleTo={0.98}
         className="bg-blue-600 rounded-full p-4 shadow-xl flex-row items-center justify-between"
       >
         <View className="flex-row items-center">
-          <TouchableOpacity
+          <PressableScale
             onPress={toggleExpand}
-            className="bg-white/20 p-2 rounded-lg mr-3 relative active:bg-white/30"
+            scaleTo={0.92}
+            className="bg-white/20 p-2 rounded-lg mr-3 relative"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             {isExpanded ? <ChevronDown size={24} color="white" /> : <ChevronUp size={24} color="white" />}
@@ -107,7 +110,7 @@ export default function MiniCart() {
                 <Text className="text-white text-xs font-bold">{itemCount}</Text>
               </View>
             )}
-          </TouchableOpacity>
+          </PressableScale>
           <View>
             <Text className="text-white text-xs font-medium opacity-90">المجموع</Text>
             <Text className="text-white text-lg font-bold">{formatPrice(total)}</Text>
@@ -118,7 +121,7 @@ export default function MiniCart() {
           <Text className="text-white font-medium mr-2">إتمام الطلب</Text>
           <ArrowRight size={16} color="white" />
         </View>
-      </TouchableOpacity>
+      </PressableScale>
     </View>
   )
 }

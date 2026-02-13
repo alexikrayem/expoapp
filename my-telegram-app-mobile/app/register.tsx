@@ -3,13 +3,9 @@
 import { useState } from "react"
 import {
     View,
-    TouchableOpacity,
-    ActivityIndicator,
     Alert,
     StyleSheet,
-    Image,
     I18nManager,
-    TextInput,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -17,9 +13,10 @@ import {
 
 import { SafeAreaView } from "react-native-safe-area-context"
 import Text from "@/components/ThemedText"
+import { Input } from "@/components/ui/Input"
+import { Button } from "@/components/ui/Button"
 import { useAuth } from "@/context/AuthContext"
 import { Redirect, router, useLocalSearchParams } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
 import { authService } from "@/services/authService"
 
 const isRTL = I18nManager.isRTL
@@ -88,47 +85,37 @@ export default function RegisterScreen() {
                         </View>
 
                         <View style={styles.form}>
+                            <Input
+                                label="الاسم الكامل"
+                                placeholder="الاسم الكامل"
+                                value={fullName}
+                                onChangeText={setFullName}
+                                className={isRTL ? "text-right" : "text-left"}
+                            />
 
-                            {/* Full Name */}
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.label}>الاسم الكامل</Text>
-                                <TextInput
-                                    style={[styles.input, isRTL && { textAlign: 'right' }]}
-                                    placeholder="الاسم الكامل"
-                                    value={fullName}
-                                    onChangeText={setFullName}
-                                />
-                            </View>
+                            <Input
+                                label="المدينة"
+                                placeholder="اسم مدينتك"
+                                value={city}
+                                onChangeText={setCity}
+                                className={isRTL ? "text-right" : "text-left"}
+                            />
 
-                            {/* City */}
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.label}>المدينة</Text>
-                                <TextInput
-                                    style={[styles.input, isRTL && { textAlign: 'right' }]}
-                                    placeholder="اسم مدينتك"
-                                    value={city}
-                                    onChangeText={setCity}
-                                />
-                            </View>
+                            <Input
+                                label="العنوان"
+                                placeholder="عنوان التوصيل"
+                                value={address}
+                                onChangeText={setAddress}
+                                className={isRTL ? "text-right" : "text-left"}
+                            />
 
-                            {/* Address */}
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.label}>العنوان</Text>
-                                <TextInput
-                                    style={[styles.input, isRTL && { textAlign: 'right' }]}
-                                    placeholder="عنوان التوصيل"
-                                    value={address}
-                                    onChangeText={setAddress}
-                                />
-                            </View>
-
-                            <TouchableOpacity
-                                style={styles.button}
+                            <Button
+                                title="إنشاء الحساب"
                                 onPress={handleRegister}
-                                disabled={loading}
-                            >
-                                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>إنشاء الحساب</Text>}
-                            </TouchableOpacity>
+                                loading={loading}
+                                size="lg"
+                                className="mt-2"
+                            />
 
                         </View>
                     </ScrollView>
@@ -149,30 +136,4 @@ const styles = StyleSheet.create({
     subtitle: { fontSize: 16, color: '#64748b' },
 
     form: { gap: 20 },
-    inputGroup: { gap: 8 },
-    label: { fontSize: 14, fontWeight: '700', color: '#334155', textAlign: isRTL ? 'right' : 'left' },
-    input: {
-        backgroundColor: '#fff',
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        borderRadius: 12,
-        padding: 16,
-        fontSize: 16,
-        color: '#0f172a'
-    },
-
-    button: {
-        height: 56,
-        backgroundColor: '#0ea5e9',
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 16,
-        shadowColor: '#0ea5e9',
-        shadowOpacity: 0.3,
-        shadowOffset: { width: 0, height: 4 },
-        shadowRadius: 8,
-        elevation: 4
-    },
-    buttonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
 })

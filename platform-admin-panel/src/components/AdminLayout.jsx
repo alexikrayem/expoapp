@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, ShoppingBag, Tag, Settings, LogOut, FileText } from 'lucide-react'; // Added Users, Tag, FileText
+import { adminApiClient, clearTokens, getRefreshToken } from '../api/adminApiClient';
 
 
 const AdminLayout = () => {
@@ -9,10 +10,20 @@ const AdminLayout = () => {
     const location = useLocation(); // To highlight active link
     const adminInfo = JSON.parse(localStorage.getItem('adminInfo'));
 
-    const handleLogout = () => {
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('adminInfo');
-        navigate('/login');
+    const handleLogout = async () => {
+        try {
+            const refreshToken = getRefreshToken();
+            if (refreshToken) {
+                await adminApiClient.post('/api/auth/logout', { refreshToken });
+            }
+        } catch (error) {
+            // Ignore logout failures, clear local session anyway
+            console.error('Logout error:', error);
+        } finally {
+            clearTokens();
+            localStorage.removeItem('adminInfo');
+            navigate('/login');
+        }
     };
 
     const navItems = [

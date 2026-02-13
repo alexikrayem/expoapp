@@ -4,6 +4,7 @@ const { body, param, validationResult } = require('express-validator');
 const router = express.Router();
 const db = require('../config/db');
 const telegramBotService = require('../services/telegramBot');
+const { enqueueOrderNotification } = require('../services/notificationQueue');
 
 // Validation middleware for order operations
 const validateCreateOrder = [
@@ -39,18 +40,37 @@ router.post('/from-cart', validateCreateOrder, async (req, res) => {
         try {
             await client.query('BEGIN');
 
-            // Step 1: Verify all products exist and have sufficient stock
+            // Step 1: Verify all products exist and have sufficient stock (single query, row-locked)
+            const requestedQuantityByProduct = new Map();
             for (const item of items) {
-                const productQuery = 'SELECT id, name, stock_level, supplier_id FROM products WHERE id = $1';
-                const productResult = await client.query(productQuery, [item.product_id]);
-                
-                if (productResult.rows.length === 0) {
+                const currentQty = requestedQuantityByProduct.get(item.product_id) || 0;
+                requestedQuantityByProduct.set(item.product_id, currentQty + item.quantity);
+            }
+
+            const uniqueProductIds = Array.from(requestedQuantityByProduct.keys());
+            const productsQuery = `
+                SELECT id, name, stock_level, supplier_id
+                FROM products
+                WHERE id = ANY($1::int[])
+                FOR UPDATE
+            `;
+            const productsResult = await client.query(productsQuery, [uniqueProductIds]);
+
+            if (productsResult.rows.length !== uniqueProductIds.length) {
+                const foundIds = new Set(productsResult.rows.map((row) => row.id));
+                const missingIds = uniqueProductIds.filter((id) => !foundIds.has(id));
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: `Product(s) not found: ${missingIds.join(', ')}` });
+            }
+
+            const productMap = new Map(productsResult.rows.map((row) => [row.id, row]));
+            for (const [productId, totalQuantity] of requestedQuantityByProduct.entries()) {
+                const product = productMap.get(productId);
+                if (!product) {
                     await client.query('ROLLBACK');
-                    return res.status(400).json({ error: `Product with ID ${item.product_id} not found` });
+                    return res.status(400).json({ error: `Product with ID ${productId} not found` });
                 }
-                
-                const product = productResult.rows[0];
-                if (product.stock_level < item.quantity) {
+                if (product.stock_level < totalQuantity) {
                     await client.query('ROLLBACK');
                     return res.status(409).json({ error: `Insufficient stock for product: ${product.name}` });
                 }
@@ -127,7 +147,10 @@ router.post('/from-cart', validateCreateOrder, async (req, res) => {
                         orderDate: new Date().toISOString()
                     };
                     
-                    await telegramBotService.sendOrderNotificationToDeliveryAgent(orderNotificationData);
+                    const queued = await enqueueOrderNotification(orderNotificationData);
+                    if (!queued) {
+                        await telegramBotService.sendOrderNotificationToDeliveryAgent(orderNotificationData);
+                    }
                 }
             } catch (notificationError) {
                 console.error('Failed to send order notification:', notificationError);

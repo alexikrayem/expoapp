@@ -1,11 +1,12 @@
 "use client"
 
 import React, { useCallback } from "react"
-import { View, TouchableOpacity, StyleSheet } from "react-native"
+import { View, StyleSheet } from "react-native"
 import { Image } from "expo-image"
 import Text from "@/components/ThemedText"
 import { Tag, Clock, ArrowRight } from "lucide-react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import PressableScale from "@/components/ui/PressableScale"
 
 interface DealCardProps {
   deal: any
@@ -21,10 +22,10 @@ const DealCard = React.memo(
     const dealImageUrl = deal.imageUrl || deal.image_url
 
     return (
-      <TouchableOpacity
+      <PressableScale
         className="bg-white rounded-3xl shadow-md mb-6 overflow-hidden border border-gray-100"
         onPress={handlePress}
-        activeOpacity={0.9}
+        scaleTo={0.98}
       >
         <View className="relative">
           {dealImageUrl?.startsWith("http") ? (
@@ -66,7 +67,7 @@ const DealCard = React.memo(
             <Text className="text-xs text-gray-400 font-medium">عرض خاص</Text>
           </View>
         </View>
-      </TouchableOpacity>
+      </PressableScale>
     )
   },
   (prevProps, nextProps) => {

@@ -225,7 +225,11 @@
 <a name='L160'></a><a href='#L160'>160</a>
 <a name='L161'></a><a href='#L161'>161</a>
 <a name='L162'></a><a href='#L162'>162</a>
-<a name='L163'></a><a href='#L163'>163</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -344,24 +348,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -388,7 +394,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Modal, Animated, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, Modal, Animated, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
@@ -397,6 +403,7 @@ import { X, MapPin, Check } from 'lucide-react-native';
 import { cityService } from '@/services/cityService';
 import { userService } from '@/services/userService';
 import { useAuth } from '@/context/AuthContext';
+import PressableScale from '@/components/ui/PressableScale';
 &nbsp;
 interface CitySelectionModalProps {
     visible: boolean;
@@ -473,10 +480,10 @@ export default function <span class="fstat-no" title="function not covered" >Cit
             navigationBarTranslucent
         &gt;
             &lt;View className="flex-1 justify-end bg-black/60 backdrop-blur-sm"&gt;
-                &lt;TouchableOpacity
-                    style={StyleSheet.absoluteFill}
-                    activeOpacity={1}
+                &lt;PressableScale
                     onPress={onClose}
+                    scaleTo={1}
+                    style={StyleSheet.absoluteFill}
                 /&gt;
                 &lt;Animated.View
                     style={{ transform: [{ translateY: slideAnim }] }}
@@ -492,13 +499,14 @@ export default function <span class="fstat-no" title="function not covered" >Cit
                             elevation: 2,
                         }}
                     &gt;
-                        &lt;TouchableOpacity
+                        &lt;PressableScale
                             onPress={onClose}
+                            scaleTo={0.92}
                             className="p-2 rounded-full bg-surface border border-border ml-4"
                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         &gt;
                             &lt;X size={20} color="#64748b" /&gt;
-                        &lt;/TouchableOpacity&gt;
+                        &lt;/PressableScale&gt;
                         &lt;Text className="text-xl font-bold text-text-main"&gt;اختر المدينة&lt;/Text&gt;
                         &lt;View className="w-10" /&gt;
                     &lt;/View&gt;
@@ -522,9 +530,10 @@ export default function <span class="fstat-no" title="function not covered" >Cit
                             renderItem={<span class="fstat-no" title="function not covered" >({</span> item }: { item: any }) =&gt; {
                                 const isSelected = <span class="cstat-no" title="statement not covered" >userProfile?.selected_city_id === item.id;</span>
 <span class="cstat-no" title="statement not covered" >                                return (</span>
-                                    &lt;TouchableOpacity
+                                    &lt;PressableScale
                                         onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >handleSelectCity(item)}</span>
                                         disabled={isUpdating}
+                                        scaleTo={0.98}
                                         className={`flex-row items-center justify-between p-4 mb-3 rounded-2xl border active:scale-[0.99] ${isSelected
                                             ? 'bg-primary-50 border-primary-200'
                                             : 'bg-white border-border'
@@ -539,7 +548,7 @@ export default function <span class="fstat-no" title="function not covered" >Cit
                                         &lt;View className={`p-2.5 rounded-xl ml-3 ${isSelected ? 'bg-primary-100' : 'bg-surface border border-border'}`}&gt;
                                             &lt;MapPin size={20} color={isSelected ? '#2563EB' : '#94a3b8'} /&gt;
                                         &lt;/View&gt;
-                                    &lt;/TouchableOpacity&gt;
+                                    &lt;/PressableScale&gt;
                                 );
                             }}
                         /&gt;
@@ -556,7 +565,7 @@ export default function <span class="fstat-no" title="function not covered" >Cit
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-12T20:43:34.187Z
+                at 2026-02-12T11:40:20.952Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

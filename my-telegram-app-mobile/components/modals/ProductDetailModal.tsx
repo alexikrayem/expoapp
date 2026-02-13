@@ -1,6 +1,6 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useEffect } from 'react';
-import { View, Image, ScrollView, TouchableOpacity, Modal, StyleSheet, Platform, StatusBar } from 'react-native';
+import { View, Image, ScrollView, Modal, StyleSheet, Platform, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import Animated, {
@@ -24,6 +24,7 @@ import { useModal } from '@/context/ModalContext';
 import { useRelatedProducts } from '@/hooks/useRelatedProducts';
 import ProductCard from '@/components/ProductCard';
 import { RelatedProductsSection } from '@/components/RelatedProductsSection';
+import PressableScale from '@/components/ui/PressableScale';
 
 
 export default function ProductDetailModal({ show, onClose, product }: any) {
@@ -104,12 +105,13 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                     {/* Close Button */}
                     <View className="absolute top-4 right-4 z-10 rounded-full overflow-hidden shadow-sm">
                         <BlurView intensity={80} tint="light" className="p-2.5">
-                            <TouchableOpacity
+                            <PressableScale
                                 onPress={onClose}
+                                scaleTo={0.9}
                                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                             >
                                 <X size={22} color="#0f172a" />
-                            </TouchableOpacity>
+                            </PressableScale>
                         </BlurView>
                     </View>
 
@@ -146,13 +148,13 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                         ) : (
                             <>
                                 {/* Image */}
-                                <TouchableOpacity onPress={() => setImageViewerVisible(true)} activeOpacity={0.95}>
+                                <PressableScale onPress={() => setImageViewerVisible(true)} scaleTo={0.98}>
                                     <Image
                                         source={{ uri: displayProduct.image_url }}
                                         className="w-full h-96 bg-surface"
                                         resizeMode="cover"
                                     />
-                                </TouchableOpacity>
+                                </PressableScale>
 
                                 <View className="p-6 -mt-6 bg-white rounded-t-3xl shadow-sm">
                                     {/* Header */}
@@ -206,23 +208,23 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                             className="absolute left-0 right-0 p-4 border-t border-gray-200/50 flex-row gap-4"
                             style={{ bottom: 0, paddingBottom: insets.bottom + 16 }}
                         >
-                            <TouchableOpacity
+                            <PressableScale
                                 onPress={() => {
                                     haptics.light();
                                     toggleFavorite(displayProduct.id);
                                 }}
+                                scaleTo={0.92}
                                 className={`w-14 h-14 rounded-full flex items-center justify-center border ${isFavorite(displayProduct.id)
                                     ? 'bg-red-50 border-red-200'
                                     : 'bg-white/80 border-gray-300'
                                     }`}
-                                activeOpacity={0.8}
                             >
                                 <Heart
                                     size={26}
                                     color={isFavorite(displayProduct.id) ? "#EF4444" : "#64748b"}
                                     fill={isFavorite(displayProduct.id) ? "#EF4444" : "transparent"}
                                 />
-                            </TouchableOpacity>
+                            </PressableScale>
 
                             {/* Morphing Add to Cart / Quantity Button */}
                             <View className="flex-1 h-14 relative">
@@ -235,16 +237,17 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                                     ]}
                                     pointerEvents={quantity === 0 ? 'auto' : 'none'}
                                 >
-                                    <TouchableOpacity
+                                    <PressableScale
                                         onPress={() => {
                                             haptics.medium();
                                             setQuantity(1);
                                         }}
+                                        scaleTo={0.98}
                                         className="bg-blue-600 rounded-full flex-row justify-center items-center h-full active:opacity-80 shadow-lg shadow-blue-600/30"
                                     >
                                         <ShoppingCart size={20} color="white" style={{ marginRight: 8 }} />
                                         <Text className="text-white font-bold text-lg">إضافة للسلة</Text>
-                                    </TouchableOpacity>
+                                    </PressableScale>
                                 </Animated.View>
 
 
@@ -261,43 +264,45 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
 
                                         {/* Quantity Control Bar */}
                                         <View className="flex-1 bg-white/90 rounded-full border border-gray-300 flex-row items-center overflow-hidden shadow-sm">
-                                            <TouchableOpacity
+                                            <PressableScale
                                                 onPress={() => {
                                                     haptics.selection();
                                                     setQuantity(Math.max(0, quantity - 1));
                                                 }}
+                                                scaleTo={0.92}
                                                 className="h-full px-4 justify-center active:opacity-60"
                                             >
                                                 <Minus size={18} color="#4b5563" strokeWidth={2.5} />
-                                            </TouchableOpacity>
+                                            </PressableScale>
 
                                             <View className="flex-1 items-center justify-center">
                                                 <Text className="text-gray-900 font-bold text-xl">{quantity}</Text>
                                             </View>
 
-                                            <TouchableOpacity
+                                            <PressableScale
                                                 onPress={() => {
                                                     haptics.selection();
                                                     setQuantity(quantity + 1);
                                                 }}
+                                                scaleTo={0.92}
                                                 className="h-full px-4 justify-center active:opacity-60"
                                             >
                                                 <Plus size={18} color="#4b5563" strokeWidth={2.5} />
-                                            </TouchableOpacity>
+                                            </PressableScale>
                                         </View>
 
                                         {/* Confirm Button */}
-                                        <TouchableOpacity
+                                        <PressableScale
                                             onPress={() => {
                                                 haptics.success();
                                                 handleAddToCart();
                                             }}
+                                            scaleTo={0.98}
                                             className="bg-blue-600 px-6 rounded-full flex-row items-center justify-center active:bg-blue-700 h-full shadow-lg shadow-blue-600/30"
-                                            activeOpacity={0.9}
                                         >
                                             <Check size={20} color="white" style={{ marginLeft: 4 }} />
                                             <Text className="text-white font-bold text-base">تأكيد</Text>
-                                        </TouchableOpacity>
+                                        </PressableScale>
 
                                     </View>
                                 </Animated.View>

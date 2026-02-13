@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Modal, ScrollView } from 'react-native';
 import Text from '@/components/ThemedText';
 import { CheckCircle, Edit3, MapPin, User, Phone } from 'lucide-react-native';
+import PressableScale from '@/components/ui/PressableScale';
 
 interface AddressConfirmationModalProps {
     visible: boolean;
@@ -67,27 +68,30 @@ export default function AddressConfirmationModal({
 
                     {/* Action Buttons */}
                     <View className="space-y-3">
-                        <TouchableOpacity
+                        <PressableScale
                             onPress={onConfirmAndProceed}
-                            className="w-full bg-green-600 py-4 rounded-xl shadow-lg shadow-green-500/20 items-center active:scale-[0.98]"
+                            scaleTo={0.98}
+                            className="w-full bg-green-600 py-4 rounded-xl shadow-lg shadow-green-500/20 items-center"
                         >
                             <Text className="text-white font-bold text-lg">تأكيد وإتمام الطلب</Text>
-                        </TouchableOpacity>
+                        </PressableScale>
 
-                        <TouchableOpacity
+                        <PressableScale
                             onPress={onEditAddress}
-                            className="w-full bg-surface py-3.5 rounded-xl flex-row items-center justify-center border border-border active:bg-gray-50"
+                            scaleTo={0.98}
+                            className="w-full bg-surface py-3.5 rounded-xl flex-row items-center justify-center border border-border"
                         >
                             <Edit3 size={18} color="#374151" className="mr-2" />
                             <Text className="text-text-main font-bold">تعديل العنوان</Text>
-                        </TouchableOpacity>
+                        </PressableScale>
 
-                        <TouchableOpacity
+                        <PressableScale
                             onPress={onCancel}
+                            scaleTo={0.98}
                             className="w-full py-2 items-center mt-1"
                         >
                             <Text className="text-text-secondary text-sm font-medium">إلغاء</Text>
-                        </TouchableOpacity>
+                        </PressableScale>
                     </View>
                 </View>
             </View>

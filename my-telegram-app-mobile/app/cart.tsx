@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, TouchableOpacity } from 'react-native';
+import { View, Image } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
@@ -8,6 +8,8 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { Minus, Plus, Trash2, ArrowRight, ShoppingBag } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
+import { Button } from '@/components/ui/Button';
+import PressableScale from '@/components/ui/PressableScale';
 
 export default function CartScreen() {
     const { cartItems, actions, getCartTotal } = useCart();
@@ -21,12 +23,11 @@ export default function CartScreen() {
                     <ShoppingBag size={64} color="#9CA3AF" />
                     <Text className="text-xl font-bold text-gray-800 mt-4">سلة التسوق فارغة</Text>
                     <Text className="text-gray-500 mt-2 text-center">أضف بعض المنتجات لتبدأ التسوق</Text>
-                    <TouchableOpacity
+                    <Button
+                        title="تصفح المنتجات"
                         onPress={() => router.back()}
-                        className="mt-8 bg-blue-600 px-8 py-3 rounded-xl"
-                    >
-                        <Text className="text-white font-bold">تصفح المنتجات</Text>
-                    </TouchableOpacity>
+                        className="mt-8"
+                    />
                 </AnimatedScreen>
             </SafeAreaView>
         );
@@ -57,26 +58,29 @@ export default function CartScreen() {
 
                                 <View className="items-center">
                                     <View className="flex-row items-center bg-surface rounded-xl mb-2 border border-border">
-                                        <TouchableOpacity
+                                        <PressableScale
                                             onPress={() => actions.increaseQuantity(item.product_id)}
-                                            className="p-2 active:bg-gray-100 rounded-l-xl"
+                                            scaleTo={0.92}
+                                            className="p-2 rounded-l-xl"
                                         >
                                             <Plus size={16} color="#4B5563" />
-                                        </TouchableOpacity>
+                                        </PressableScale>
                                         <Text className="font-bold w-8 text-center text-text-main">{item.quantity}</Text>
-                                        <TouchableOpacity
+                                        <PressableScale
                                             onPress={() => actions.decreaseQuantity(item.product_id)}
-                                            className="p-2 active:bg-gray-100 rounded-r-xl"
+                                            scaleTo={0.92}
+                                            className="p-2 rounded-r-xl"
                                         >
                                             <Minus size={16} color="#4B5563" />
-                                        </TouchableOpacity>
+                                        </PressableScale>
                                     </View>
-                                    <TouchableOpacity
+                                    <PressableScale
                                         onPress={() => actions.removeItem(item.product_id)}
+                                        scaleTo={0.92}
                                         className="p-2 bg-red-50 rounded-full"
                                     >
                                         <Trash2 size={18} color="#EF4444" />
-                                    </TouchableOpacity>
+                                    </PressableScale>
                                 </View>
                             </View>
                         )}
@@ -88,13 +92,13 @@ export default function CartScreen() {
                         <Text className="text-2xl font-bold text-primary-600">{formatPrice(getCartTotal())}</Text>
                         <Text className="text-text-secondary font-medium text-lg">المجموع الكلي:</Text>
                     </View>
-                    <TouchableOpacity
+                    <Button
+                        title="متابعة الشراء"
                         onPress={() => router.push('/checkout')}
-                        className="bg-primary-600 py-4 rounded-2xl flex-row justify-center items-center shadow-lg shadow-primary-500/30 active:scale-[0.98]"
-                    >
-                        <Text className="text-white font-bold text-lg mr-2">متابعة الشراء</Text>
-                        <ArrowRight size={20} color="white" />
-                    </TouchableOpacity>
+                        size="lg"
+                        className="shadow-lg shadow-primary-500/30"
+                        rightIcon={<ArrowRight size={20} color="#ffffff" />}
+                    />
                 </View>
             </AnimatedScreen>
         </SafeAreaView>

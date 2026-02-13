@@ -14,7 +14,7 @@ import ManageFeaturedListsPage from './pages/ManageFeaturedListsPage';
 
 
 const isAdminAuthenticated = () => {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem('adminAccessToken') || localStorage.getItem('adminToken');
     // TODO: Add token validation/expiry check
     return !!token;
 };

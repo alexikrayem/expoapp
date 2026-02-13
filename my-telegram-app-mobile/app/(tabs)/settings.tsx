@@ -1,6 +1,6 @@
 /// <reference types="nativewind/types" />
 import React, { useState } from 'react';
-import { View, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
 import { useModal } from '@/context/ModalContext';
@@ -9,11 +9,13 @@ import { User, Briefcase, FileText, Shield, Share2, ChevronLeft, MessageSquare, 
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import CitySelectionModal from '@/components/modals/CitySelectionModal';
 import { useRouter } from 'expo-router';
+import PressableScale from '@/components/ui/PressableScale';
 
 const SettingItem = ({ icon: Icon, title, subtitle, onPress, color }: any) => (
-  <TouchableOpacity
+  <PressableScale
     onPress={onPress}
-    className="flex-row items-center p-4 bg-white active:bg-gray-50 transition-colors"
+    scaleTo={0.98}
+    className="flex-row items-center p-4 bg-white"
   >
     <View className="p-2.5 bg-gray-50 rounded-xl mr-4 border border-gray-100">
       <Icon size={22} color={color} />
@@ -23,7 +25,7 @@ const SettingItem = ({ icon: Icon, title, subtitle, onPress, color }: any) => (
       {subtitle && <Text className="text-xs text-text-secondary text-right font-medium">{subtitle}</Text>}
     </View>
     <ChevronLeft size={18} color="#94a3b8" />
-  </TouchableOpacity>
+  </PressableScale>
 );
 
 export default function SettingsScreen() {
@@ -129,7 +131,7 @@ export default function SettingsScreen() {
 
           {/* Logout Section */}
           <View className="mb-8">
-            <TouchableOpacity
+            <PressableScale
               onPress={() => {
                 Alert.alert(
                   'تسجيل الخروج',
@@ -147,11 +149,12 @@ export default function SettingsScreen() {
                   ]
                 );
               }}
-              className="bg-red-50 rounded-2xl p-4 flex-row items-center justify-center border border-red-200 active:bg-red-100"
+              scaleTo={0.98}
+              className="bg-red-50 rounded-2xl p-4 flex-row items-center justify-center border border-red-200"
             >
               <Text className="text-red-600 font-bold text-base mr-2">تسجيل الخروج</Text>
               <LogOut size={20} color="#dc2626" />
-            </TouchableOpacity>
+            </PressableScale>
           </View>
         </ScrollView>
       </SafeAreaView>

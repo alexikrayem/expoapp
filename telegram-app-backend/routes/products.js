@@ -4,6 +4,7 @@ const { query, param, body } = require('express-validator');
 const router = express.Router();
 const db = require('../config/db');
 const validateRequest = require('../middleware/validateRequest');
+const { cacheResponse } = require('../middleware/cache');
 
 
 // Get all products with filtering, search, and pagination
@@ -16,7 +17,8 @@ router.get('/', [
     query('minPrice').optional().isFloat({ min: 0 }).withMessage('Min price must be a positive number'),
     query('maxPrice').optional().isFloat({ min: 0 }).withMessage('Max price must be a positive number'),
     query('onSale').optional().isIn(['true', 'false']).withMessage('onSale must be true or false'),
-    validateRequest
+    validateRequest,
+    cacheResponse(60, 'products:list')
 ], async (req, res) => {
     try {
         // Validation handled by middleware
@@ -87,7 +89,8 @@ router.get('/', [
 // Get product categories for filter options
 router.get('/categories', [
     query('cityId').optional().isInt({ min: 1 }).withMessage('City ID must be a positive integer'),
-    validateRequest
+    validateRequest,
+    cacheResponse(300, 'products:categories')
 ], async (req, res) => {
     try {
         const { cityId } = req.query;

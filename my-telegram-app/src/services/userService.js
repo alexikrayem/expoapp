@@ -2,7 +2,7 @@ import { apiClient } from '../api/apiClient';
 
 export const userService = {
     getProfile: () => {
-        // The user ID is determined securely by the backend using the Telegram auth middleware
+        // The user ID is determined securely by the backend using the auth middleware
         return apiClient('user/profile');
     },
 

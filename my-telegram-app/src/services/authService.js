@@ -1,4 +1,3 @@
-import { setTokens } from '../api/apiClient';
 import { isAccessTokenValid } from '../utils/tokenManager';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -41,30 +40,6 @@ export const authService = {
         return data;
     },
 
-    // --- Legacy Telegram Login (Deprecated) ---
-    telegramLoginWidget: async (authData) => {
-        const { apiClient, setTokens } = await import('../api/apiClient');
-
-        const headers = {};
-        // Check if running in React Native WebView
-        if (window.ReactNativeWebView) {
-            headers['X-Client-Type'] = 'mobile';
-        }
-
-        const data = await apiClient('auth/telegram-login-widget', {
-            method: 'POST',
-            headers,
-            body: { authData },
-        });
-
-        // If the response contains tokens, store them (refreshToken is HttpOnly cookie now)
-        if (data.accessToken) {
-            setTokens(data.accessToken);
-        }
-
-        return data;
-    },
-
     // Check if user is authenticated (has valid tokens)
     isAuthenticated: () => {
         return isAccessTokenValid();
@@ -74,5 +49,18 @@ export const authService = {
     getProfile: async () => {
         const { apiClient } = await import('../api/apiClient');
         return apiClient('user/profile');
+    },
+
+    // Logout and revoke refresh token server-side
+    logout: async () => {
+        const { apiClient, clearTokens } = await import('../api/apiClient');
+        try {
+            await apiClient('auth/logout', { method: 'POST' });
+        } catch (error) {
+            // Even if logout fails, clear local tokens
+            console.error('Logout error:', error);
+        } finally {
+            clearTokens();
+        }
     }
 };

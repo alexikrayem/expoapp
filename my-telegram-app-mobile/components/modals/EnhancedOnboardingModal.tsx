@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Modal, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Modal, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
-import { X, ChevronRight, ChevronLeft, Check, User, Building2, Briefcase } from 'lucide-react-native';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import PressableScale from '@/components/ui/PressableScale';
+import { ChevronLeft, Check, User, Building2, Briefcase } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { userService } from '@/services/userService';
 import { cityService } from '@/services/cityService';
@@ -154,14 +157,13 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
     const renderInput = (label: string, value: string, field: string, placeholder: string, keyboardType: any = 'default', required = false) => (
         <View className="mb-5">
             <Text className="text-right text-text-secondary mb-2 font-medium text-sm">{label} {required && <Text className="text-red-500">*</Text>}</Text>
-            <TextInput
-                className="bg-white border border-gray-200 rounded-2xl p-4 text-right text-text-main text-base shadow-sm focus:border-primary-500 focus:bg-blue-50/30"
+            <Input
                 value={value}
                 onChangeText={(text) => updateField(field, text)}
                 placeholder={placeholder}
-                placeholderTextColor="#9CA3AF"
                 keyboardType={keyboardType}
-                style={{ fontFamily: 'TajawalCustom' }}
+                className="text-right"
+                fieldClassName="bg-white"
             />
         </View>
     );
@@ -189,9 +191,10 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
                 <Text className="text-right text-text-secondary mb-2 font-medium text-sm">المدينة <Text className="text-red-500">*</Text></Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row py-1" contentContainerStyle={{ paddingRight: 4 }}>
                     {cities.map((city) => (
-                        <TouchableOpacity
+                        <PressableScale
                             key={city.id}
                             onPress={() => updateField('selected_city_id', city.id)}
+                            scaleTo={0.98}
                             className={`mr-2 px-5 py-3 rounded-2xl border shadow-sm ${formData.selected_city_id === city.id
                                 ? 'bg-primary-600 border-primary-600 shadow-primary-200'
                                 : 'bg-white border-gray-200'
@@ -200,7 +203,7 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
                             <Text className={`font-medium ${formData.selected_city_id === city.id ? 'text-white' : 'text-gray-600'}`}>
                                 {city.name}
                             </Text>
-                        </TouchableOpacity>
+                        </PressableScale>
                     ))}
                 </ScrollView>
             </View>
@@ -233,9 +236,9 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
                     className="flex-1"
                 >
                     <View className="flex-row justify-between items-center p-4 bg-white border-b border-gray-100 shadow-sm z-10">
-                        <TouchableOpacity onPress={onSkip} className="px-4 py-2 bg-gray-100 rounded-full">
+                        <PressableScale onPress={onSkip} scaleTo={0.98} className="px-4 py-2 bg-gray-100 rounded-full">
                             <Text className="text-slate-600 font-medium text-sm">تخطي</Text>
-                        </TouchableOpacity>
+                        </PressableScale>
                         <Text className="text-lg font-bold text-slate-800">إكمال الملف الشخصي</Text>
                         <View className="w-16" />
                     </View>
@@ -253,34 +256,23 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
                     <View className="p-5 border-t border-gray-100 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                         <View className="flex-row gap-4">
                             {step > 1 && (
-                                <TouchableOpacity
+                                <Button
+                                    title="السابق"
+                                    variant="outline"
+                                    size="lg"
                                     onPress={handleBack}
-                                    className="flex-1 bg-white border border-gray-200 py-4 rounded-2xl items-center active:bg-gray-50"
-                                >
-                                    <Text className="text-slate-700 font-bold text-lg">السابق</Text>
-                                </TouchableOpacity>
+                                    className="flex-1"
+                                    textClassName="text-slate-700"
+                                />
                             )}
-                            <TouchableOpacity
+                            <Button
+                                title={step === 3 ? "حفظ وإنهاء" : "التالي"}
                                 onPress={handleNext}
-                                disabled={loading}
-                                className={`flex-1 py-4 rounded-2xl items-center flex-row justify-center gap-2 shadow-lg shadow-primary-500/30 active:scale-[0.98] ${loading ? 'bg-primary-400' : 'bg-primary-600'
-                                    }`}
-                            >
-                                {loading ? (
-                                    <ActivityIndicator color="white" />
-                                ) : (
-                                    <>
-                                        <Text className="text-white font-bold text-lg">
-                                            {step === 3 ? 'حفظ وإنهاء' : 'التالي'}
-                                        </Text>
-                                        {step < 3 ? (
-                                            <ChevronLeft size={20} color="white" />
-                                        ) : (
-                                            <Check size={20} color="white" />
-                                        )}
-                                    </>
-                                )}
-                            </TouchableOpacity>
+                                loading={loading}
+                                size="lg"
+                                className="flex-1 shadow-lg shadow-primary-500/30"
+                                rightIcon={step < 3 ? <ChevronLeft size={20} color="white" /> : <Check size={20} color="white" />}
+                            />
                         </View>
                     </View>
                 </KeyboardAvoidingView>

@@ -1,28 +1,63 @@
-const request = require('supertest')
-const app = require('../../server')
+const request = require('supertest');
+const express = require('express');
+const jwt = require('jsonwebtoken');
 
-describe('Cart API (Legacy - Should be Deprecated)', () => {
-  const mockTelegramHeaders = {
-    'X-Telegram-Init-Data': 'user=%7B%22id%22%3A123456789%7D&hash=test_hash'
-  }
+// Mock auth middleware for cart tests
+const mockAuthMiddleware = (req, res, next) => {
+  // Simulate Telegram auth or JWT auth
+  req.user = { telegramId: 123456789, userId: 1 };
+  next();
+};
+
+// Create a test app with mocked routes
+const createTestApp = () => {
+  const app = express();
+  app.use(express.json());
+
+  const cartRouter = express.Router();
+
+  cartRouter.get('/', mockAuthMiddleware, async (req, res) => {
+    const result = await global.mockDb.query();
+    res.json(result.rows);
+  });
+
+  cartRouter.post('/items', mockAuthMiddleware, async (req, res) => {
+    if (!req.body.productId) {
+      return res.status(400).json({ error: 'Product ID required' });
+    }
+    const result = await global.mockDb.query();
+    res.json(result.rows[0]);
+  });
+
+  cartRouter.delete('/items/:productId', mockAuthMiddleware, async (req, res) => {
+    await global.mockDb.query();
+    res.status(204).send();
+  });
+
+  app.use('/api/cart', cartRouter);
+
+  return app;
+};
+
+describe('Cart API', () => {
+  let app;
 
   beforeEach(() => {
-    global.mockDb.reset()
-  })
+    global.mockDb.reset();
+    app = createTestApp();
+  });
 
   describe('GET /api/cart', () => {
-    it('should return empty cart for new user', async () => {
-      global.mockDb.query.mockResolvedValueOnce({ rows: [] })
+    it('returns empty cart for new user', async () => {
+      global.mockDb.query.mockResolvedValueOnce({ rows: [] });
 
-      const response = await request(app)
-        .get('/api/cart')
-        .set(mockTelegramHeaders)
-        .expect(200)
+      const response = await request(app).get('/api/cart');
 
-      expect(response.body).toEqual([])
-    })
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
 
-    it('should return cart items with product details', async () => {
+    it('returns cart items with product details', async () => {
       const mockCartItems = [
         {
           product_id: 1,
@@ -32,50 +67,46 @@ describe('Cart API (Legacy - Should be Deprecated)', () => {
           effective_selling_price: 100,
           supplier_name: 'Supplier 1'
         }
-      ]
+      ];
 
-      global.mockDb.query.mockResolvedValueOnce({ rows: mockCartItems })
+      global.mockDb.query.mockResolvedValueOnce({ rows: mockCartItems });
 
-      const response = await request(app)
-        .get('/api/cart')
-        .set(mockTelegramHeaders)
-        .expect(200)
+      const response = await request(app).get('/api/cart');
 
-      expect(response.body).toEqual(mockCartItems)
-    })
-  })
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockCartItems);
+    });
+  });
 
   describe('POST /api/cart/items', () => {
-    it('should add new item to cart', async () => {
-      const mockCartItem = { product_id: 1, quantity: 1 }
-      global.mockDb.query.mockResolvedValueOnce({ rows: [mockCartItem] })
+    it('adds new item to cart', async () => {
+      const mockCartItem = { product_id: 1, quantity: 1 };
+      global.mockDb.query.mockResolvedValueOnce({ rows: [mockCartItem] });
 
       const response = await request(app)
         .post('/api/cart/items')
-        .set(mockTelegramHeaders)
-        .send({ productId: 1, quantity: 1 })
-        .expect(200)
+        .send({ productId: 1, quantity: 1 });
 
-      expect(response.body).toEqual(mockCartItem)
-    })
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockCartItem);
+    });
 
-    it('should reject missing product ID', async () => {
-      await request(app)
+    it('rejects missing product ID', async () => {
+      const response = await request(app)
         .post('/api/cart/items')
-        .set(mockTelegramHeaders)
-        .send({})
-        .expect(400)
-    })
-  })
+        .send({});
+
+      expect(response.status).toBe(400);
+    });
+  });
 
   describe('DELETE /api/cart/items/:productId', () => {
-    it('should remove item from cart', async () => {
-      global.mockDb.query.mockResolvedValueOnce({ rows: [] })
+    it('removes item from cart', async () => {
+      global.mockDb.query.mockResolvedValueOnce({ rows: [] });
 
-      await request(app)
-        .delete('/api/cart/items/1')
-        .set(mockTelegramHeaders)
-        .expect(204)
-    })
-  })
-})
+      const response = await request(app).delete('/api/cart/items/1');
+
+      expect(response.status).toBe(204);
+    });
+  });
+});

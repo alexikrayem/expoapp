@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, TouchableOpacity } from 'react-native';
+import { View, Animated } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Text from '@/components/ThemedText';
 import { CheckCircle, XCircle, Info, X } from 'lucide-react-native';
+import PressableScale from '@/components/ui/PressableScale';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -112,9 +113,9 @@ export default function Toast({
                     <Text className={`flex-1 font-medium text-right ${getTextStyles()}`}>
                         {message}
                     </Text>
-                    <TouchableOpacity onPress={hideToast} className="ml-3">
+                    <PressableScale onPress={hideToast} scaleTo={0.9} className="ml-3">
                         <X size={16} color="#6B7280" />
-                    </TouchableOpacity>
+                    </PressableScale>
                 </BlurView>
             </View>
         </Animated.View>

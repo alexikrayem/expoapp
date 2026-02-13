@@ -3,7 +3,6 @@ import {
     View,
     StyleSheet,
     ActivityIndicator,
-    TouchableOpacity,
 } from 'react-native';
 import Text from '@/components/ThemedText';
 import Animated, {
@@ -19,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { Check, ChevronRight, X } from 'lucide-react-native';
+import PressableScale from '@/components/ui/PressableScale';
 
 const BUTTON_HEIGHT = 64;
 const PADDING = 4;
@@ -184,24 +184,24 @@ const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
                     </View>
 
                     {/* Cancel Button - Red Pill */}
-                    <TouchableOpacity
+                    <PressableScale
                         onPress={handleCancel}
+                        scaleTo={0.96}
                         style={styles.cancelButton}
-                        activeOpacity={0.8}
                     >
                         <X color="#ffffff" size={18} />
                         <Text style={styles.cancelButtonText}>إلغاء</Text>
-                    </TouchableOpacity>
+                    </PressableScale>
 
                     {/* Done Button - Blue Pill */}
-                    <TouchableOpacity
+                    <PressableScale
                         onPress={handleDone}
+                        scaleTo={0.96}
                         style={styles.doneButton}
-                        activeOpacity={0.8}
                     >
                         <Check color="#ffffff" size={18} />
                         <Text style={styles.doneButtonText}>تأكيد</Text>
-                    </TouchableOpacity>
+                    </PressableScale>
                 </Animated.View>
             )}
 
@@ -333,4 +333,3 @@ const styles = StyleSheet.create({
 });
 
 export default CheckoutSlider;
-

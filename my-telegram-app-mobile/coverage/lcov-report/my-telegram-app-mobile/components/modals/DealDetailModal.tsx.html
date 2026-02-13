@@ -413,7 +413,16 @@
 <a name='L348'></a><a href='#L348'>348</a>
 <a name='L349'></a><a href='#L349'>349</a>
 <a name='L350'></a><a href='#L350'>350</a>
-<a name='L351'></a><a href='#L351'>351</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L351'></a><a href='#L351'>351</a>
+<a name='L352'></a><a href='#L352'>352</a>
+<a name='L353'></a><a href='#L353'>353</a>
+<a name='L354'></a><a href='#L354'>354</a>
+<a name='L355'></a><a href='#L355'>355</a>
+<a name='L356'></a><a href='#L356'>356</a>
+<a name='L357'></a><a href='#L357'>357</a>
+<a name='L358'></a><a href='#L358'>358</a>
+<a name='L359'></a><a href='#L359'>359</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -565,7 +574,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -765,7 +781,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/// &lt;reference types="nativewind/types" /&gt;
 import React, { useState, useEffect } from 'react';
-import { View, Image, ScrollView, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { View, Image, ScrollView, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -773,6 +789,7 @@ import { X, Tag, Clock, Package, MapPin, Percent, Gift, ShoppingCart, ExternalLi
 import { cityService } from '../../services/cityService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
+import PressableScale from '@/components/ui/PressableScale';
 &nbsp;
 export default function <span class="fstat-no" title="function not covered" >DealDetailModal(</span>{ show, onClose, dealId, onProductClick, onSupplierClick }: any) {
     const [deal, setDeal] = <span class="cstat-no" title="statement not covered" >useState&lt;any&gt;(null);</span>
@@ -849,13 +866,14 @@ export default function <span class="fstat-no" title="function not covered" >Dea
                         &lt;Text className="text-xl font-bold text-text-main flex-1 text-right"&gt;
                             {isLoading ? "جاري التحميل..." : deal ? deal.title : "تفاصيل العرض"}
                         &lt;/Text&gt;
-                        &lt;TouchableOpacity
+                        &lt;PressableScale
                             onPress={onClose}
+                            scaleTo={0.92}
                             className="p-2 rounded-full bg-surface border border-border ml-4"
                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         &gt;
                             &lt;X size={20} color="#64748b" /&gt;
-                        &lt;/TouchableOpacity&gt;
+                        &lt;/PressableScale&gt;
                     &lt;/View&gt;
 &nbsp;
                     {/* Content */}
@@ -914,12 +932,13 @@ export default function <span class="fstat-no" title="function not covered" >Dea
                                     &lt;Tag size={48} color="#ef4444" className="mb-4" /&gt;
                                     &lt;Text className="text-red-600 font-bold text-lg mb-2"&gt;خطأ!&lt;/Text&gt;
                                     &lt;Text className="text-text-secondary text-center mb-4"&gt;{error}&lt;/Text&gt;
-                                    &lt;TouchableOpacity
+                                    &lt;PressableScale
                                         onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setDeal(null)}</span>
+                                        scaleTo={0.98}
                                         className="bg-red-500 px-6 py-2.5 rounded-xl shadow-sm"
                                     &gt;
                                         &lt;Text className="text-white font-bold"&gt;إغلاق&lt;/Text&gt;
-                                    &lt;/TouchableOpacity&gt;
+                                    &lt;/PressableScale&gt;
                                 &lt;/View&gt;
                             &lt;/View&gt;
                         )}
@@ -993,9 +1012,10 @@ export default function <span class="fstat-no" title="function not covered" >Dea
 &nbsp;
                                 {/* Supplier Info */}
                                 {deal.supplier_name &amp;&amp; (
-                                    &lt;TouchableOpacity
+                                    &lt;PressableScale
                                         onPress={handleSupplierClick}
-                                        className="bg-white rounded-2xl p-5 shadow-sm border border-border active:bg-primary-50"
+                                        scaleTo={0.98}
+                                        className="bg-white rounded-2xl p-5 shadow-sm border border-border"
                                     &gt;
                                         &lt;View className="flex-row justify-end items-center mb-3"&gt;
                                             &lt;Text className="font-bold text-text-main mr-2"&gt;المورد&lt;/Text&gt;
@@ -1013,7 +1033,7 @@ export default function <span class="fstat-no" title="function not covered" >Dea
                                                 )}
                                             &lt;/View&gt;
                                         &lt;/View&gt;
-                                    &lt;/TouchableOpacity&gt;
+                                    &lt;/PressableScale&gt;
                                 )}
 &nbsp;
                                 {/* Related Product */}
@@ -1024,9 +1044,10 @@ export default function <span class="fstat-no" title="function not covered" >Dea
                                             &lt;Package size={18} color="#10b981" /&gt;
                                         &lt;/View&gt;
 &nbsp;
-                                        &lt;TouchableOpacity
+                                        &lt;PressableScale
                                             onPress={handleProductClick}
-                                            className="flex-row items-center justify-between p-3 bg-surface rounded-xl border border-border active:bg-primary-50"
+                                            scaleTo={0.98}
+                                            className="flex-row items-center justify-between p-3 bg-surface rounded-xl border border-border"
                                         &gt;
                                             &lt;Text className="text-primary-600 text-sm font-bold"&gt;عرض المنتج ←&lt;/Text&gt;
                                             &lt;View className="flex-row items-center flex-1 justify-end ml-3"&gt;
@@ -1062,7 +1083,7 @@ export default function <span class="fstat-no" title="function not covered" >Dea
                                                     &lt;/View&gt;
                                                 )}
                                             &lt;/View&gt;
-                                        &lt;/TouchableOpacity&gt;
+                                        &lt;/PressableScale&gt;
                                     &lt;/View&gt;
                                 )}
 &nbsp;
@@ -1078,29 +1099,32 @@ export default function <span class="fstat-no" title="function not covered" >Dea
 &nbsp;
                                     &lt;View className="w-full space-y-3"&gt;
                                         {deal.product_id &amp;&amp; (
-                                            &lt;TouchableOpacity
+                                            &lt;PressableScale
                                                 onPress={handleAddToCart}
-                                                className="w-full bg-white py-4 px-4 rounded-xl flex-row justify-center items-center shadow-md active:scale-[0.98]"
+                                                scaleTo={0.98}
+                                                className="w-full bg-white py-4 px-4 rounded-xl flex-row justify-center items-center shadow-md"
                                             &gt;
                                                 &lt;ShoppingCart size={20} color="#2563eb" className="mr-2" /&gt;
                                                 &lt;Text className="text-primary-600 font-bold text-lg"&gt;استفد من العرض&lt;/Text&gt;
-                                            &lt;/TouchableOpacity&gt;
+                                            &lt;/PressableScale&gt;
                                         )}
 &nbsp;
                                         &lt;View className="flex-row gap-3"&gt;
-                                            &lt;TouchableOpacity
+                                            &lt;PressableScale
                                                 onPress={handleSupplierClick}
-                                                className="flex-1 bg-primary-700/50 py-3 px-4 rounded-xl border border-primary-500 active:bg-primary-700"
+                                                scaleTo={0.98}
+                                                className="flex-1 bg-primary-700/50 py-3 px-4 rounded-xl border border-primary-500"
                                             &gt;
                                                 &lt;Text className="text-white font-bold text-center"&gt;زيارة المتجر&lt;/Text&gt;
-                                            &lt;/TouchableOpacity&gt;
+                                            &lt;/PressableScale&gt;
                                             {deal.product_id &amp;&amp; (
-                                                &lt;TouchableOpacity
+                                                &lt;PressableScale
                                                     onPress={handleProductClick}
-                                                    className="flex-1 bg-primary-700/50 py-3 px-4 rounded-xl border border-primary-500 active:bg-primary-700"
+                                                    scaleTo={0.98}
+                                                    className="flex-1 bg-primary-700/50 py-3 px-4 rounded-xl border border-primary-500"
                                                 &gt;
                                                     &lt;Text className="text-white font-bold text-center"&gt;عرض المنتج&lt;/Text&gt;
-                                                &lt;/TouchableOpacity&gt;
+                                                &lt;/PressableScale&gt;
                                             )}
                                         &lt;/View&gt;
                                     &lt;/View&gt;
@@ -1120,7 +1144,7 @@ export default function <span class="fstat-no" title="function not covered" >Dea
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-12T20:43:34.187Z
+                at 2026-02-12T11:40:20.952Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -5,6 +5,8 @@ const db = require("../config/db")
 const authAdmin = require("../middleware/authAdmin")
 const bcrypt = require("bcrypt")
 const telegramBotService = require("../services/telegramBot")
+const { invalidateCache } = require("../middleware/cache")
+const { getQueueStats } = require("../services/queueMonitor")
 
 // Get all suppliers (admin only)
 router.get("/suppliers", authAdmin, async (req, res) => {
@@ -74,6 +76,14 @@ router.post("/suppliers", authAdmin, async (req, res) => {
     const supplier = result.rows[0]
     delete supplier.password_hash
 
+    void invalidateCache([
+      "products:list",
+      "products:categories",
+      "deals:list",
+      "search",
+      "featured:items",
+      "featured:list",
+    ])
     res.status(201).json(supplier)
   } catch (error) {
     console.error("Error creating supplier:", error)
@@ -163,6 +173,14 @@ router.put("/suppliers/:id", authAdmin, async (req, res) => {
     const supplier = result.rows[0]
     delete supplier.password_hash
 
+    void invalidateCache([
+      "products:list",
+      "products:categories",
+      "deals:list",
+      "search",
+      "featured:items",
+      "featured:list",
+    ])
     res.json(supplier)
   } catch (error) {
     console.error("Error updating supplier:", error)
@@ -192,6 +210,14 @@ router.put("/suppliers/:id/toggle-active", authAdmin, async (req, res) => {
     const supplier = result.rows[0]
     delete supplier.password_hash
 
+    void invalidateCache([
+      "products:list",
+      "products:categories",
+      "deals:list",
+      "search",
+      "featured:items",
+      "featured:list",
+    ])
     res.json(supplier)
   } catch (error) {
     console.error("Error toggling supplier status:", error)
@@ -231,6 +257,14 @@ router.delete("/suppliers/:id", authAdmin, async (req, res) => {
       return res.status(404).json({ error: "Supplier not found" })
     }
 
+    void invalidateCache([
+      "products:list",
+      "products:categories",
+      "deals:list",
+      "search",
+      "featured:items",
+      "featured:list",
+    ])
     res.json({ message: "Supplier deleted successfully" })
   } catch (error) {
     console.error("Error deleting supplier:", error)
@@ -304,6 +338,7 @@ router.post("/featured-items", authAdmin, async (req, res) => {
       active_until,
     ])
 
+    void invalidateCache(["featured:items", "featured:list"])
     res.status(201).json(result.rows[0])
   } catch (error) {
     console.error("Error creating featured item:", error)
@@ -405,6 +440,7 @@ router.put("/featured-items-definitions/:id", authAdmin, async (req, res) => {
       return res.status(404).json({ error: "Featured item not found" })
     }
 
+    void invalidateCache(["featured:items", "featured:list"])
     res.json(result.rows[0])
   } catch (error) {
     console.error("Error updating featured item:", error)
@@ -424,6 +460,7 @@ router.delete("/featured-items-definitions/:id", authAdmin, async (req, res) => 
       return res.status(404).json({ error: "Featured item not found" })
     }
 
+    void invalidateCache(["featured:items", "featured:list"])
     res.json({ message: "Featured item deleted successfully" })
   } catch (error) {
     console.error("Error deleting featured item:", error)
@@ -461,6 +498,17 @@ router.get("/stats", authAdmin, async (req, res) => {
   } catch (error) {
     console.error("Error fetching platform stats:", error)
     res.status(500).json({ error: "Failed to fetch platform statistics" })
+  }
+})
+
+// Queue stats (admin only)
+router.get("/queue-stats", authAdmin, async (req, res) => {
+  try {
+    const stats = await getQueueStats()
+    res.json(stats)
+  } catch (error) {
+    console.error("Error fetching queue stats:", error)
+    res.status(500).json({ error: "Failed to fetch queue stats" })
   }
 })
 
@@ -614,6 +662,7 @@ router.post("/featured-lists", authAdmin, async (req, res) => {
       }
     }
 
+    void invalidateCache(["featured:list", "featured:items"])
     res.status(201).json({
       id: listId,
       message: "Featured list created successfully",
@@ -711,6 +760,7 @@ router.put("/featured-lists/:id", authAdmin, async (req, res) => {
       }
     }
 
+    void invalidateCache(["featured:list", "featured:items"])
     res.json({ message: "Featured list updated successfully" })
   } catch (error) {
     console.error("Error updating featured list:", error)
@@ -730,6 +780,7 @@ router.delete("/featured-lists/:id", authAdmin, async (req, res) => {
       return res.status(404).json({ error: "Featured list not found" })
     }
 
+    void invalidateCache(["featured:list", "featured:items"])
     res.json({ message: "Featured list deleted successfully" })
   } catch (error) {
     console.error("Error deleting featured list:", error)
@@ -757,6 +808,7 @@ router.post("/featured-lists/:id/items", authAdmin, async (req, res) => {
         `
 
     const result = await db.query(insertQuery, [id, item_type, item_id, display_order])
+    void invalidateCache(["featured:list", "featured:items"])
     res.status(201).json(result.rows[0])
   } catch (error) {
     console.error("Error adding item to list:", error)
@@ -781,6 +833,7 @@ router.delete("/featured-lists/:id/items/:itemId", authAdmin, async (req, res) =
       return res.status(404).json({ error: "List item not found" })
     }
 
+    void invalidateCache(["featured:list", "featured:items"])
     res.json({ message: "Item removed from list" })
   } catch (error) {
     console.error("Error removing item from list:", error)

@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { View, Modal, TouchableOpacity, Animated } from 'react-native';
+import { View, Modal, Animated } from 'react-native';
 import Text from '@/components/ThemedText';
 import { CheckCircle, Package, MapPin, Phone, User, ArrowRight } from 'lucide-react-native';
 import { useCurrency } from '../../context/CurrencyContext';
+import PressableScale from '@/components/ui/PressableScale';
 
 interface OrderConfirmationModalProps {
     visible: boolean;
@@ -107,13 +108,14 @@ export default function OrderConfirmationModal({ visible, onClose, orderDetails,
                     </View>
 
                     {/* Action Button */}
-                    <TouchableOpacity
+                    <PressableScale
                         onPress={onClose}
-                        className="w-full bg-primary-600 py-4 rounded-xl shadow-lg shadow-primary-500/30 flex-row items-center justify-center active:scale-[0.98]"
+                        scaleTo={0.98}
+                        className="w-full bg-primary-600 py-4 rounded-xl shadow-lg shadow-primary-500/30 flex-row items-center justify-center"
                     >
                         <Text className="text-white font-bold text-lg mr-2">متابعة التسوق</Text>
                         <ArrowRight size={20} color="white" />
-                    </TouchableOpacity>
+                    </PressableScale>
 
                     <Text className="text-center text-text-secondary text-xs mt-4 font-medium">
                         سيتم إرسال تفاصيل الطلب إلى هاتفك 📱

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Modal, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from 'react-native';
+import { View, Modal, ScrollView, KeyboardAvoidingView, Platform, Image, I18nManager } from 'react-native';
 import Text from '@/components/ThemedText';
-import { X, User, Phone, Home, MapPin, Mail, Save, Loader2 } from 'lucide-react-native';
-import { useModal } from '../../context/ModalContext';
-import { useAuth } from '../../context/AuthContext';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { X, User, Phone, Home, MapPin, Mail, Save } from 'lucide-react-native';
+import PressableScale from '@/components/ui/PressableScale';
 
 interface ProfileModalProps {
     visible: boolean;
@@ -14,6 +15,7 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ visible, onClose, telegramUser, userProfile, onSave }: ProfileModalProps) {
+    const isRTL = I18nManager.isRTL;
     const [formData, setFormData] = useState({
         fullName: '',
         phoneNumber: '',
@@ -53,6 +55,8 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
         }
     };
 
+    const iconSlot = (icon: React.ReactNode) => (isRTL ? { rightIcon: icon } : { leftIcon: icon });
+
     return (
         <Modal
             animationType="slide"
@@ -71,9 +75,9 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
                     {/* Header */}
                     <View className="flex-row justify-between items-center p-5 border-b border-border bg-white z-10">
                         <Text className="text-xl font-bold text-text-main">الملف الشخصي</Text>
-                        <TouchableOpacity onPress={onClose} className="p-2 bg-surface rounded-full border border-border">
+                        <PressableScale onPress={onClose} scaleTo={0.9} className="p-2 bg-surface rounded-full border border-border">
                             <X size={20} color="#64748b" />
-                        </TouchableOpacity>
+                        </PressableScale>
                     </View>
 
                     <ScrollView className="flex-1 p-5" contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
@@ -111,95 +115,65 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
                         {/* Form Fields */}
                         <View className="space-y-5">
                             {/* Full Name */}
-                            <View>
-                                <Text className="text-sm font-bold text-text-main mb-2 text-right">الاسم الكامل</Text>
-                                <View className="relative">
-                                    <View className="absolute left-4 top-4 z-10">
-                                        <User size={20} color="#94a3b8" />
-                                    </View>
-                                    <TextInput
-                                        className="w-full pl-12 pr-4 py-3.5 border border-border rounded-xl bg-white text-right text-text-main focus:border-primary-500 focus:bg-primary-50/30"
-                                        placeholder="أدخل اسمك الكامل"
-                                        placeholderTextColor="#94a3b8"
-                                        value={formData.fullName}
-                                        onChangeText={(text) => handleChange('fullName', text)}
-                                        style={{ fontFamily: 'TajawalCustom' }}
-                                    />
-                                </View>
-                            </View>
+                            <Input
+                                label="الاسم الكامل"
+                                labelClassName="text-right font-bold"
+                                placeholder="أدخل اسمك الكامل"
+                                value={formData.fullName}
+                                onChangeText={(text) => handleChange('fullName', text)}
+                                className="text-right"
+                                fieldClassName="bg-white"
+                                {...iconSlot(<User size={20} color="#94a3b8" />)}
+                            />
 
                             {/* Phone Number */}
-                            <View>
-                                <Text className="text-sm font-bold text-text-main mb-2 text-right">رقم الهاتف</Text>
-                                <View className="relative">
-                                    <View className="absolute left-4 top-4 z-10">
-                                        <Phone size={20} color="#94a3b8" />
-                                    </View>
-                                    <TextInput
-                                        className="w-full pl-12 pr-4 py-3.5 border border-border rounded-xl bg-white text-right text-text-main focus:border-primary-500 focus:bg-primary-50/30"
-                                        placeholder="05xxxxxxxx"
-                                        placeholderTextColor="#94a3b8"
-                                        keyboardType="phone-pad"
-                                        value={formData.phoneNumber}
-                                        onChangeText={(text) => handleChange('phoneNumber', text)}
-                                        style={{ fontFamily: 'TajawalCustom' }}
-                                    />
-                                </View>
-                            </View>
+                            <Input
+                                label="رقم الهاتف"
+                                labelClassName="text-right font-bold"
+                                placeholder="05xxxxxxxx"
+                                keyboardType="phone-pad"
+                                value={formData.phoneNumber}
+                                onChangeText={(text) => handleChange('phoneNumber', text)}
+                                className="text-right"
+                                fieldClassName="bg-white"
+                                {...iconSlot(<Phone size={20} color="#94a3b8" />)}
+                            />
 
                             {/* Address Line 1 */}
-                            <View>
-                                <Text className="text-sm font-bold text-text-main mb-2 text-right">العنوان</Text>
-                                <View className="relative">
-                                    <View className="absolute left-4 top-4 z-10">
-                                        <Home size={20} color="#94a3b8" />
-                                    </View>
-                                    <TextInput
-                                        className="w-full pl-12 pr-4 py-3.5 border border-border rounded-xl bg-white text-right text-text-main focus:border-primary-500 focus:bg-primary-50/30"
-                                        placeholder="الشارع، المبنى، رقم الشقة"
-                                        placeholderTextColor="#94a3b8"
-                                        value={formData.addressLine1}
-                                        onChangeText={(text) => handleChange('addressLine1', text)}
-                                        style={{ fontFamily: 'TajawalCustom' }}
-                                    />
-                                </View>
-                            </View>
+                            <Input
+                                label="العنوان"
+                                labelClassName="text-right font-bold"
+                                placeholder="الشارع، المبنى، رقم الشقة"
+                                value={formData.addressLine1}
+                                onChangeText={(text) => handleChange('addressLine1', text)}
+                                className="text-right"
+                                fieldClassName="bg-white"
+                                {...iconSlot(<Home size={20} color="#94a3b8" />)}
+                            />
 
                             {/* Address Line 2 */}
-                            <View>
-                                <Text className="text-sm font-bold text-text-main mb-2 text-right">تفاصيل إضافية (اختياري)</Text>
-                                <View className="relative">
-                                    <View className="absolute left-4 top-4 z-10">
-                                        <Mail size={20} color="#94a3b8" />
-                                    </View>
-                                    <TextInput
-                                        className="w-full pl-12 pr-4 py-3.5 border border-border rounded-xl bg-white text-right text-text-main focus:border-primary-500 focus:bg-primary-50/30"
-                                        placeholder="معلومات إضافية عن العنوان"
-                                        placeholderTextColor="#94a3b8"
-                                        value={formData.addressLine2}
-                                        onChangeText={(text) => handleChange('addressLine2', text)}
-                                        style={{ fontFamily: 'TajawalCustom' }}
-                                    />
-                                </View>
-                            </View>
+                            <Input
+                                label="تفاصيل إضافية (اختياري)"
+                                labelClassName="text-right font-bold"
+                                placeholder="معلومات إضافية عن العنوان"
+                                value={formData.addressLine2}
+                                onChangeText={(text) => handleChange('addressLine2', text)}
+                                className="text-right"
+                                fieldClassName="bg-white"
+                                {...iconSlot(<Mail size={20} color="#94a3b8" />)}
+                            />
 
                             {/* City */}
-                            <View>
-                                <Text className="text-sm font-bold text-text-main mb-2 text-right">المدينة</Text>
-                                <View className="relative">
-                                    <View className="absolute left-4 top-4 z-10">
-                                        <MapPin size={20} color="#94a3b8" />
-                                    </View>
-                                    <TextInput
-                                        className="w-full pl-12 pr-4 py-3.5 border border-border rounded-xl bg-white text-right text-text-main focus:border-primary-500 focus:bg-primary-50/30"
-                                        placeholder="اسم المدينة"
-                                        placeholderTextColor="#94a3b8"
-                                        value={formData.city}
-                                        onChangeText={(text) => handleChange('city', text)}
-                                        style={{ fontFamily: 'TajawalCustom' }}
-                                    />
-                                </View>
-                            </View>
+                            <Input
+                                label="المدينة"
+                                labelClassName="text-right font-bold"
+                                placeholder="اسم المدينة"
+                                value={formData.city}
+                                onChangeText={(text) => handleChange('city', text)}
+                                className="text-right"
+                                fieldClassName="bg-white"
+                                {...iconSlot(<MapPin size={20} color="#94a3b8" />)}
+                            />
                         </View>
 
                         {/* Error Message */}
@@ -210,23 +184,14 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
                         )}
 
                         {/* Submit Button */}
-                        <TouchableOpacity
+                        <Button
+                            title={isSaving ? "جاري الحفظ..." : "حفظ التغييرات"}
                             onPress={handleSubmit}
-                            disabled={isSaving}
-                            className={`mt-8 w-full py-4 rounded-xl flex-row justify-center items-center shadow-lg shadow-primary-500/20 active:scale-[0.98] ${isSaving ? 'bg-primary-400' : 'bg-primary-600'}`}
-                        >
-                            {isSaving ? (
-                                <>
-                                    <ActivityIndicator color="white" className="mr-2" />
-                                    <Text className="text-white font-bold text-lg">جاري الحفظ...</Text>
-                                </>
-                            ) : (
-                                <>
-                                    <Save size={20} color="white" className="mr-2" />
-                                    <Text className="text-white font-bold text-lg">حفظ التغييرات</Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
+                            loading={isSaving}
+                            size="lg"
+                            leftIcon={<Save size={20} color="white" />}
+                            className="mt-8 shadow-lg shadow-primary-500/20"
+                        />
 
                         {/* Security Note */}
                         <View className="mt-6 p-4 bg-primary-50/50 rounded-xl border border-primary-100/50">

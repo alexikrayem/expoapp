@@ -1,13 +1,13 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useEffect } from 'react';
-import { View, Image, TouchableOpacity, Modal, Dimensions, ActivityIndicator, Alert } from 'react-native';
+import { View, Image, Modal, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '@/context/AuthContext';
 import Animated, { FadeInDown, FadeInUp, useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import PressableScale from '@/components/ui/PressableScale';
 
 const { width } = Dimensions.get('window');
 
@@ -37,8 +37,6 @@ const STORAGE_KEY = 'hasSeenWelcome_v1';
 export default function WelcomeOnboardingModal({ visible, onFinish }: any) {
     const [index, setIndex] = useState(0);
     const [showModal, setShowModal] = useState(visible);
-    const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const { login } = useAuth();
 
     useEffect(() => {
         setShowModal(visible);
@@ -66,19 +64,6 @@ export default function WelcomeOnboardingModal({ visible, onFinish }: any) {
         }
     };
 
-    const handleLogin = async () => {
-        setIsLoggingIn(true);
-        try {
-            await login();
-            await finish();
-        } catch (error) {
-            console.error('Login failed:', error);
-            Alert.alert('فشل تسجيل الدخول', 'حدث خطأ أثناء محاولة تسجيل الدخول. يرجى المحاولة مرة أخرى.');
-        } finally {
-            setIsLoggingIn(false);
-        }
-    };
-
     if (!showModal) return null;
 
     return (
@@ -96,12 +81,13 @@ export default function WelcomeOnboardingModal({ visible, onFinish }: any) {
                 <SafeAreaView className="flex-1">
                     <View className="flex-1 items-center justify-between py-6 px-6">
                         {/* Skip Button */}
-                        <TouchableOpacity
+                        <PressableScale
                             onPress={finish}
+                            scaleTo={0.98}
                             className="self-end px-4 py-2 bg-white/80 rounded-full border border-blue-100 shadow-sm"
                         >
                             <Text className="text-primary-600 font-bold text-sm">تخطي</Text>
-                        </TouchableOpacity>
+                        </PressableScale>
 
                         {/* Content */}
                         <View className="flex-1 items-center justify-center w-full">
@@ -145,37 +131,32 @@ export default function WelcomeOnboardingModal({ visible, onFinish }: any) {
                                 {index < slides.length - 1 ? (
                                     <View className="flex-row gap-4">
                                         {index > 0 && (
-                                            <TouchableOpacity
+                                            <PressableScale
                                                 onPress={prev}
-                                                className="flex-1 bg-white border border-blue-100 py-4 rounded-2xl items-center active:bg-blue-50"
+                                                scaleTo={0.98}
+                                                className="flex-1 bg-white border border-blue-100 py-4 rounded-2xl items-center"
                                             >
                                                 <Text className="text-primary-700 font-bold text-lg">السابق</Text>
-                                            </TouchableOpacity>
+                                            </PressableScale>
                                         )}
 
-                                        <TouchableOpacity
+                                        <PressableScale
                                             onPress={next}
-                                            className="flex-1 bg-primary-600 py-4 rounded-2xl items-center shadow-lg shadow-primary-500/30 active:scale-[0.98]"
+                                            scaleTo={0.98}
+                                            className="flex-1 bg-primary-600 py-4 rounded-2xl items-center shadow-lg shadow-primary-500/30"
                                         >
                                             <Text className="text-white font-bold text-lg">التالي</Text>
-                                        </TouchableOpacity>
+                                        </PressableScale>
                                     </View>
                                 ) : (
                                     <View className="w-full gap-4">
-                                        <TouchableOpacity
-                                            onPress={handleLogin}
-                                            className="w-full bg-[#0088cc] py-4 rounded-2xl items-center shadow-lg shadow-blue-200 flex-row justify-center gap-3 active:scale-[0.98]"
-                                        >
-                                            <Text className="text-white font-bold text-lg">تسجيل الدخول عبر تيليجرام</Text>
-                                            {isLoggingIn && <ActivityIndicator size="small" color="white" />}
-                                        </TouchableOpacity>
-
-                                        <TouchableOpacity
+                                        <PressableScale
                                             onPress={finish}
-                                            className="w-full bg-white py-4 rounded-2xl items-center flex-row justify-center gap-2 border border-blue-100 shadow-sm active:bg-gray-50"
+                                            scaleTo={0.98}
+                                            className="w-full bg-primary-600 py-4 rounded-2xl items-center shadow-lg shadow-primary-500/30"
                                         >
-                                            <Text className="text-slate-600 font-bold text-lg">المتابعة كزائر</Text>
-                                        </TouchableOpacity>
+                                            <Text className="text-white font-bold text-lg">ابدأ الآن</Text>
+                                        </PressableScale>
                                     </View>
                                 )}
                             </View>

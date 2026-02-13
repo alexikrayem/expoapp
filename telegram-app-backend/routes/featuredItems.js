@@ -2,9 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const { cacheResponse } = require('../middleware/cache');
 
 // Get featured items for the slider
-router.get('/', async (req, res) => {
+router.get('/', cacheResponse(300, 'featured:items'), async (req, res) => {
     try {
         // This query is now corrected to use the right table and column names.
         const query = `
@@ -64,7 +65,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get items in a featured list
-router.get('/list/:listId', async (req, res) => {
+router.get('/list/:listId', cacheResponse(300, 'featured:list'), async (req, res) => {
     try {
         const { listId } = req.params
 

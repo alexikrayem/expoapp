@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import Text from '@/components/ThemedText';
 import { FlashList } from "@shopify/flash-list";
 import { useRelatedProducts } from '@/hooks/useRelatedProducts';
 import ProductCard from '@/components/ProductCard';

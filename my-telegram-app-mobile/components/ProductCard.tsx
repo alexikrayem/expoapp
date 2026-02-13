@@ -2,7 +2,7 @@
 
 /// <reference types="nativewind/types" />
 import React, { useState } from "react"
-import { View, Pressable, Dimensions } from "react-native"
+import { View, Dimensions } from "react-native"
 import { Image } from "expo-image"
 import Text from "@/components/ThemedText"
 import { ShoppingCart, Heart } from "lucide-react-native"
@@ -10,6 +10,7 @@ import { useCurrency } from "../context/CurrencyContext"
 import { Skeleton } from "./ui/Skeleton"
 import { haptics } from "@/utils/haptics"
 import { Product } from "@/types"
+import PressableScale from "@/components/ui/PressableScale"
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window")
 const CARD_MARGIN = 6
@@ -48,9 +49,10 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
 
     return (
       <View className="flex-1 m-1.5">
-        <Pressable
+        <PressableScale
           onPress={handleShowDetails}
-          className="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden active:opacity-90 active:scale-[0.98]"
+          scaleTo={0.98}
+          className="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden"
         >
           <View className="h-[150px] w-full bg-slate-50 relative overflow-hidden">
             {product.image_url && !product.image_url.startsWith("linear-gradient") ? (
@@ -83,9 +85,10 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
               </View>
             )}
 
-            <Pressable
+            <PressableScale
               onPress={handleToggleFavorite}
-              className="absolute top-2 right-2 p-2 bg-white/90 rounded-full z-10 shadow-sm active:bg-white"
+              scaleTo={0.92}
+              className="absolute top-2 right-2 p-2 bg-white/90 rounded-full z-10 shadow-sm"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Heart
@@ -93,7 +96,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
                 color={isFavorite ? "#ef4444" : "#64748b"}
                 fill={isFavorite ? "#ef4444" : "transparent"}
               />
-            </Pressable>
+            </PressableScale>
           </View>
 
           <View className="p-3">
@@ -106,13 +109,14 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
             </Text>
 
             <View className="flex-row items-end justify-between">
-              <Pressable
+              <PressableScale
                 onPress={handleAddToCart}
-                className="p-2.5 bg-blue-50 rounded-xl active:bg-blue-100"
+                scaleTo={0.92}
+                className="p-2.5 bg-blue-50 rounded-xl"
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <ShoppingCart size={18} color="#2563eb" />
-              </Pressable>
+              </PressableScale>
 
               <View className="items-end">
                 {product.is_on_sale && product.discount_price && (
@@ -126,7 +130,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
               </View>
             </View>
           </View>
-        </Pressable>
+        </PressableScale>
       </View>
     )
   },

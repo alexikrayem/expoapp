@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/100</span>
+                <span class='fraction'>0/96</span>
             </div>
         
             
@@ -345,15 +345,7 @@
 <a name='L280'></a><a href='#L280'>280</a>
 <a name='L281'></a><a href='#L281'>281</a>
 <a name='L282'></a><a href='#L282'>282</a>
-<a name='L283'></a><a href='#L283'>283</a>
-<a name='L284'></a><a href='#L284'>284</a>
-<a name='L285'></a><a href='#L285'>285</a>
-<a name='L286'></a><a href='#L286'>286</a>
-<a name='L287'></a><a href='#L287'>287</a>
-<a name='L288'></a><a href='#L288'>288</a>
-<a name='L289'></a><a href='#L289'>289</a>
-<a name='L290'></a><a href='#L290'>290</a>
-<a name='L291'></a><a href='#L291'>291</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L283'></a><a href='#L283'>283</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -370,6 +362,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -508,7 +503,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -564,6 +558,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -576,17 +571,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -643,11 +627,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState, useEffect, useRef } from 'react';
-import { View, Modal, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState, useEffect } from 'react';
+import { View, Modal, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
-import { X, ChevronRight, ChevronLeft, Check, User, Building2, Briefcase } from 'lucide-react-native';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import PressableScale from '@/components/ui/PressableScale';
+import { ChevronLeft, Check, User, Building2, Briefcase } from 'lucide-react-native';
 import { useAuth } from '@/context/AuthContext';
 import { userService } from '@/services/userService';
 import { cityService } from '@/services/cityService';
@@ -799,14 +786,13 @@ export default function <span class="fstat-no" title="function not covered" >Enh
     const renderInput = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(l</span>abel: string, value: string, field: string, placeholder: string, keyboardType: any = <span class="branch-0 cbranch-no" title="branch not covered" >'default',</span> required = <span class="branch-0 cbranch-no" title="branch not covered" >false)</span> =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >        &lt;View className="mb-5"&gt;</span>
             &lt;Text className="text-right text-text-secondary mb-2 font-medium text-sm"&gt;{label} {required &amp;&amp; &lt;Text className="text-red-500"&gt;*&lt;/Text&gt;}&lt;/Text&gt;
-            &lt;TextInput
-                className="bg-white border border-gray-200 rounded-2xl p-4 text-right text-text-main text-base shadow-sm focus:border-primary-500 focus:bg-blue-50/30"
+            &lt;Input
                 value={value}
                 onChangeText={<span class="fstat-no" title="function not covered" >(t</span>ext) =&gt; <span class="cstat-no" title="statement not covered" >updateField(field, text)}</span>
                 placeholder={placeholder}
-                placeholderTextColor="#9CA3AF"
                 keyboardType={keyboardType}
-                style={{ fontFamily: 'TajawalCustom' }}
+                className="text-right"
+                fieldClassName="bg-white"
             /&gt;
         &lt;/View&gt;
     );
@@ -834,9 +820,10 @@ export default function <span class="fstat-no" title="function not covered" >Enh
                 &lt;Text className="text-right text-text-secondary mb-2 font-medium text-sm"&gt;المدينة &lt;Text className="text-red-500"&gt;*&lt;/Text&gt;&lt;/Text&gt;
                 &lt;ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row py-1" contentContainerStyle={{ paddingRight: 4 }}&gt;
                     {cities.map(<span class="fstat-no" title="function not covered" >(c</span>ity) =&gt; (
-<span class="cstat-no" title="statement not covered" >                        &lt;TouchableOpacity</span>
+<span class="cstat-no" title="statement not covered" >                        &lt;PressableScale</span>
                             key={city.id}
                             onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >updateField('selected_city_id', city.id)}</span>
+                            scaleTo={0.98}
                             className={`mr-2 px-5 py-3 rounded-2xl border shadow-sm ${formData.selected_city_id === city.id
                                 ? 'bg-primary-600 border-primary-600 shadow-primary-200'
                                 : 'bg-white border-gray-200'
@@ -845,7 +832,7 @@ export default function <span class="fstat-no" title="function not covered" >Enh
                             &lt;Text className={`font-medium ${formData.selected_city_id === city.id ? 'text-white' : 'text-gray-600'}`}&gt;
                                 {city.name}
                             &lt;/Text&gt;
-                        &lt;/TouchableOpacity&gt;
+                        &lt;/PressableScale&gt;
                     ))}
                 &lt;/ScrollView&gt;
             &lt;/View&gt;
@@ -878,9 +865,9 @@ export default function <span class="fstat-no" title="function not covered" >Enh
                     className="flex-1"
                 &gt;
                     &lt;View className="flex-row justify-between items-center p-4 bg-white border-b border-gray-100 shadow-sm z-10"&gt;
-                        &lt;TouchableOpacity onPress={onSkip} className="px-4 py-2 bg-gray-100 rounded-full"&gt;
+                        &lt;PressableScale onPress={onSkip} scaleTo={0.98} className="px-4 py-2 bg-gray-100 rounded-full"&gt;
                             &lt;Text className="text-slate-600 font-medium text-sm"&gt;تخطي&lt;/Text&gt;
-                        &lt;/TouchableOpacity&gt;
+                        &lt;/PressableScale&gt;
                         &lt;Text className="text-lg font-bold text-slate-800"&gt;إكمال الملف الشخصي&lt;/Text&gt;
                         &lt;View className="w-16" /&gt;
                     &lt;/View&gt;
@@ -898,34 +885,23 @@ export default function <span class="fstat-no" title="function not covered" >Enh
                     &lt;View className="p-5 border-t border-gray-100 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]"&gt;
                         &lt;View className="flex-row gap-4"&gt;
                             {step &gt; 1 &amp;&amp; (
-                                &lt;TouchableOpacity
+                                &lt;Button
+                                    title="السابق"
+                                    variant="outline"
+                                    size="lg"
                                     onPress={handleBack}
-                                    className="flex-1 bg-white border border-gray-200 py-4 rounded-2xl items-center active:bg-gray-50"
-                                &gt;
-                                    &lt;Text className="text-slate-700 font-bold text-lg"&gt;السابق&lt;/Text&gt;
-                                &lt;/TouchableOpacity&gt;
+                                    className="flex-1"
+                                    textClassName="text-slate-700"
+                                /&gt;
                             )}
-                            &lt;TouchableOpacity
+                            &lt;Button
+                                title={step === 3 ? "حفظ وإنهاء" : "التالي"}
                                 onPress={handleNext}
-                                disabled={loading}
-                                className={`flex-1 py-4 rounded-2xl items-center flex-row justify-center gap-2 shadow-lg shadow-primary-500/30 active:scale-[0.98] ${loading ? 'bg-primary-400' : 'bg-primary-600'
-                                    }`}
-                            &gt;
-                                {loading ? (
-                                    &lt;ActivityIndicator color="white" /&gt;
-                                ) : (
-                                    &lt;&gt;
-                                        &lt;Text className="text-white font-bold text-lg"&gt;
-                                            {step === 3 ? 'حفظ وإنهاء' : 'التالي'}
-                                        &lt;/Text&gt;
-                                        {step &lt; 3 ? (
-                                            &lt;ChevronLeft size={20} color="white" /&gt;
-                                        ) : (
-                                            &lt;Check size={20} color="white" /&gt;
-                                        )}
-                                    &lt;/&gt;
-                                )}
-                            &lt;/TouchableOpacity&gt;
+                                loading={loading}
+                                size="lg"
+                                className="flex-1 shadow-lg shadow-primary-500/30"
+                                rightIcon={step &lt; 3 ? &lt;ChevronLeft size={20} color="white" /&gt; : &lt;Check size={20} color="white" /&gt;}
+                            /&gt;
                         &lt;/View&gt;
                     &lt;/View&gt;
                 &lt;/KeyboardAvoidingView&gt;
@@ -940,7 +916,7 @@ export default function <span class="fstat-no" title="function not covered" >Enh
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-12T20:43:34.187Z
+                at 2026-02-12T11:40:20.952Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

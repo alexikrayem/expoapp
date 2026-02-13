@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, ScrollView, ActivityIndicator } from 'react-native';
 import Text from '@/components/ThemedText';
 import { useCategories } from '@/hooks/useCategories';
+import PressableScale from '@/components/ui/PressableScale';
 
 interface ProductFilterBarProps {
     currentFilters: any;
@@ -51,9 +52,10 @@ export default function ProductFilterBar({ currentFilters, onFiltersChange, sele
                     const count = cat.product_count ? `(${cat.product_count})` : '';
 
                     return (
-                        <TouchableOpacity
+                        <PressableScale
                             key={`${cat.category}-${index}`}
                             onPress={() => handleCategoryClick(cat.category)}
+                            scaleTo={0.98}
                             className={`px-5 py-3 rounded-full border ${isSelected
                                 ? 'bg-blue-600 border-blue-600'
                                 : 'bg-white border-gray-200'
@@ -65,7 +67,7 @@ export default function ProductFilterBar({ currentFilters, onFiltersChange, sele
                             >
                                 {displayName} {count}
                             </Text>
-                        </TouchableOpacity>
+                        </PressableScale>
                     );
                 })}
             </ScrollView>

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Modal, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Modal, ScrollView, KeyboardAvoidingView, Platform, I18nManager } from 'react-native';
 import Text from '@/components/ThemedText';
-import { X, User, Phone, MapPin, Building, AlertCircle, Loader2 } from 'lucide-react-native';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { X, User, Phone, Building, AlertCircle } from 'lucide-react-native';
 import { Picker } from '@react-native-picker/picker';
+import PressableScale from '@/components/ui/PressableScale';
 
 interface AddressModalProps {
     visible: boolean;
@@ -13,6 +16,7 @@ interface AddressModalProps {
 }
 
 export default function AddressModal({ visible, onClose, initialData = {}, onSaveAndProceed, availableCities = [] }: AddressModalProps) {
+    const isRTL = I18nManager.isRTL;
     const [formData, setFormData] = useState({
         fullName: '',
         phoneNumber: '',
@@ -67,6 +71,8 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
         }
     };
 
+    const iconSlot = (icon: React.ReactNode) => (isRTL ? { rightIcon: icon } : { leftIcon: icon });
+
     return (
         <Modal
             animationType="slide"
@@ -85,9 +91,9 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
                     {/* Header */}
                     <View className="flex-row justify-between items-center p-5 border-b border-border bg-white z-10">
                         <Text className="text-xl font-bold text-text-main">تفاصيل التوصيل</Text>
-                        <TouchableOpacity onPress={onClose} disabled={isSaving} className="p-2 bg-surface rounded-full border border-border">
+                        <PressableScale onPress={onClose} disabled={isSaving} scaleTo={0.9} className="p-2 bg-surface rounded-full border border-border">
                             <X size={20} color="#64748b" />
-                        </TouchableOpacity>
+                        </PressableScale>
                     </View>
 
                     <ScrollView className="flex-1 p-5" contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
@@ -100,45 +106,33 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
 
                         <View className="space-y-5">
                             {/* Full Name */}
-                            <View>
-                                <Text className="text-sm font-bold text-text-main mb-2 text-right">الاسم الكامل</Text>
-                                <View className="relative">
-                                    <View className="absolute left-4 top-4 z-10">
-                                        <User size={20} color="#94a3b8" />
-                                    </View>
-                                    <TextInput
-                                        className={`w-full pl-12 pr-4 py-3.5 border rounded-xl bg-white text-right text-text-main focus:bg-primary-50/30 ${validationErrors.fullName ? 'border-red-300 bg-red-50' : 'border-border focus:border-primary-500'}`}
-                                        placeholder="أدخل اسمك الكامل"
-                                        placeholderTextColor="#94a3b8"
-                                        value={formData.fullName}
-                                        onChangeText={(text) => handleChange('fullName', text)}
-                                        editable={!isSaving}
-                                        style={{ fontFamily: 'TajawalCustom' }}
-                                    />
-                                </View>
-                                {validationErrors.fullName && <Text className="text-red-500 text-xs mt-1.5 text-right font-medium">{validationErrors.fullName}</Text>}
-                            </View>
+                            <Input
+                                label="الاسم الكامل"
+                                labelClassName="text-right font-bold"
+                                placeholder="أدخل اسمك الكامل"
+                                value={formData.fullName}
+                                onChangeText={(text) => handleChange('fullName', text)}
+                                editable={!isSaving}
+                                className="text-right"
+                                fieldClassName="bg-white"
+                                error={validationErrors.fullName}
+                                {...iconSlot(<User size={20} color="#94a3b8" />)}
+                            />
 
                             {/* Phone Number */}
-                            <View>
-                                <Text className="text-sm font-bold text-text-main mb-2 text-right">رقم الهاتف</Text>
-                                <View className="relative">
-                                    <View className="absolute left-4 top-4 z-10">
-                                        <Phone size={20} color="#94a3b8" />
-                                    </View>
-                                    <TextInput
-                                        className={`w-full pl-12 pr-4 py-3.5 border rounded-xl bg-white text-right text-text-main focus:bg-primary-50/30 ${validationErrors.phoneNumber ? 'border-red-300 bg-red-50' : 'border-border focus:border-primary-500'}`}
-                                        placeholder="05xxxxxxxx"
-                                        placeholderTextColor="#94a3b8"
-                                        keyboardType="phone-pad"
-                                        value={formData.phoneNumber}
-                                        onChangeText={(text) => handleChange('phoneNumber', text)}
-                                        editable={!isSaving}
-                                        style={{ fontFamily: 'TajawalCustom' }}
-                                    />
-                                </View>
-                                {validationErrors.phoneNumber && <Text className="text-red-500 text-xs mt-1.5 text-right font-medium">{validationErrors.phoneNumber}</Text>}
-                            </View>
+                            <Input
+                                label="رقم الهاتف"
+                                labelClassName="text-right font-bold"
+                                placeholder="05xxxxxxxx"
+                                keyboardType="phone-pad"
+                                value={formData.phoneNumber}
+                                onChangeText={(text) => handleChange('phoneNumber', text)}
+                                editable={!isSaving}
+                                className="text-right"
+                                fieldClassName="bg-white"
+                                error={validationErrors.phoneNumber}
+                                {...iconSlot(<Phone size={20} color="#94a3b8" />)}
+                            />
 
                             {/* City */}
                             <View>
@@ -160,62 +154,44 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
                             </View>
 
                             {/* Address Line 1 */}
-                            <View>
-                                <Text className="text-sm font-bold text-text-main mb-2 text-right">العنوان الأساسي</Text>
-                                <View className="relative">
-                                    <View className="absolute left-4 top-4 z-10">
-                                        <Building size={20} color="#94a3b8" />
-                                    </View>
-                                    <TextInput
-                                        className={`w-full pl-12 pr-4 py-3.5 border rounded-xl bg-white text-right text-text-main focus:bg-primary-50/30 ${validationErrors.addressLine1 ? 'border-red-300 bg-red-50' : 'border-border focus:border-primary-500'}`}
-                                        placeholder="الشارع، رقم المبنى، المنطقة"
-                                        placeholderTextColor="#94a3b8"
-                                        value={formData.addressLine1}
-                                        onChangeText={(text) => handleChange('addressLine1', text)}
-                                        editable={!isSaving}
-                                        style={{ fontFamily: 'TajawalCustom' }}
-                                    />
-                                </View>
-                                {validationErrors.addressLine1 && <Text className="text-red-500 text-xs mt-1.5 text-right font-medium">{validationErrors.addressLine1}</Text>}
-                            </View>
+                            <Input
+                                label="العنوان الأساسي"
+                                labelClassName="text-right font-bold"
+                                placeholder="الشارع، رقم المبنى، المنطقة"
+                                value={formData.addressLine1}
+                                onChangeText={(text) => handleChange('addressLine1', text)}
+                                editable={!isSaving}
+                                className="text-right"
+                                fieldClassName="bg-white"
+                                error={validationErrors.addressLine1}
+                                {...iconSlot(<Building size={20} color="#94a3b8" />)}
+                            />
 
                             {/* Address Line 2 */}
-                            <View>
-                                <Text className="text-sm font-bold text-text-main mb-2 text-right">تفاصيل إضافية (اختياري)</Text>
-                                <View className="relative">
-                                    <View className="absolute left-4 top-4 z-10">
-                                        <Building size={20} color="#94a3b8" />
-                                    </View>
-                                    <TextInput
-                                        className="w-full pl-12 pr-4 py-3.5 border border-border rounded-xl bg-white text-right text-text-main focus:border-primary-500 focus:bg-primary-50/30"
-                                        placeholder="رقم الشقة، علامة مميزة، تعليمات التوصيل..."
-                                        placeholderTextColor="#94a3b8"
-                                        value={formData.addressLine2}
-                                        onChangeText={(text) => handleChange('addressLine2', text)}
-                                        editable={!isSaving}
-                                        multiline
-                                        numberOfLines={2}
-                                        style={{ minHeight: 80, textAlignVertical: 'top', fontFamily: 'TajawalCustom' }}
-                                    />
-                                </View>
-                            </View>
+                            <Input
+                                label="تفاصيل إضافية (اختياري)"
+                                labelClassName="text-right font-bold"
+                                placeholder="رقم الشقة، علامة مميزة، تعليمات التوصيل..."
+                                value={formData.addressLine2}
+                                onChangeText={(text) => handleChange('addressLine2', text)}
+                                editable={!isSaving}
+                                multiline
+                                numberOfLines={2}
+                                className="text-right"
+                                fieldClassName="bg-white"
+                                style={{ minHeight: 80, textAlignVertical: 'top' }}
+                                {...iconSlot(<Building size={20} color="#94a3b8" />)}
+                            />
                         </View>
 
                         {/* Submit Button */}
-                        <TouchableOpacity
+                        <Button
+                            title={isSaving ? "جاري الحفظ والمتابعة..." : "حفظ ومتابعة الطلب"}
                             onPress={handleSubmit}
-                            disabled={isSaving}
-                            className={`mt-8 w-full py-4 rounded-xl flex-row justify-center items-center shadow-lg shadow-primary-500/20 active:scale-[0.98] ${isSaving ? 'bg-primary-400' : 'bg-primary-600'}`}
-                        >
-                            {isSaving ? (
-                                <>
-                                    <ActivityIndicator color="white" className="mr-2" />
-                                    <Text className="text-white font-bold text-lg">جاري الحفظ والمتابعة...</Text>
-                                </>
-                            ) : (
-                                <Text className="text-white font-bold text-lg">حفظ ومتابعة الطلب</Text>
-                            )}
-                        </TouchableOpacity>
+                            loading={isSaving}
+                            size="lg"
+                            className="mt-8 shadow-lg shadow-primary-500/20"
+                        />
 
                         <View className="mt-6">
                             <Text className="text-xs text-text-secondary text-center font-medium">

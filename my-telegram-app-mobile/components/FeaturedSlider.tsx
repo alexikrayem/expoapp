@@ -1,12 +1,13 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback } from "react"
-import { View, TouchableOpacity, Dimensions, StyleSheet } from "react-native"
+import { View, Dimensions, StyleSheet } from "react-native"
 import Animated from "react-native-reanimated"
 import { Image } from "expo-image"
 import Text from "@/components/ThemedText"
 import { LinearGradient } from "expo-linear-gradient"
 import { Sparkles } from "lucide-react-native"
+import PressableScale from "@/components/ui/PressableScale"
 
 const { width } = Dimensions.get("window")
 const SLIDER_HEIGHT = 200
@@ -33,7 +34,7 @@ const SlideItem = React.memo(
     onPress: () => void
   }) => (
     <View style={{ width: CARD_WIDTH, marginRight: index === totalItems - 1 ? 0 : CARD_SPACING }}>
-      <TouchableOpacity onPress={onPress} activeOpacity={0.95} style={styles.card}>
+      <PressableScale onPress={onPress} scaleTo={0.98} style={styles.card}>
         {(item.imageUrl || item.image_url)?.startsWith("http") ? (
           <Image
             source={{ uri: item.imageUrl || item.image_url }}
@@ -77,7 +78,7 @@ const SlideItem = React.memo(
         </View>
 
         <View style={styles.shine} />
-      </TouchableOpacity>
+      </PressableScale>
     </View>
   ),
 )

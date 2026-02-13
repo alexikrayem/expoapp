@@ -3,27 +3,25 @@
 import { useState } from "react"
 import {
   View,
-  TouchableOpacity,
-  ActivityIndicator,
   Alert,
-  Dimensions,
   StyleSheet,
   Image,
   I18nManager,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
 } from "react-native"
 
 import { SafeAreaView } from "react-native-safe-area-context"
 import Text from "@/components/ThemedText"
+import { Input } from "@/components/ui/Input"
+import { Button } from "@/components/ui/Button"
+import LoadingScreen from "@/components/ui/LoadingScreen"
 import { useAuth } from "@/context/AuthContext"
 import { Redirect, router } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import { authService } from "@/services/authService"
 
-const { width, height } = Dimensions.get("window")
 const isRTL = I18nManager.isRTL
 
 export default function LoginScreen() {
@@ -35,11 +33,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false)
 
   if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0ea5e9" />
-      </View>
-    )
+    return <LoadingScreen message="جاري التحقق من الحساب..." />
   }
 
   if (isAuthenticated) {
@@ -131,54 +125,57 @@ export default function LoginScreen() {
           <View style={styles.form}>
             {step === 'PHONE' ? (
               <>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="call-outline" size={20} color="#64748b" style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, isRTL && { textAlign: 'right' }]}
-                    placeholder="رقم الهاتف (مثال: 0501234567)"
-                    placeholderTextColor="#94a3b8"
-                    keyboardType="phone-pad"
-                    value={phoneNumber}
-                    onChangeText={setPhoneNumber}
-                    autoFocus
-                  />
-                </View>
+                <Input
+                  placeholder="رقم الهاتف (مثال: 0501234567)"
+                  keyboardType="phone-pad"
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  autoFocus
+                  className={isRTL ? "text-right" : "text-left"}
+                  leftIcon={!isRTL ? <Ionicons name="call-outline" size={20} color="#64748b" /> : undefined}
+                  rightIcon={isRTL ? <Ionicons name="call-outline" size={20} color="#64748b" /> : undefined}
+                />
 
-                <TouchableOpacity
-                  style={styles.button}
+                <Button
+                  title="إرسال الرمز"
                   onPress={handleSendOtp}
-                  disabled={loading}
-                >
-                  {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>إرسال الرمز</Text>}
-                </TouchableOpacity>
+                  loading={loading}
+                  size="lg"
+                  className="mt-2"
+                />
               </>
             ) : (
               <>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="keypad-outline" size={20} color="#64748b" style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, isRTL && { textAlign: 'right', letterSpacing: 4, fontSize: 18 }]}
-                    placeholder="------"
-                    placeholderTextColor="#94a3b8"
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    value={otp}
-                    onChangeText={setOtp}
-                    autoFocus
-                  />
-                </View>
+                <Input
+                  placeholder="------"
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  value={otp}
+                  onChangeText={setOtp}
+                  autoFocus
+                  className={isRTL ? "text-right" : "text-left"}
+                  style={{ letterSpacing: 6, fontSize: 18, textAlign: isRTL ? "right" : "left" }}
+                  leftIcon={!isRTL ? <Ionicons name="keypad-outline" size={20} color="#64748b" /> : undefined}
+                  rightIcon={isRTL ? <Ionicons name="keypad-outline" size={20} color="#64748b" /> : undefined}
+                />
 
-                <TouchableOpacity
-                  style={styles.button}
+                <Button
+                  title="تحقق"
                   onPress={handleVerifyOtp}
-                  disabled={loading}
-                >
-                  {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>تحقق</Text>}
-                </TouchableOpacity>
+                  loading={loading}
+                  size="lg"
+                  className="mt-2"
+                />
 
-                <TouchableOpacity onPress={() => setStep('PHONE')} disabled={loading}>
-                  <Text style={styles.linkText}>تغيير رقم الهاتف</Text>
-                </TouchableOpacity>
+                <Button
+                  title="تغيير رقم الهاتف"
+                  variant="ghost"
+                  size="sm"
+                  onPress={() => setStep("PHONE")}
+                  disabled={loading}
+                  className="self-center mt-2"
+                  textClassName="text-text-secondary"
+                />
               </>
             )}
           </View>
@@ -201,38 +198,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800', color: '#0f172a', marginBottom: 8 },
   subtitle: { fontSize: 15, color: '#475569', textAlign: 'center', lineHeight: 22 },
 
-  form: { gap: 16, width: '100%' },
-  inputContainer: {
-    flexDirection: isRTL ? 'row-reverse' : 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    height: 56,
-    paddingHorizontal: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2
-  },
-  inputIcon: { marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 },
-  input: { flex: 1, fontSize: 16, color: '#0f172a', height: '100%' },
-
-  button: {
-    height: 56,
-    backgroundColor: '#0ea5e9',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: '#0ea5e9',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 4
-  },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  linkText: { color: '#64748b', textAlign: 'center', marginTop: 16, fontSize: 14 }
+  form: { gap: 16, width: '100%' }
 })

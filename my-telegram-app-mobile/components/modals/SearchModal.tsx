@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { View, TextInput, TouchableOpacity, ActivityIndicator, Modal } from "react-native"
+import { View, ActivityIndicator, Modal, TextInput } from "react-native"
 import { FlashList } from "@shopify/flash-list"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Text from "@/components/ThemedText"
+import { Input } from "@/components/ui/Input"
 import { useSearch } from "@/context/SearchContext"
 import { useAuth } from "@/context/AuthContext"
 import { useFavorites } from "@/hooks/useFavorites"
@@ -12,6 +13,7 @@ import { Search, X, Package, Tag, Factory, ArrowRight } from "lucide-react-nativ
 import ProductCard from "@/components/ProductCard"
 import DealCard from "@/components/DealCard"
 import SupplierCard from "@/components/SupplierCard"
+import PressableScale from "@/components/ui/PressableScale"
 
 interface SearchModalProps {
   visible: boolean
@@ -165,28 +167,28 @@ export default function SearchModal({ visible, onClose, openModal }: SearchModal
       <SafeAreaView className="flex-1 bg-surface">
         {/* Header */}
         <View className="bg-white px-4 py-3 border-b border-border flex-row items-center">
-          <TouchableOpacity onPress={handleClose} className="p-2 bg-surface rounded-full border border-border">
+          <PressableScale onPress={handleClose} scaleTo={0.92} className="p-2 bg-surface rounded-full border border-border">
             <ArrowRight size={20} color="#64748b" />
-          </TouchableOpacity>
-          <View className="flex-1 flex-row items-center bg-surface rounded-2xl px-4 py-2.5 mx-3 border border-border">
-            <Search size={20} color="#64748b" />
-            <TextInput
-              ref={inputRef}
-              className="flex-1 ml-3 text-right text-text-main font-medium"
-              placeholder="بحث..."
-              placeholderTextColor="#94a3b8"
-              value={searchTerm}
-              onChangeText={handleSearchTermChange}
-              textAlign="right"
-              returnKeyType="search"
-              style={{ fontFamily: "TajawalCustom" }}
-            />
-            {searchTerm.length > 0 && (
-              <TouchableOpacity onPress={() => handleSearchTermChange("")} className="bg-gray-200 p-1 rounded-full">
-                <X size={14} color="#64748b" />
-              </TouchableOpacity>
-            )}
-          </View>
+          </PressableScale>
+          <Input
+            ref={inputRef}
+            containerClassName="flex-1 mx-3"
+            fieldClassName="py-2.5"
+            className="text-right font-medium"
+            placeholder="بحث..."
+            value={searchTerm}
+            onChangeText={handleSearchTermChange}
+            textAlign="right"
+            returnKeyType="search"
+            leftIcon={<Search size={20} color="#64748b" />}
+            rightIcon={
+              searchTerm.length > 0 ? (
+                <PressableScale onPress={() => handleSearchTermChange("")} scaleTo={0.9} className="bg-gray-200 p-1 rounded-full">
+                  <X size={14} color="#64748b" />
+                </PressableScale>
+              ) : null
+            }
+          />
         </View>
 
         {/* Tabs */}
@@ -203,9 +205,10 @@ export default function SearchModal({ visible, onClose, openModal }: SearchModal
               if (count === 0 && !isSearching) return null
 
               return (
-                <TouchableOpacity
+                <PressableScale
                   key={tab.id}
                   onPress={() => setActiveTab(tab.id)}
+                  scaleTo={0.98}
                   className={`flex-1 flex-row items-center justify-center py-2.5 mx-1 rounded-xl border ${
                     isActive ? "bg-primary-50 border-primary-200" : "bg-white border-transparent"
                   }`}
@@ -216,7 +219,7 @@ export default function SearchModal({ visible, onClose, openModal }: SearchModal
                   >
                     {tab.label} ({count})
                   </Text>
-                </TouchableOpacity>
+                </PressableScale>
               )
             })}
           </View>

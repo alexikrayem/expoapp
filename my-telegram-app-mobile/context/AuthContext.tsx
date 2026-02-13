@@ -2,17 +2,16 @@
 
 import type React from "react"
 import { createContext, useState, useEffect, useContext } from "react"
-import { authService } from "@/services/authService"
 import { userService } from "@/services/userService"
-import { getAccessToken, clearTokens } from "@/api/apiClient"
+import { getAccessToken } from "@/api/apiClient"
 import { ensureValidToken } from "@/utils/tokenManager"
+import { authService } from "@/services/authService"
 import { UserProfile } from "@/types"
 
 interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   userProfile: UserProfile | null
-  login: () => Promise<void>
   logout: () => Promise<void>
   refreshProfile: () => Promise<void>
   refreshAuth: () => Promise<void>
@@ -71,22 +70,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initAuth()
   }, [])
 
-  const login = async () => {
-    setIsLoading(true)
-    try {
-      await authService.loginWithTelegram()
-      setIsAuthenticated(true)
-      await fetchProfile()
-    } catch (error) {
-      console.error("[AuthContext] Login failed:", error)
-      throw error
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const logout = async () => {
-    await clearTokens()
+    await authService.logout()
     setIsAuthenticated(false)
     setUserProfile(null)
   }
@@ -108,7 +93,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, isLoading, userProfile, login, logout, refreshProfile: fetchProfile, refreshAuth }}
+      value={{ isAuthenticated, isLoading, userProfile, logout, refreshProfile: fetchProfile, refreshAuth }}
     >
       {children}
     </AuthContext.Provider>

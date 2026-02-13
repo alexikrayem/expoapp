@@ -1,9 +1,8 @@
-import TelegramLoginWidget from './TelegramLoginWidget';
-
 /**
  * WelcomeOnboardingModal - Shows either onboarding slides for first-time users or login for new users
  */
-
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 const slides = [
   {
     id: "slide-1",
@@ -57,8 +56,6 @@ export default function WelcomeOnboardingModal({
 }) {
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(0);
-  const [loginError, setLoginError] = useState(null);
-
   // Keyboard navigation (→ next, ← previous)
   useEffect(() => {
     if (showLogin) return; // Don't handle keyboard navigation when showing login
@@ -90,17 +87,6 @@ export default function WelcomeOnboardingModal({
     onFinish?.();
   };
 
-  const handleLoginSuccess = (result) => {
-    // User successfully logged in, finish onboarding
-    localStorage.setItem(storageKey(version), "true");
-    onFinish?.(result);
-  };
-
-  const handleLoginError = (error) => {
-    setLoginError(`Login failed: ${error.message || 'Unknown error'}`);
-    console.error('Telegram login failed:', error);
-  };
-
   if (!isOpen) return null;
 
   if (showLogin) {
@@ -128,33 +114,23 @@ export default function WelcomeOnboardingModal({
           </h2>
 
           <p className="text-slate-500 text-sm leading-relaxed mb-8 px-4">
-            للمتابعة، يرجى تسجيل الدخول باستخدام حسابك في تيليجرام
+            للمتابعة، يرجى تسجيل الدخول برقم الهاتف
           </p>
 
-          {/* Telegram Login Widget */}
-          <div className="w-full mb-6">
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-blue-100 rounded-xl opacity-0 group-hover:opacity-50 transition duration-300"></div>
-              <div className="relative bg-white border border-slate-200 rounded-xl p-4 flex justify-center shadow-sm">
-                <TelegramLoginWidget
-                  onLoginSuccess={handleLoginSuccess}
-                  onError={handleLoginError}
-                />
-              </div>
-            </div>
+          <div className="w-full flex flex-col gap-3">
+            <button
+              onClick={() => window.location.assign('/login')}
+              className="w-full py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
+            >
+              تسجيل الدخول برقم الهاتف
+            </button>
+            <button
+              onClick={finish}
+              className="w-full py-3 rounded-xl bg-white text-slate-700 text-sm font-semibold border border-slate-200 hover:bg-slate-50 transition"
+            >
+              المتابعة كزائر
+            </button>
           </div>
-
-          {/* Error Message */}
-          {loginError && (
-            <div className="bg-red-50 text-red-600 text-xs py-2 px-3 rounded-lg mb-4 w-full flex items-center justify-center gap-2 border border-red-100">
-              <span>⚠️</span> {loginError}
-            </div>
-          )}
-
-          {/* Instructions */}
-          <p className="text-slate-300 text-[10px] mt-2">
-            بالمتابعة أنت توافق على الشروط والأحكام
-          </p>
         </motion.div>
       </div>
     );

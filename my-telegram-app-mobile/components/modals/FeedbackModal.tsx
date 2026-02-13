@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { View, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Modal, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import Text from '@/components/ThemedText';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 import { X, Star, Send } from 'lucide-react-native';
 import { useToast } from '@/context/ToastContext';
+import PressableScale from '@/components/ui/PressableScale';
 
 interface FeedbackModalProps {
     visible: boolean;
@@ -46,9 +49,9 @@ export default function FeedbackModal({ visible, onClose }: FeedbackModalProps) 
                     >
                         <View className="bg-surface rounded-3xl p-6 shadow-2xl w-full">
                             <View className="flex-row justify-between items-center mb-6">
-                                <TouchableOpacity onPress={onClose} className="p-2 bg-gray-100 rounded-full">
+                                <PressableScale onPress={onClose} scaleTo={0.9} className="p-2 bg-gray-100 rounded-full">
                                     <X size={20} color="#64748b" />
-                                </TouchableOpacity>
+                                </PressableScale>
                                 <Text className="text-xl font-bold text-text-main">أرسل ملاحظاتك</Text>
                             </View>
 
@@ -56,42 +59,41 @@ export default function FeedbackModal({ visible, onClose }: FeedbackModalProps) 
                                 <Text className="text-text-secondary mb-4 font-medium">كيف كانت تجربتك؟</Text>
                                 <View className="flex-row gap-3">
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                        <TouchableOpacity
+                                        <PressableScale
                                             key={star}
                                             onPress={() => setRating(star)}
-                                            className="active:scale-110 transition-transform"
+                                            scaleTo={1.06}
                                         >
                                             <Star
                                                 size={32}
                                                 color={rating >= star ? "#f59e0b" : "#e2e8f0"}
                                                 fill={rating >= star ? "#f59e0b" : "transparent"}
                                             />
-                                        </TouchableOpacity>
+                                        </PressableScale>
                                     ))}
                                 </View>
                             </View>
 
                             <View className="mb-6">
                                 <Text className="text-right text-text-main font-bold mb-2">ملاحظات إضافية</Text>
-                                <TextInput
-                                    className="bg-white border border-border rounded-xl p-4 text-right h-32 text-text-main"
+                                <Input
                                     placeholder="اكتب ملاحظاتك هنا..."
-                                    placeholderTextColor="#94a3b8"
-                                    multiline
-                                    textAlignVertical="top"
                                     value={comment}
                                     onChangeText={setComment}
-                                    style={{ fontFamily: 'TajawalCustom' }}
+                                    multiline
+                                    textAlignVertical="top"
+                                    className="text-right"
+                                    style={{ minHeight: 128 }}
                                 />
                             </View>
 
-                            <TouchableOpacity
+                            <Button
+                                title="إرسال"
                                 onPress={handleSubmit}
-                                className="w-full bg-primary-600 py-4 rounded-xl shadow-lg shadow-primary-500/30 flex-row items-center justify-center active:scale-[0.98]"
-                            >
-                                <Text className="text-white font-bold text-lg mr-2">إرسال</Text>
-                                <Send size={20} color="white" />
-                            </TouchableOpacity>
+                                size="lg"
+                                rightIcon={<Send size={20} color="white" />}
+                                className="shadow-lg shadow-primary-500/30"
+                            />
                         </View>
                     </KeyboardAvoidingView>
                 </View>

@@ -1,6 +1,6 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useEffect } from 'react';
-import { View, Image, TouchableOpacity, Modal, ActivityIndicator, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Image, Modal, ActivityIndicator, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
@@ -10,6 +10,7 @@ import { cityService } from '../../services/cityService';
 import ProductCard from '../ProductCard';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../hooks/useFavorites';
+import PressableScale from '@/components/ui/PressableScale';
 
 export default function SupplierDetailModal({ show, onClose, supplierId, onProductClick }: any) {
     const [supplier, setSupplier] = useState<any>(null);
@@ -76,13 +77,14 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
                         <Text className="text-xl font-bold text-text-main flex-1 text-right">
                             {isLoading ? "جاري التحميل..." : supplier ? supplier.name : "تفاصيل المورد"}
                         </Text>
-                        <TouchableOpacity
+                        <PressableScale
                             onPress={onClose}
+                            scaleTo={0.92}
                             className="p-2 rounded-full bg-surface border border-border ml-4"
                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         >
                             <X size={20} color="#64748b" />
-                        </TouchableOpacity>
+                        </PressableScale>
                     </View>
 
                     {/* Content */}
@@ -115,12 +117,13 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
                                 <Package size={48} color="#ef4444" className="mb-4" />
                                 <Text className="text-red-600 font-bold text-lg mb-2">خطأ!</Text>
                                 <Text className="text-text-secondary text-center mb-4">{error}</Text>
-                                <TouchableOpacity
+                                <PressableScale
                                     onPress={() => setSupplier(null)}
+                                    scaleTo={0.98}
                                     className="bg-red-500 px-6 py-2.5 rounded-xl shadow-sm"
                                 >
                                     <Text className="text-white font-bold">إغلاق</Text>
-                                </TouchableOpacity>
+                                </PressableScale>
                             </View>
                         </View>
                     ) : supplier ? (

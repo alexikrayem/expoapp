@@ -8,7 +8,6 @@ import AppInitializer from '../AppInitializer';
 vi.mock('../services/authService', () => ({
   authService: {
     isAuthenticated: vi.fn(),
-    telegramLoginWidget: vi.fn(),
     getProfile: vi.fn(),
   },
 }));

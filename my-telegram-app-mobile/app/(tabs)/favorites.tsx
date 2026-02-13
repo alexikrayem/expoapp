@@ -2,10 +2,12 @@
 
 /// <reference types="nativewind/types" />
 import { useState, useMemo } from "react"
-import { View, TextInput, TouchableOpacity } from "react-native"
+import { View } from "react-native"
 import { FlashList } from "@shopify/flash-list"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Text from "@/components/ThemedText"
+import { Input } from "@/components/ui/Input"
+import PressableScale from "@/components/ui/PressableScale"
 import { useAuth } from "@/context/AuthContext"
 import { useFavorites } from "@/hooks/useFavorites"
 import { useFavoriteProducts } from "@/hooks/useFavoriteProducts"
@@ -172,27 +174,20 @@ export default function FavoritesScreen() {
             </Text>
 
             {/* Search */}
-            <View className="flex-row items-center bg-surface rounded-2xl px-4 h-12 border border-border">
-              <Search size={20} color="#64748b" />
-
-              <TextInput
-                className="flex-1 ml-3 text-right text-text-main font-medium"
-                placeholder="ابحث في المفضلة..."
-                placeholderTextColor="#94a3b8"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                style={{ fontFamily: "TajawalCustom" }}
-              />
-
-              {searchQuery ? (
-                <TouchableOpacity
-                  onPress={() => setSearchQuery("")}
-                  className="bg-gray-200 p-1 rounded-full"
-                >
-                  <X size={14} color="#64748b" />
-                </TouchableOpacity>
-              ) : null}
-            </View>
+            <Input
+              className="text-right font-medium"
+              placeholder="ابحث في المفضلة..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              leftIcon={<Search size={20} color="#64748b" />}
+              rightIcon={
+                searchQuery ? (
+                  <PressableScale onPress={() => setSearchQuery("")} scaleTo={0.9} className="bg-gray-200 p-1 rounded-full">
+                    <X size={14} color="#64748b" />
+                  </PressableScale>
+                ) : null
+              }
+            />
           </View>
 
           {/* ------------------------------- */}
@@ -210,8 +205,9 @@ export default function FavoritesScreen() {
               estimatedItemSize={80}
               keyExtractor={(item: Category) => item.id}
               renderItem={({ item }: { item: Category }) => (
-                <TouchableOpacity
+                <PressableScale
                   onPress={() => setActiveCategory(item.id)}
+                  scaleTo={0.98}
                   className={`mr-2 px-5 py-3 rounded-full border ${
                     activeCategory === item.id
                       ? "bg-blue-600 border-blue-600"
@@ -236,7 +232,7 @@ export default function FavoritesScreen() {
                       ({item.count})
                     </Text>
                   </Text>
-                </TouchableOpacity>
+                </PressableScale>
               )}
             />
           )}

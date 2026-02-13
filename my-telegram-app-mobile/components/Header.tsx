@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { View, TouchableOpacity, Image } from "react-native"
+import { View, Image } from "react-native"
 import Text from "@/components/ThemedText"
 import { useRouter } from "expo-router"
 import { Search, Settings } from "lucide-react-native"
 import { useAuth } from "@/context/AuthContext"
 import { useModal } from "@/context/ModalContext"
 import SearchModal from "./modals/SearchModal"
+import PressableScale from "@/components/ui/PressableScale"
 
 export default function Header() {
   const router = useRouter()
@@ -26,30 +27,33 @@ export default function Header() {
 
       {/* Left Side: Actions */}
       <View className="flex-row items-center gap-3">
-        <TouchableOpacity
+        <PressableScale
           onPress={() => setIsSearchVisible(true)}
-          className="w-10 h-10 bg-surface rounded-xl items-center justify-center border border-border active:bg-primary-50"
+          scaleTo={0.96}
+          className="w-10 h-10 bg-surface rounded-xl items-center justify-center border border-border"
         >
           <Search size={20} color="#64748b" />
-        </TouchableOpacity>
+        </PressableScale>
 
-        <TouchableOpacity
+        <PressableScale
           onPress={() => router.push("/settings")}
-          className="w-10 h-10 bg-surface rounded-xl items-center justify-center border border-border active:bg-primary-50"
+          scaleTo={0.96}
+          className="w-10 h-10 bg-surface rounded-xl items-center justify-center border border-border"
         >
           <Settings size={20} color="#64748b" />
-        </TouchableOpacity>
+        </PressableScale>
 
-        <TouchableOpacity
+        <PressableScale
           onPress={handleProfilePress}
-          className="w-10 h-10 bg-surface rounded-xl items-center justify-center border border-border overflow-hidden active:opacity-80"
+          scaleTo={0.96}
+          className="w-10 h-10 bg-surface rounded-xl items-center justify-center border border-border overflow-hidden"
         >
           {userProfile?.photo_url ? (
             <Image source={{ uri: userProfile.photo_url }} className="w-full h-full" />
           ) : (
             <Text className="text-primary-600 font-bold text-lg">{userProfile?.full_name?.charAt(0) || "U"}</Text>
           )}
-        </TouchableOpacity>
+        </PressableScale>
       </View>
 
       {/* Right Side: Logo & Custom Typography */}

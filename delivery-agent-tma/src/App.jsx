@@ -15,11 +15,9 @@ import AssignedOrdersPage from './pages/AssignedOrdersPage';
 // Import OrderItemDetailPage when you create it
 // import OrderItemDetailPage from './pages/OrderItemDetailPage'; 
 
-// Import API client
-import apiClient from './services/api'; 
-
 // Import Icons for Layout (if needed directly in layout, otherwise keep in specific pages)
 import { LogOut, Menu, Bell } from 'lucide-react'; // Example icons for layout
+import { setTokens, clearTokens, getAccessToken, logoutRequest } from './services/api';
 
 // --- Auth Context ---
 const AuthContext = createContext(null);
@@ -34,52 +32,37 @@ export const useAuth = () => {
 
 const AuthProvider = ({ children }) => {
     const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-    const [authToken, setAuthToken] = useState(() => localStorage.getItem('deliveryAgentToken'));
+    const [authToken, setAuthToken] = useState(() => getAccessToken());
     const [agentInfo, setAgentInfo] = useState(() => {
         const info = localStorage.getItem('deliveryAgentInfo');
         try { return info ? JSON.parse(info) : null; } catch (e) { return null; }
     });
 
     useEffect(() => {
-        const attemptTelegramLogin = async () => {
-            const tg = window.Telegram?.WebApp;
-            if (tg && tg.initData && !authToken) { // Only if not already logged in via stored token
-                console.log("[Auth] No local token. Attempting Telegram login with initData...");
-                try {
-                    const response = await apiClient.post('/api/auth/delivery/verify-telegram', { initData: tg.initData });
-                    localStorage.setItem('deliveryAgentToken', response.data.token);
-                    localStorage.setItem('deliveryAgentInfo', JSON.stringify(response.data.agent));
-                    setAuthToken(response.data.token);
-                    setAgentInfo(response.data.agent);
-                    console.log("[Auth] Telegram login successful via initData.");
-                } catch (error) {
-                    console.warn("[Auth] Telegram initData verification/login failed:", error.response?.data?.error || error.message);
-                }
-            }
-            setIsLoadingAuth(false);
-        };
-
-        if (authToken) { // If token exists in local storage, assume "logged in" for now
-            setIsLoadingAuth(false);
-        } else {
-            attemptTelegramLogin(); // Otherwise, try TG auto-login
-        }
+        // If token exists in local storage, assume "logged in" for now
+        // Otherwise, user will use phone/password login page.
+        setIsLoadingAuth(false);
     }, [authToken]); // Re-check if authToken changes (e.g., on logout)
 
-    const login = (token, agentData) => {
-        localStorage.setItem('deliveryAgentToken', token);
+    const login = (accessToken, refreshToken, agentData) => {
+        setTokens(accessToken, refreshToken);
         localStorage.setItem('deliveryAgentInfo', JSON.stringify(agentData));
-        setAuthToken(token);
+        setAuthToken(accessToken);
         setAgentInfo(agentData);
         setIsLoadingAuth(false);
     };
 
-    const logout = () => {
-        localStorage.removeItem('deliveryAgentToken');
-        localStorage.removeItem('deliveryAgentInfo');
-        setAuthToken(null);
-        setAgentInfo(null);
-        setIsLoadingAuth(false);
+    const logout = async () => {
+        try {
+            await logoutRequest();
+        } catch (error) {
+            // Ignore logout failures, just clear local tokens
+        } finally {
+            clearTokens();
+            setAuthToken(null);
+            setAgentInfo(null);
+            setIsLoadingAuth(false);
+        }
     };
 
     const contextValue = {

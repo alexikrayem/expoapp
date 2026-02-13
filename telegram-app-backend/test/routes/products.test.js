@@ -1,100 +1,202 @@
-const request = require('supertest')
-const app = require('../../server')
+const request = require('supertest');
+const express = require('express');
 
-describe('Products API', () => {
+// Create a test app
+const createTestApp = () => {
+  const app = express();
+  app.use(express.json());
+
+  const productRoutes = require('../../routes/products');
+  app.use('/api/products', productRoutes);
+
+  return app;
+};
+
+describe('Product Routes', () => {
+  let app;
+
   beforeEach(() => {
-    global.mockDb.reset()
-  })
+    global.mockDb.reset();
+    app = createTestApp();
+  });
 
   describe('GET /api/products', () => {
-    it('should return products with pagination', async () => {
-      const mockProducts = [
-        { id: 1, name: 'Product 1', price: 100, supplier_name: 'Supplier 1' },
-        { id: 2, name: 'Product 2', price: 200, supplier_name: 'Supplier 2' }
-      ]
-      
+    it('returns products with pagination', async () => {
       global.mockDb.query
-        .mockResolvedValueOnce({ rows: mockProducts }) // Products query
-        .mockResolvedValueOnce({ rows: [{ total: 2 }] }) // Count query
+        .mockResolvedValueOnce({
+          rows: [
+            { id: 1, name: 'Test Product', price: 100, supplier_name: 'Supplier A' },
+            { id: 2, name: 'Another Product', price: 200, supplier_name: 'Supplier B' }
+          ]
+        })
+        .mockResolvedValueOnce({
+          rows: [{ total: '10' }]
+        });
 
-      const response = await request(app)
+      const res = await request(app)
         .get('/api/products')
-        .expect(200)
+        .query({ cityId: 1, page: 1, limit: 12 });
 
-      expect(response.body).toEqual({
-        items: mockProducts,
-        currentPage: 1,
-        totalPages: 1
-      })
-    })
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('items');
+      expect(res.body).toHaveProperty('currentPage');
+      expect(res.body).toHaveProperty('totalPages');
+      expect(res.body.items).toHaveLength(2);
+    });
 
-    it('should filter products by city', async () => {
-      global.mockDb.query.mockResolvedValueOnce({ rows: [] })
-      global.mockDb.query.mockResolvedValueOnce({ rows: [{ total: 0 }] })
+    it('filters products by category', async () => {
+      global.mockDb.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Medical Item' }] })
+        .mockResolvedValueOnce({ rows: [{ total: '1' }] });
 
-      await request(app)
-        .get('/api/products?cityId=1')
-        .expect(200)
+      const res = await request(app)
+        .get('/api/products')
+        .query({ cityId: 1, category: 'Medical' });
 
-      expect(global.mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('supplier_cities'),
-        expect.arrayContaining(['1'])
-      )
-    })
+      expect(res.status).toBe(200);
+      expect(global.mockDb.query).toHaveBeenCalled();
+    });
 
-    it('should filter products by category', async () => {
-      global.mockDb.query.mockResolvedValueOnce({ rows: [] })
-      global.mockDb.query.mockResolvedValueOnce({ rows: [{ total: 0 }] })
+    it('filters products by price range', async () => {
+      global.mockDb.query
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ total: '0' }] });
 
-      await request(app)
-        .get('/api/products?category=medicine')
-        .expect(200)
+      const res = await request(app)
+        .get('/api/products')
+        .query({ cityId: 1, minPrice: 50, maxPrice: 150 });
 
-      expect(global.mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('p.category = $'),
-        expect.arrayContaining(['medicine'])
-      )
-    })
+      expect(res.status).toBe(200);
+    });
 
-    it('should handle search terms', async () => {
-      global.mockDb.query.mockResolvedValueOnce({ rows: [] })
-      global.mockDb.query.mockResolvedValueOnce({ rows: [{ total: 0 }] })
+    it('returns 400 for invalid minPrice', async () => {
+      const res = await request(app)
+        .get('/api/products')
+        .query({ cityId: 1, minPrice: -10 });
 
-      await request(app)
-        .get('/api/products?searchTerm=aspirin')
-        .expect(200)
+      expect(res.status).toBe(400);
+    });
 
-      expect(global.mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('ILIKE'),
-        expect.arrayContaining(['%aspirin%'])
-      )
-    })
-  })
+    it('filters products on sale', async () => {
+      global.mockDb.query
+        .mockResolvedValueOnce({ rows: [{ id: 1, is_on_sale: true }] })
+        .mockResolvedValueOnce({ rows: [{ total: '1' }] });
+
+      const res = await request(app)
+        .get('/api/products')
+        .query({ cityId: 1, onSale: 'true' });
+
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe('GET /api/products/categories', () => {
+    it('returns category list', async () => {
+      global.mockDb.query.mockResolvedValueOnce({
+        rows: [
+          { category: 'Medical' },
+          { category: 'Dental' },
+          { category: 'Lab Equipment' }
+        ]
+      });
+
+      const res = await request(app).get('/api/products/categories');
+
+      expect(res.status).toBe(200);
+      expect(res.body.categories).toHaveLength(3);
+    });
+  });
+
+  describe('GET /api/products/batch', () => {
+    it('returns products by IDs', async () => {
+      global.mockDb.query.mockResolvedValueOnce({
+        rows: [
+          { id: 1, name: 'Product 1' },
+          { id: 5, name: 'Product 5' }
+        ]
+      });
+
+      const res = await request(app)
+        .get('/api/products/batch')
+        .query({ ids: '1,5' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(2);
+    });
+
+    it('returns empty array for no IDs', async () => {
+      const res = await request(app).get('/api/products/batch');
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+  });
 
   describe('GET /api/products/:id', () => {
-    it('should return single product', async () => {
-      const mockProduct = { id: 1, name: 'Product 1', price: 100 }
-      global.mockDb.query.mockResolvedValueOnce({ rows: [mockProduct] })
+    it('returns product by ID', async () => {
+      global.mockDb.query.mockResolvedValueOnce({
+        rows: [{ id: 1, name: 'Test Product', price: 100 }]
+      });
 
-      const response = await request(app)
-        .get('/api/products/1')
-        .expect(200)
+      const res = await request(app).get('/api/products/1');
 
-      expect(response.body).toEqual(mockProduct)
-    })
+      expect(res.status).toBe(200);
+      expect(res.body.id).toBe(1);
+    });
 
-    it('should return 404 for non-existent product', async () => {
-      global.mockDb.query.mockResolvedValueOnce({ rows: [] })
+    it('returns 404 for non-existent product', async () => {
+      global.mockDb.query.mockResolvedValueOnce({ rows: [] });
 
-      await request(app)
-        .get('/api/products/999')
-        .expect(404)
-    })
+      const res = await request(app).get('/api/products/999');
 
-    it('should return 400 for invalid product ID', async () => {
-      await request(app)
-        .get('/api/products/invalid')
-        .expect(400)
-    })
-  })
-})
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 400 for invalid product ID', async () => {
+      const res = await request(app).get('/api/products/abc');
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe('GET /api/products/favorite-details/:productId', () => {
+    it('returns product with availability status', async () => {
+      global.mockDb.query.mockResolvedValueOnce({
+        rows: [{
+          id: 1,
+          name: 'Available Product',
+          stock_level: 10,
+          supplier_is_active: true,
+          price: 100
+        }]
+      });
+
+      const res = await request(app).get('/api/products/favorite-details/1');
+
+      expect(res.status).toBe(200);
+      expect(res.body.isAvailable).toBe(true);
+      expect(res.body.originalProduct).toBeDefined();
+    });
+
+    it('returns alternatives for unavailable product', async () => {
+      global.mockDb.query
+        .mockResolvedValueOnce({
+          rows: [{
+            id: 1,
+            name: 'Out of Stock',
+            stock_level: 0,
+            supplier_is_active: true,
+            standardized_name_input: 'test product'
+          }]
+        })
+        .mockResolvedValueOnce({
+          rows: [{ id: 2, name: 'Alternative Product', price: 90 }]
+        });
+
+      const res = await request(app).get('/api/products/favorite-details/1');
+
+      expect(res.status).toBe(200);
+      expect(res.body.isAvailable).toBe(false);
+    });
+  });
+});

@@ -60,7 +60,7 @@ const LoginPage = () => {
             });
             
             // Call the login function from AuthContext
-            auth.login(response.data.token, response.data.agent);
+            auth.login(response.data.accessToken, response.data.refreshToken, response.data.agent);
             
             // Navigation will now primarily be handled by the useEffect above reacting to auth.isAuthenticated
             // or by ProtectedRoutes. For an immediate feel:

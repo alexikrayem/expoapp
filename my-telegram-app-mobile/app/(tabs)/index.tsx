@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useCallback, useMemo } from "react"
-import { View, ActivityIndicator, TouchableOpacity, RefreshControl } from "react-native"
+import { View, ActivityIndicator, RefreshControl } from "react-native"
 import { FlashList } from "@shopify/flash-list"
 import Text from "@/components/ThemedText"
 import { useProducts } from "@/hooks/useProducts"
@@ -20,6 +20,7 @@ import { Package, Tag, Factory } from "lucide-react-native"
 import { useCart } from "@/context/CartContext"
 import AnimatedScreen from "@/components/ui/AnimatedScreen"
 import Header from "@/components/Header"
+import PressableScale from "@/components/ui/PressableScale"
 
 type FlashListLayout = {
   span?: number
@@ -43,15 +44,16 @@ const TabButton = React.memo(
   }) => {
     const Icon = tab.icon
     return (
-      <TouchableOpacity
+      <PressableScale
         onPress={onPress}
+        scaleTo={0.98}
         className={`flex-1 flex-row items-center justify-center py-2.5 mx-1 rounded-full ${
           isActive ? "bg-primary-500" : "bg-gray-100"
         }`}
       >
         <Icon size={18} color={isActive ? "#ffffff" : "#64748b"} />
         <Text className={`ml-2 text-sm font-bold ${isActive ? "text-white" : "text-text-secondary"}`}>{tab.label}</Text>
-      </TouchableOpacity>
+      </PressableScale>
     )
   },
 )

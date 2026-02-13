@@ -1,187 +1,120 @@
-import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the external dependencies
-const mockLocalStorage = (() => {
-  let store = {};
-  return {
-    getItem: (key) => store[key] || null,
-    setItem: (key, value) => {
-      store[key] = value.toString();
-    },
-    removeItem: (key) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    },
-  };
-})();
-
-// Mock the API client
+// Mock the apiClient module
 vi.mock('../api/apiClient', () => ({
-  setTokens: vi.fn(),
   apiClient: vi.fn(),
+  setTokens: vi.fn()
 }));
 
-// Mock fetch
-global.fetch = vi.fn();
+// Mock tokenManager
+vi.mock('../utils/tokenManager', () => ({
+  isAccessTokenValid: vi.fn()
+}));
 
-describe('AuthService Tests', () => {
-  const ORIGINAL_ENV = process.env;
+import { authService } from '../services/authService';
+import { apiClient, setTokens } from '../api/apiClient';
+import { isAccessTokenValid } from '../utils/tokenManager';
 
-  let authService;
-
-  beforeEach(async () => {
-    vi.resetModules();
-    process.env = { ...ORIGINAL_ENV };
-    global.localStorage = mockLocalStorage;
+describe('authService', () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-
-    // Clear any stored tokens
-    localStorage.clear();
-
-    // Import authService after clearing modules to allow mocking
-    const authModule = await import('../services/authService');
-    authService = authModule.authService;
   });
 
-  afterEach(() => {
-    process.env = ORIGINAL_ENV;
+  describe('sendOtp', () => {
+    it('sends OTP request with phone number', async () => {
+      apiClient.mockResolvedValue({ success: true, message: 'OTP sent' });
+
+      const result = await authService.sendOtp('+1234567890');
+
+      expect(apiClient).toHaveBeenCalledWith('auth/send-otp', {
+        method: 'POST',
+        body: { phone_number: '+1234567890' }
+      });
+      expect(result).toEqual({ success: true, message: 'OTP sent' });
+    });
+  });
+
+  describe('verifyOtp', () => {
+    it('verifies OTP and stores token if user exists', async () => {
+      apiClient.mockResolvedValue({
+        accessToken: 'new-access-token',
+        isNew: false
+      });
+
+      const result = await authService.verifyOtp('+1234567890', '123456');
+
+      expect(apiClient).toHaveBeenCalledWith('auth/verify-otp', {
+        method: 'POST',
+        body: { phone_number: '+1234567890', code: '123456' }
+      });
+      expect(setTokens).toHaveBeenCalledWith('new-access-token');
+      expect(result.isNew).toBe(false);
+    });
+
+    it('does not store token if user is new', async () => {
+      apiClient.mockResolvedValue({
+        isNew: true,
+        message: 'User not found, please register'
+      });
+
+      const result = await authService.verifyOtp('+1234567890', '123456');
+
+      expect(setTokens).not.toHaveBeenCalled();
+      expect(result.isNew).toBe(true);
+    });
+  });
+
+  describe('registerWithPhone', () => {
+    it('registers new user and stores token', async () => {
+      const profileData = {
+        full_name: 'Test User',
+        address_line1: '123 Test St',
+        city: 'Test City'
+      };
+
+      apiClient.mockResolvedValue({
+        accessToken: 'registration-token',
+        user: { id: 1 }
+      });
+
+      const result = await authService.registerWithPhone('+1234567890', '123456', profileData);
+
+      expect(apiClient).toHaveBeenCalledWith('auth/register-phone', {
+        method: 'POST',
+        body: {
+          phone_number: '+1234567890',
+          code: '123456',
+          profileData
+        }
+      });
+      expect(setTokens).toHaveBeenCalledWith('registration-token');
+    });
   });
 
   describe('isAuthenticated', () => {
-    test('should return true when access token exists', () => {
-      localStorage.setItem('accessToken', 'valid_token');
+    it('returns true when access token is valid', () => {
+      isAccessTokenValid.mockReturnValue(true);
       expect(authService.isAuthenticated()).toBe(true);
     });
 
-    test('should return false when no access token exists', () => {
-      expect(authService.isAuthenticated()).toBe(false);
-    });
-
-    test('should return false when access token is empty string', () => {
-      localStorage.setItem('accessToken', '');
+    it('returns false when access token is invalid', () => {
+      isAccessTokenValid.mockReturnValue(false);
       expect(authService.isAuthenticated()).toBe(false);
     });
   });
 
-  describe('telegramLoginWidget', () => {
-    test('should successfully authenticate with valid Telegram auth data', async () => {
-      // Mock successful response
-      const mockResponse = {
-        ok: true,
-        status: 200,
-        json: async () => ({
-          accessToken: 'mock_access_token',
-          refreshToken: 'mock_refresh_token',
-          userProfile: {
-            userId: 123456789,
-            fullName: 'John Doe',
-            profileCompleted: false
-          }
-        })
-      };
-
-      vi.mocked(fetch).mockResolvedValue(mockResponse);
-
-      const authData = {
-        id: 123456789,
-        first_name: 'John',
-        last_name: 'Doe',
-        username: 'johndoe',
-        auth_date: Math.floor(Date.now() / 1000)
-      };
-
-      const result = await authService.telegramLoginWidget(authData);
-
-      expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/auth/telegram-login-widget'),
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            'Content-Type': 'application/json'
-          }),
-          body: JSON.stringify({ authData })
-        })
-      );
-
-      expect(result).toEqual({
-        accessToken: 'mock_access_token',
-        refreshToken: 'mock_refresh_token',
-        userProfile: {
-          userId: 123456789,
-          fullName: 'John Doe',
-          profileCompleted: false
-        }
+  describe('getProfile', () => {
+    it('fetches user profile', async () => {
+      apiClient.mockResolvedValue({
+        id: 1,
+        full_name: 'Test User',
+        phone_number: '+1234567890'
       });
-    });
 
-    test('should handle API errors gracefully', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 400,
-        json: async () => ({ message: 'Invalid request' })
-      };
+      const result = await authService.getProfile();
 
-      vi.mocked(fetch).mockResolvedValue(mockResponse);
-
-      const authData = {
-        id: 123456789,
-        first_name: 'John',
-        last_name: 'Doe'
-      };
-
-      await expect(authService.telegramLoginWidget(authData)).rejects.toEqual({
-        message: 'Invalid request',
-        status: 400
-      });
-    });
-
-    test('should handle network errors', async () => {
-      vi.mocked(fetch).mockRejectedValue(new Error('Network error'));
-
-      const authData = {
-        id: 123456789,
-        first_name: 'John'
-      };
-
-      await expect(authService.telegramLoginWidget(authData)).rejects.toThrow('Network error');
-    });
-  });
-
-  describe('devBypassLogin', () => {
-    test('should work in development mode', async () => {
-      process.env.NODE_ENV = 'development';
-      process.env.VITE_DEV_BYPASS_SECRET = 'test_secret';
-
-      const mockResponse = {
-        ok: true,
-        json: async () => ({
-          accessToken: 'dev_token',
-          refreshToken: 'dev_refresh_token'
-        })
-      };
-
-      vi.mocked(fetch).mockResolvedValue(mockResponse);
-
-      const result = await authService.devBypassLogin();
-
-      expect(result).toEqual({
-        accessToken: 'dev_token',
-        refreshToken: 'dev_refresh_token'
-      });
-    });
-
-    test('should return null in non-development mode', async () => {
-      // Import the module again to get access to the internal functions
-      const authModule = await import('../services/authService');
-      const mockGetIsDevelopment = vi.spyOn(authModule, 'getIsDevelopment').mockReturnValue(false);
-
-      const result = await authService.devBypassLogin();
-      expect(result).toBeNull();
-
-      // Restore the original function
-      mockGetIsDevelopment.mockRestore();
+      expect(apiClient).toHaveBeenCalledWith('user/profile');
+      expect(result.full_name).toBe('Test User');
     });
   });
 });

@@ -1,6 +1,6 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, ScrollView, Image, Alert, RefreshControl } from 'react-native';
+import { View, ScrollView, Image, Alert, RefreshControl } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
@@ -13,6 +13,8 @@ import { orderService } from '@/services/orderService';
 import { Clock, CheckCircle, XCircle, Package, Trash2, Plus, Minus } from 'lucide-react-native';
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Button } from '@/components/ui/Button';
+import PressableScale from '@/components/ui/PressableScale';
 
 const CheckoutCard = () => {
   const { cartItems, getCartTotal, actions } = useCart();
@@ -52,13 +54,13 @@ const CheckoutCard = () => {
               <Text className="text-primary-600 font-bold text-xs text-right">{formatPrice(item.effective_selling_price)}</Text>
             </View>
             <View className="flex-row items-center bg-surface rounded-lg p-1 border border-border">
-              <TouchableOpacity onPress={() => actions.decreaseQuantity(item.product_id)} className="p-1.5 bg-white rounded-md shadow-sm">
+              <PressableScale onPress={() => actions.decreaseQuantity(item.product_id)} scaleTo={0.92} className="p-1.5 bg-white rounded-md shadow-sm">
                 {item.quantity > 1 ? <Minus size={12} color="#374151" /> : <Trash2 size={12} color="#EF4444" />}
-              </TouchableOpacity>
+              </PressableScale>
               <Text className="mx-3 font-bold text-sm text-text-main">{item.quantity}</Text>
-              <TouchableOpacity onPress={() => actions.increaseQuantity(item.product_id)} className="p-1.5 bg-white rounded-md shadow-sm">
+              <PressableScale onPress={() => actions.increaseQuantity(item.product_id)} scaleTo={0.92} className="p-1.5 bg-white rounded-md shadow-sm">
                 <Plus size={12} color="#374151" />
-              </TouchableOpacity>
+              </PressableScale>
             </View>
           </View>
         ))}
@@ -69,20 +71,14 @@ const CheckoutCard = () => {
           <Text className="font-bold text-text-secondary">المجموع:</Text>
           <Text className="font-bold text-primary-600 text-xl">{formatPrice(total)}</Text>
         </View>
-        <TouchableOpacity
+        <Button
+          title={isPlacingOrder ? "جاري الإرسال..." : "إرسال الطلب"}
           onPress={() => startCheckout(userProfile, telegramUser, refreshProfile)}
-          disabled={isPlacingOrder}
-          className={`w-full py-4 rounded-xl items-center flex-row justify-center shadow-lg shadow-primary-500/20 active:scale-[0.98] ${isPlacingOrder ? 'bg-gray-300' : 'bg-primary-600'}`}
-        >
-          {isPlacingOrder ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <>
-              <Text className="text-white font-bold text-lg ml-2">إرسال الطلب</Text>
-              <CheckCircle size={20} color="white" />
-            </>
-          )}
-        </TouchableOpacity>
+          loading={isPlacingOrder}
+          size="lg"
+          className="shadow-lg shadow-primary-500/20"
+          rightIcon={<CheckCircle size={20} color="white" />}
+        />
       </View>
     </View>
   );
@@ -140,13 +136,14 @@ const OrderItem = React.memo(({ order, onCancel }: { order: any, onCancel: (id: 
       {/* Actions */}
       {order.status === 'pending' && (
         <View className="px-5 pb-5 pt-0">
-          <TouchableOpacity
+          <PressableScale
             onPress={() => onCancel(order.id)}
-            className="w-full py-3 rounded-xl border border-red-200 bg-red-50 flex-row items-center justify-center active:bg-red-100 "
+            scaleTo={0.98}
+            className="w-full py-3 rounded-xl border border-red-200 bg-red-50 flex-row items-center justify-center"
           >
             <XCircle size={16} color="#DC2626" />
             <Text className="text-red-600 text-sm font-bold ml-2">إلغاء الطلب</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
       )}
     </View>
@@ -240,9 +237,10 @@ export default function OrdersScreen() {
                 <Text className="text-lg font-bold text-text-main mb-3 text-right">سجل الطلبات</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row py-1" contentContainerStyle={{ paddingRight: 4 }}>
                   {filters.map(filter => (
-                    <TouchableOpacity
+                    <PressableScale
                       key={filter.key}
                       onPress={() => setActiveFilter(filter.key)}
+                      scaleTo={0.98}
                       className={`px-5 py-3 rounded-full mr-2 border  ${activeFilter === filter.key
                         ? 'bg-blue-600 border-blue-600'
                         : 'bg-white border-gray-200'
@@ -251,7 +249,7 @@ export default function OrdersScreen() {
                       <Text className={`${activeFilter === filter.key ? 'text-white' : 'text-gray-700'} text-base font-medium`}>
                         {filter.label}
                       </Text>
-                    </TouchableOpacity>
+                    </PressableScale>
                   ))}
                 </ScrollView>
               </View>

@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View } from 'react-native';
 import { Image } from 'expo-image';
 import Text from '@/components/ThemedText';
 import { MapPin, Star } from 'lucide-react-native';
+import PressableScale from '@/components/ui/PressableScale';
 
 interface SupplierCardProps {
     supplier: any;
@@ -11,10 +12,10 @@ interface SupplierCardProps {
 
 const SupplierCard = React.memo(({ supplier, onShowDetails }: SupplierCardProps) => {
     return (
-        <TouchableOpacity
+        <PressableScale
             className="bg-white rounded-xl shadow-sm mb-4 p-4 flex-row items-center border border-gray-100"
             onPress={() => onShowDetails(supplier.id)}
-            activeOpacity={0.7}
+            scaleTo={0.98}
         >
             {supplier.logoUrl?.startsWith('http') ? (
                 <Image
@@ -42,7 +43,7 @@ const SupplierCard = React.memo(({ supplier, onShowDetails }: SupplierCardProps)
                     <Text className="text-gray-400 text-xs">{supplier.city}</Text>
                 </View>
             </View>
-        </TouchableOpacity>
+        </PressableScale>
     );
 });
 

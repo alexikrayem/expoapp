@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Modal, StyleSheet, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Modal, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
     useSharedValue,
@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Text from '@/components/ThemedText';
 import { X } from 'lucide-react-native';
+import PressableScale from '@/components/ui/PressableScale';
 
 interface ImageViewerProps {
     visible: boolean;
@@ -98,9 +99,9 @@ export default function ImageViewer({ visible, imageUrl, onClose, imageName }: I
             <GestureHandlerRootView style={{ flex: 1 }}>
                 <View style={styles.container}>
                     <View style={styles.header}>
-                        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                        <PressableScale onPress={handleClose} scaleTo={0.9} style={styles.closeButton}>
                             <X size={24} color="white" />
-                        </TouchableOpacity>
+                        </PressableScale>
                         {imageName && (
                             <Text style={styles.title} numberOfLines={1}>
                                 {imageName}

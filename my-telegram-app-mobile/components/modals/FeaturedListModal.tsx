@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Modal, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Modal, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import Text from '@/components/ThemedText';
@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { X, Package, Zap } from 'lucide-react-native';
 import { useCurrency } from '@/context/CurrencyContext';
 import { apiClient } from '../../api/apiClient';
+import PressableScale from '@/components/ui/PressableScale';
 
 interface FeaturedListModalProps {
     show: boolean;
@@ -79,9 +80,10 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
     }, [onClose, openModal]);
 
     const renderItem = useCallback(({ item }: { item: any }) => (
-        <TouchableOpacity
+        <PressableScale
             onPress={() => handleItemClick(item)}
-            className="flex-row items-start p-4 mb-4 bg-white rounded-2xl shadow-sm border border-border active:scale-[0.99]"
+            scaleTo={0.98}
+            className="flex-row items-start p-4 mb-4 bg-white rounded-2xl shadow-sm border border-border"
         >
             {/* Text Content (Right side for RTL) */}
             <View className="flex-1 mr-4 items-end">
@@ -119,7 +121,7 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
                     transition={200}
                 />
             </View>
-        </TouchableOpacity>
+        </PressableScale>
     ), [formatPrice, handleItemClick]);
 
     if (!show) return null;
@@ -147,13 +149,14 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
                     )}
                     <View className="absolute inset-0 bg-black/40" />
 
-                    <TouchableOpacity
+                    <PressableScale
                         onPress={onClose}
+                        scaleTo={0.92}
                         className="absolute top-4 right-4 bg-black/30 p-2 rounded-full backdrop-blur-sm z-10"
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                         <X size={24} color="white" />
-                    </TouchableOpacity>
+                    </PressableScale>
 
                     <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
                         <Text className="text-white text-3xl font-bold text-right shadow-md">
@@ -189,12 +192,13 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
                     ) : error ? (
                         <View className="flex-1 justify-center items-center p-6">
                             <Text className="text-red-500 text-center mb-4 font-medium">{error}</Text>
-                            <TouchableOpacity
+                            <PressableScale
                                 onPress={fetchListItems}
+                                scaleTo={0.98}
                                 className="bg-primary-600 px-6 py-2.5 rounded-xl shadow-sm"
                             >
                                 <Text className="text-white font-bold">إعادة المحاولة</Text>
-                            </TouchableOpacity>
+                            </PressableScale>
                         </View>
                     ) : (
                         <View className="flex-1 p-5">

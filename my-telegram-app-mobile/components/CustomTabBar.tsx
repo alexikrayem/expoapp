@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
+import { View, Dimensions, StyleSheet } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import Animated, {
     useSharedValue,
@@ -10,6 +10,7 @@ import { Home, Heart, ShoppingBag, Settings } from 'lucide-react-native';
 import Text from '@/components/ThemedText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptics } from '@/utils/haptics';
+import PressableScale from '@/components/ui/PressableScale';
 
 const { width } = Dimensions.get('window');
 
@@ -57,11 +58,11 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
                     };
 
                     return (
-                        <TouchableOpacity
+                        <PressableScale
                             key={route.key}
                             onPress={onPress}
+                            scaleTo={0.92}
                             style={styles.tabItem}
-                            activeOpacity={0.7}
                         >
                             <View style={[
                                 styles.iconContainer,
@@ -79,7 +80,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
                             ]}>
                                 {label}
                             </Text>
-                        </TouchableOpacity>
+                        </PressableScale>
                     );
                 })}
             </View>

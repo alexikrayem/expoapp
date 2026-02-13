@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/db');
 const authSupplier = require('../middleware/authSupplier');
 const bcrypt = require('bcrypt');
+const { invalidateCache } = require('../middleware/cache');
 
 // ------------------------
 // Authenticated Supplier Routes (Protected)
@@ -96,6 +97,7 @@ router.put('/cities', authSupplier, async (req, res) => {
             }
             
             await client.query('COMMIT');
+            void invalidateCache(['products:list', 'deals:list', 'search']);
             res.json({ message: 'Cities updated successfully' });
             
         } catch (error) {
@@ -170,6 +172,7 @@ router.post('/products', authSupplier, async (req, res) => {
             supplierId
         ]);
 
+        void invalidateCache(['products:list', 'products:categories', 'search', 'featured:items', 'featured:list', 'deals:list']);
         res.status(201).json(result.rows[0]);
 
     } catch (error) {
@@ -260,6 +263,7 @@ router.put('/products/:id', authSupplier, async (req, res) => {
         `;
 
         const result = await db.query(updateQuery, updateValues);
+        void invalidateCache(['products:list', 'products:categories', 'search', 'featured:items', 'featured:list', 'deals:list']);
         res.json(result.rows[0]);
 
     } catch (error) {
@@ -292,7 +296,7 @@ router.delete('/products/:id', authSupplier, async (req, res) => {
 
         const deleteQuery = 'DELETE FROM products WHERE id = $1';
         await db.query(deleteQuery, [id]);
-
+        void invalidateCache(['products:list', 'products:categories', 'search', 'featured:items', 'featured:list', 'deals:list']);
         res.json({ message: 'Product deleted successfully' });
 
     } catch (error) {
@@ -336,6 +340,7 @@ router.put('/products/bulk-stock', authSupplier, async (req, res) => {
             }
             
             await client.query('COMMIT');
+            void invalidateCache(['products:list', 'products:categories', 'search', 'featured:items', 'featured:list', 'deals:list']);
             res.json({ message: 'Stock levels updated successfully', updated_count: updates.length });
             
         } catch (error) {

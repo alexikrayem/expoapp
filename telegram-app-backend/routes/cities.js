@@ -2,9 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const { cacheResponse } = require('../middleware/cache');
 
 // Get all cities
-router.get('/', async (req, res) => {
+router.get('/', cacheResponse(600, 'cities:list'), async (req, res) => {
     try {
         const query = 'SELECT * FROM cities WHERE is_active = true ORDER BY name ASC';
         const result = await db.query(query);

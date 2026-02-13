@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useCheckout } from '@/context/CheckoutContext';
@@ -11,6 +12,7 @@ import { MapPin, CreditCard, CheckCircle, AlertCircle, ChevronRight, Edit3 } fro
 import { useRouter } from 'expo-router';
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import CheckoutSlider from '@/components/CheckoutSlider';
+import PressableScale from '@/components/ui/PressableScale';
 
 export default function CheckoutScreen() {
     const { userProfile, isAuthenticated, isLoading: isLoadingAuth, refreshProfile } = useAuth();
@@ -84,9 +86,13 @@ export default function CheckoutScreen() {
         return (
             <View className="flex-1 justify-center items-center bg-gray-50 p-4">
                 <Text className="text-xl font-bold text-gray-800">سلة التسوق فارغة</Text>
-                <TouchableOpacity onPress={() => router.replace('/')} className="mt-4">
-                    <Text className="text-blue-600 font-bold">العودة للتسوق</Text>
-                </TouchableOpacity>
+                <Button
+                    title="العودة للتسوق"
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => router.replace('/')}
+                    className="mt-4"
+                />
             </View>
         );
     }
@@ -102,12 +108,12 @@ export default function CheckoutScreen() {
                     {/* Address Section */}
                     <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-border">
                         <View className="flex-row justify-between items-center mb-4">
-                            <TouchableOpacity onPress={handleEditAddress} className="flex-row items-center bg-primary-50 px-3 py-1.5 rounded-lg">
+                            <PressableScale onPress={handleEditAddress} scaleTo={0.98} className="flex-row items-center bg-primary-50 px-3 py-1.5 rounded-lg">
                                 <Text className="text-primary-600 text-sm font-semibold mr-1.5">
                                     {hasAddress ? 'تغيير' : 'إضافة عنوان'}
                                 </Text>
                                 <Edit3 size={14} color="#2563EB" />
-                            </TouchableOpacity>
+                            </PressableScale>
                             <View className="flex-row items-center">
                                 <Text className="text-lg font-bold text-text-main mr-2">عنوان التوصيل</Text>
                                 <MapPin size={20} color="#64748b" />
@@ -126,12 +132,13 @@ export default function CheckoutScreen() {
                                 )}
                             </View>
                         ) : (
-                            <TouchableOpacity
+                            <PressableScale
                                 onPress={handleEditAddress}
+                                scaleTo={0.98}
                                 className="bg-surface border-2 border-dashed border-border rounded-xl p-8 items-center justify-center active:bg-gray-50"
                             >
                                 <Text className="text-text-secondary font-medium">أضف عنوان التوصيل</Text>
-                            </TouchableOpacity>
+                            </PressableScale>
                         )}
                     </View>
 
@@ -142,8 +149,9 @@ export default function CheckoutScreen() {
                             <CreditCard size={20} color="#64748b" />
                         </View>
 
-                        <TouchableOpacity
+                        <PressableScale
                             onPress={() => setPaymentMethod('cod')}
+                            scaleTo={0.98}
                             className={`flex-row items-center justify-between p-4 rounded-xl border ${paymentMethod === 'cod' ? 'border-primary-500 bg-primary-50' : 'border-border bg-surface'
                                 }`}
                         >
@@ -153,7 +161,7 @@ export default function CheckoutScreen() {
                             <Text className={`font-medium text-base ${paymentMethod === 'cod' ? 'text-primary-800' : 'text-text-secondary'}`}>
                                 الدفع عند الاستلام
                             </Text>
-                        </TouchableOpacity>
+                        </PressableScale>
                     </View>
 
                     {/* Order Summary */}

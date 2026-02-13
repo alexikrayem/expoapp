@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react"
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
+import { View, Text, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import PressableScale from "@/components/ui/PressableScale"
 
 interface Props {
   children: ReactNode
@@ -42,9 +43,9 @@ class ErrorBoundary extends Component<Props, State> {
           <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
           <Text style={styles.title}>حدث خطأ غير متوقع</Text>
           <Text style={styles.message}>نعتذر عن هذا الخطأ. يرجى المحاولة مرة أخرى.</Text>
-          <TouchableOpacity style={styles.button} onPress={this.handleReset}>
+          <PressableScale style={styles.button} scaleTo={0.98} onPress={this.handleReset}>
             <Text style={styles.buttonText}>إعادة المحاولة</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </View>
       )
     }

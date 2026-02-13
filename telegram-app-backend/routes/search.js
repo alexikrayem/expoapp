@@ -2,9 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const { cacheResponse } = require('../middleware/cache');
 
 // Search across products, deals, and suppliers
-router.get('/', async (req, res) => {
+router.get('/', cacheResponse(30, 'search'), async (req, res) => {
     try {
         const { searchTerm, cityId, limit = 20 } = req.query;
 

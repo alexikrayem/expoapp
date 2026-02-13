@@ -7,6 +7,7 @@ import { Text as DefaultText, View as DefaultView } from 'react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from './useColorScheme';
+import { resolveFontStyle } from '@/utils/fonts';
 
 type ThemeProps = {
   lightColor?: string;
@@ -34,8 +35,12 @@ export function useThemeColor(
 export function Text(props: TextProps) {
   const { style, lightColor, darkColor, ...otherProps } = props;
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
+  const resolvedFont = resolveFontStyle(style);
+  const combinedStyle = resolvedFont
+    ? [{ color, fontFamily: 'TajawalCustom' }, style, resolvedFont]
+    : [{ color, fontFamily: 'TajawalCustom' }, style];
 
-  return <DefaultText style={[{ color, fontFamily: 'TajawalCustom' }, style]} {...otherProps} />;
+  return <DefaultText style={combinedStyle} {...otherProps} />;
 }
 
 export function View(props: ViewProps) {

@@ -25,7 +25,7 @@ global.Telegram = {
       hide: vi.fn(),
       onClick: vi.fn(),
     },
-    initData: null,  // No init data since we're using Login Widget
+    initData: null,  // No init data in tests
     initDataUnsafe: {
       user: {
         id: 123456789,

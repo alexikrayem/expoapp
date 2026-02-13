@@ -287,7 +287,12 @@
 <a name='L222'></a><a href='#L222'>222</a>
 <a name='L223'></a><a href='#L223'>223</a>
 <a name='L224'></a><a href='#L224'>224</a>
-<a name='L225'></a><a href='#L225'>225</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -411,10 +416,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -462,6 +469,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -512,7 +520,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState, useEffect, useCallback } from 'react';
-import { View, Modal, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Modal, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import Text from '@/components/ThemedText';
@@ -520,6 +528,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { X, Package, Zap } from 'lucide-react-native';
 import { useCurrency } from '@/context/CurrencyContext';
 import { apiClient } from '../../api/apiClient';
+import PressableScale from '@/components/ui/PressableScale';
 &nbsp;
 interface FeaturedListModalProps {
     show: boolean;
@@ -592,9 +601,10 @@ export default function <span class="fstat-no" title="function not covered" >Fea
     }, [onClose, openModal]);
 &nbsp;
     const renderItem = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >({</span> item }: { item: any }) =&gt; (</span>
-<span class="cstat-no" title="statement not covered" >        &lt;TouchableOpacity</span>
+<span class="cstat-no" title="statement not covered" >        &lt;PressableScale</span>
             onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >handleItemClick(item)}</span>
-            className="flex-row items-start p-4 mb-4 bg-white rounded-2xl shadow-sm border border-border active:scale-[0.99]"
+            scaleTo={0.98}
+            className="flex-row items-start p-4 mb-4 bg-white rounded-2xl shadow-sm border border-border"
         &gt;
             {/* Text Content (Right side for RTL) */}
             &lt;View className="flex-1 mr-4 items-end"&gt;
@@ -632,7 +642,7 @@ export default function <span class="fstat-no" title="function not covered" >Fea
                     transition={200}
                 /&gt;
             &lt;/View&gt;
-        &lt;/TouchableOpacity&gt;
+        &lt;/PressableScale&gt;
     ), [formatPrice, handleItemClick]);
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (!show) <span class="cstat-no" title="statement not covered" >return null;</span></span>
@@ -660,13 +670,14 @@ export default function <span class="fstat-no" title="function not covered" >Fea
                     )}
                     &lt;View className="absolute inset-0 bg-black/40" /&gt;
 &nbsp;
-                    &lt;TouchableOpacity
+                    &lt;PressableScale
                         onPress={onClose}
+                        scaleTo={0.92}
                         className="absolute top-4 right-4 bg-black/30 p-2 rounded-full backdrop-blur-sm z-10"
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     &gt;
                         &lt;X size={24} color="white" /&gt;
-                    &lt;/TouchableOpacity&gt;
+                    &lt;/PressableScale&gt;
 &nbsp;
                     &lt;View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent"&gt;
                         &lt;Text className="text-white text-3xl font-bold text-right shadow-md"&gt;
@@ -702,12 +713,13 @@ export default function <span class="fstat-no" title="function not covered" >Fea
                     ) : error ? (
                         &lt;View className="flex-1 justify-center items-center p-6"&gt;
                             &lt;Text className="text-red-500 text-center mb-4 font-medium"&gt;{error}&lt;/Text&gt;
-                            &lt;TouchableOpacity
+                            &lt;PressableScale
                                 onPress={fetchListItems}
+                                scaleTo={0.98}
                                 className="bg-primary-600 px-6 py-2.5 rounded-xl shadow-sm"
                             &gt;
                                 &lt;Text className="text-white font-bold"&gt;إعادة المحاولة&lt;/Text&gt;
-                            &lt;/TouchableOpacity&gt;
+                            &lt;/PressableScale&gt;
                         &lt;/View&gt;
                     ) : (
                         &lt;View className="flex-1 p-5"&gt;
@@ -742,7 +754,7 @@ export default function <span class="fstat-no" title="function not covered" >Fea
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-12T20:43:34.187Z
+                at 2026-02-12T11:40:20.952Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

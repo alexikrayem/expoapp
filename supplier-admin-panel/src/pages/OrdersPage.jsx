@@ -1,19 +1,7 @@
 // src/pages/OrdersPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios'; // Or your preferred HTTP client
 import { Eye, Package, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react'; // Icons
-
-// Helper to get token and create apiClient (assuming it's not globally available or passed via context)
-// If you have a global apiClient instance, use that instead.
-const getAuthToken = () => localStorage.getItem('supplierToken');
-const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_SUPPLIER_API_BASE_URL || 'http://localhost:3001',
-});
-apiClient.interceptors.request.use(config => {
-    const token = getAuthToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-}, error => Promise.reject(error));
+import apiClient from '../services/apiClient';
 
 
 const OrdersPage = () => {

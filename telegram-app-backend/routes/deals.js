@@ -3,9 +3,11 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const authSupplier = require('../middleware/authSupplier');
+const { invalidateCache } = require('../middleware/cache');
+const { cacheResponse } = require('../middleware/cache');
 
 // Get deals (with optional city filter)
-router.get('/', async (req, res) => {
+router.get('/', cacheResponse(60, 'deals:list'), async (req, res) => {
     try {
         const { cityId } = req.query;
         
@@ -129,6 +131,7 @@ router.post('/supplier/deals', authSupplier, async (req, res) => {
             image_url, Boolean(is_active), supplierId
         ]);
         
+        void invalidateCache(['deals:list', 'search', 'featured:items', 'featured:list']);
         res.status(201).json(result.rows[0]);
         
     } catch (error) {
@@ -222,6 +225,7 @@ router.put('/supplier/deals/:id', authSupplier, async (req, res) => {
         `;
         
         const result = await db.query(updateQuery, updateValues);
+        void invalidateCache(['deals:list', 'search', 'featured:items', 'featured:list']);
         res.json(result.rows[0]);
         
     } catch (error) {

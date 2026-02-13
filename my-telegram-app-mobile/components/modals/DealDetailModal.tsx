@@ -1,6 +1,6 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useEffect } from 'react';
-import { View, Image, ScrollView, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { View, Image, ScrollView, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -8,6 +8,7 @@ import { X, Tag, Clock, Package, MapPin, Percent, Gift, ShoppingCart, ExternalLi
 import { cityService } from '../../services/cityService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
+import PressableScale from '@/components/ui/PressableScale';
 
 export default function DealDetailModal({ show, onClose, dealId, onProductClick, onSupplierClick }: any) {
     const [deal, setDeal] = useState<any>(null);
@@ -84,13 +85,14 @@ export default function DealDetailModal({ show, onClose, dealId, onProductClick,
                         <Text className="text-xl font-bold text-text-main flex-1 text-right">
                             {isLoading ? "جاري التحميل..." : deal ? deal.title : "تفاصيل العرض"}
                         </Text>
-                        <TouchableOpacity
+                        <PressableScale
                             onPress={onClose}
+                            scaleTo={0.92}
                             className="p-2 rounded-full bg-surface border border-border ml-4"
                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         >
                             <X size={20} color="#64748b" />
-                        </TouchableOpacity>
+                        </PressableScale>
                     </View>
 
                     {/* Content */}
@@ -149,12 +151,13 @@ export default function DealDetailModal({ show, onClose, dealId, onProductClick,
                                     <Tag size={48} color="#ef4444" className="mb-4" />
                                     <Text className="text-red-600 font-bold text-lg mb-2">خطأ!</Text>
                                     <Text className="text-text-secondary text-center mb-4">{error}</Text>
-                                    <TouchableOpacity
+                                    <PressableScale
                                         onPress={() => setDeal(null)}
+                                        scaleTo={0.98}
                                         className="bg-red-500 px-6 py-2.5 rounded-xl shadow-sm"
                                     >
                                         <Text className="text-white font-bold">إغلاق</Text>
-                                    </TouchableOpacity>
+                                    </PressableScale>
                                 </View>
                             </View>
                         )}
@@ -228,9 +231,10 @@ export default function DealDetailModal({ show, onClose, dealId, onProductClick,
 
                                 {/* Supplier Info */}
                                 {deal.supplier_name && (
-                                    <TouchableOpacity
+                                    <PressableScale
                                         onPress={handleSupplierClick}
-                                        className="bg-white rounded-2xl p-5 shadow-sm border border-border active:bg-primary-50"
+                                        scaleTo={0.98}
+                                        className="bg-white rounded-2xl p-5 shadow-sm border border-border"
                                     >
                                         <View className="flex-row justify-end items-center mb-3">
                                             <Text className="font-bold text-text-main mr-2">المورد</Text>
@@ -248,7 +252,7 @@ export default function DealDetailModal({ show, onClose, dealId, onProductClick,
                                                 )}
                                             </View>
                                         </View>
-                                    </TouchableOpacity>
+                                    </PressableScale>
                                 )}
 
                                 {/* Related Product */}
@@ -259,9 +263,10 @@ export default function DealDetailModal({ show, onClose, dealId, onProductClick,
                                             <Package size={18} color="#10b981" />
                                         </View>
 
-                                        <TouchableOpacity
+                                        <PressableScale
                                             onPress={handleProductClick}
-                                            className="flex-row items-center justify-between p-3 bg-surface rounded-xl border border-border active:bg-primary-50"
+                                            scaleTo={0.98}
+                                            className="flex-row items-center justify-between p-3 bg-surface rounded-xl border border-border"
                                         >
                                             <Text className="text-primary-600 text-sm font-bold">عرض المنتج ←</Text>
                                             <View className="flex-row items-center flex-1 justify-end ml-3">
@@ -297,7 +302,7 @@ export default function DealDetailModal({ show, onClose, dealId, onProductClick,
                                                     </View>
                                                 )}
                                             </View>
-                                        </TouchableOpacity>
+                                        </PressableScale>
                                     </View>
                                 )}
 
@@ -313,29 +318,32 @@ export default function DealDetailModal({ show, onClose, dealId, onProductClick,
 
                                     <View className="w-full space-y-3">
                                         {deal.product_id && (
-                                            <TouchableOpacity
+                                            <PressableScale
                                                 onPress={handleAddToCart}
-                                                className="w-full bg-white py-4 px-4 rounded-xl flex-row justify-center items-center shadow-md active:scale-[0.98]"
+                                                scaleTo={0.98}
+                                                className="w-full bg-white py-4 px-4 rounded-xl flex-row justify-center items-center shadow-md"
                                             >
                                                 <ShoppingCart size={20} color="#2563eb" className="mr-2" />
                                                 <Text className="text-primary-600 font-bold text-lg">استفد من العرض</Text>
-                                            </TouchableOpacity>
+                                            </PressableScale>
                                         )}
 
                                         <View className="flex-row gap-3">
-                                            <TouchableOpacity
+                                            <PressableScale
                                                 onPress={handleSupplierClick}
-                                                className="flex-1 bg-primary-700/50 py-3 px-4 rounded-xl border border-primary-500 active:bg-primary-700"
+                                                scaleTo={0.98}
+                                                className="flex-1 bg-primary-700/50 py-3 px-4 rounded-xl border border-primary-500"
                                             >
                                                 <Text className="text-white font-bold text-center">زيارة المتجر</Text>
-                                            </TouchableOpacity>
+                                            </PressableScale>
                                             {deal.product_id && (
-                                                <TouchableOpacity
+                                                <PressableScale
                                                     onPress={handleProductClick}
-                                                    className="flex-1 bg-primary-700/50 py-3 px-4 rounded-xl border border-primary-500 active:bg-primary-700"
+                                                    scaleTo={0.98}
+                                                    className="flex-1 bg-primary-700/50 py-3 px-4 rounded-xl border border-primary-500"
                                                 >
                                                     <Text className="text-white font-bold text-center">عرض المنتج</Text>
-                                                </TouchableOpacity>
+                                                </PressableScale>
                                             )}
                                         </View>
                                     </View>

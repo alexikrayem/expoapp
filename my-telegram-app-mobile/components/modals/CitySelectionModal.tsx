@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Modal, Animated, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, Modal, Animated, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
@@ -8,6 +8,7 @@ import { X, MapPin, Check } from 'lucide-react-native';
 import { cityService } from '@/services/cityService';
 import { userService } from '@/services/userService';
 import { useAuth } from '@/context/AuthContext';
+import PressableScale from '@/components/ui/PressableScale';
 
 interface CitySelectionModalProps {
     visible: boolean;
@@ -84,10 +85,10 @@ export default function CitySelectionModal({ visible, onClose }: CitySelectionMo
             navigationBarTranslucent
         >
             <View className="flex-1 justify-end bg-black/60 backdrop-blur-sm">
-                <TouchableOpacity
-                    style={StyleSheet.absoluteFill}
-                    activeOpacity={1}
+                <PressableScale
                     onPress={onClose}
+                    scaleTo={1}
+                    style={StyleSheet.absoluteFill}
                 />
                 <Animated.View
                     style={{ transform: [{ translateY: slideAnim }] }}
@@ -103,13 +104,14 @@ export default function CitySelectionModal({ visible, onClose }: CitySelectionMo
                             elevation: 2,
                         }}
                     >
-                        <TouchableOpacity
+                        <PressableScale
                             onPress={onClose}
+                            scaleTo={0.92}
                             className="p-2 rounded-full bg-surface border border-border ml-4"
                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         >
                             <X size={20} color="#64748b" />
-                        </TouchableOpacity>
+                        </PressableScale>
                         <Text className="text-xl font-bold text-text-main">اختر المدينة</Text>
                         <View className="w-10" />
                     </View>
@@ -133,9 +135,10 @@ export default function CitySelectionModal({ visible, onClose }: CitySelectionMo
                             renderItem={({ item }: { item: any }) => {
                                 const isSelected = userProfile?.selected_city_id === item.id;
                                 return (
-                                    <TouchableOpacity
+                                    <PressableScale
                                         onPress={() => handleSelectCity(item)}
                                         disabled={isUpdating}
+                                        scaleTo={0.98}
                                         className={`flex-row items-center justify-between p-4 mb-3 rounded-2xl border active:scale-[0.99] ${isSelected
                                             ? 'bg-primary-50 border-primary-200'
                                             : 'bg-white border-border'
@@ -150,7 +153,7 @@ export default function CitySelectionModal({ visible, onClose }: CitySelectionMo
                                         <View className={`p-2.5 rounded-xl ml-3 ${isSelected ? 'bg-primary-100' : 'bg-surface border border-border'}`}>
                                             <MapPin size={20} color={isSelected ? '#2563EB' : '#94a3b8'} />
                                         </View>
-                                    </TouchableOpacity>
+                                    </PressableScale>
                                 );
                             }}
                         />
