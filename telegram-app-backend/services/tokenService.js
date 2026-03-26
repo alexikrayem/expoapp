@@ -4,6 +4,7 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const db = require('../config/db');
+const { signJwt, verifyJwt } = require('./jwtService');
 
 const ACCESS_TOKEN_TTL = '15m';
 const REFRESH_TOKEN_TTL = '7d';
@@ -46,10 +47,10 @@ const issueTokens = async ({ payload, role, ip, userAgent }) => {
     throw new Error('JWT secrets are not configured');
   }
 
-  const accessToken = jwt.sign(payload, accessSecret, { expiresIn: ACCESS_TOKEN_TTL });
+  const accessToken = signJwt(payload, accessSecret, { expiresIn: ACCESS_TOKEN_TTL });
   const refreshJti = crypto.randomUUID();
   const refreshPayload = { ...payload, type: 'refresh', jti: refreshJti };
-  const refreshToken = jwt.sign(refreshPayload, refreshSecret, { expiresIn: REFRESH_TOKEN_TTL });
+  const refreshToken = signJwt(refreshPayload, refreshSecret, { expiresIn: REFRESH_TOKEN_TTL });
 
   const decoded = jwt.decode(refreshToken);
   const expiresAt = decoded?.exp
@@ -125,7 +126,7 @@ const rotateRefreshToken = async ({ token, ip, userAgent }) => {
 
   let decoded;
   try {
-    decoded = jwt.verify(token, refreshSecret);
+    decoded = verifyJwt(token, refreshSecret);
   } catch (error) {
     throw new Error('Invalid or expired refresh token');
   }
@@ -141,7 +142,7 @@ const rotateRefreshToken = async ({ token, ip, userAgent }) => {
 
   const tokenHash = hashToken(token);
   const existing = await db.query(
-    'SELECT token_hash, revoked_at, expires_at FROM refresh_tokens WHERE token_hash = $1',
+    'SELECT token_hash, revoked_at, expires_at, ip, user_agent FROM refresh_tokens WHERE token_hash = $1',
     [tokenHash]
   );
 
@@ -156,6 +157,19 @@ const rotateRefreshToken = async ({ token, ip, userAgent }) => {
     if (row.expires_at && new Date(row.expires_at) < new Date()) {
       await revokeRefreshToken(token);
       throw new Error('Refresh token expired');
+    }
+
+    const ipBindingEnabled = process.env.REFRESH_TOKEN_IP_BINDING === 'true';
+    const uaBindingEnabled = process.env.REFRESH_TOKEN_UA_BINDING === 'true';
+
+    if (ipBindingEnabled && row.ip && ip && row.ip !== ip) {
+      await revokeAllForSubject(subjectId, decoded.role);
+      throw new Error('Refresh token reuse detected');
+    }
+
+    if (uaBindingEnabled && row.user_agent && userAgent && row.user_agent !== userAgent) {
+      await revokeAllForSubject(subjectId, decoded.role);
+      throw new Error('Refresh token reuse detected');
     }
   }
 
@@ -209,4 +223,5 @@ module.exports = {
   issueTokens,
   rotateRefreshToken,
   revokeRefreshToken,
+  revokeAllForSubject,
 };

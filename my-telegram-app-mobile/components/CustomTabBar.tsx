@@ -1,18 +1,11 @@
 import React from 'react';
-import { View, Dimensions, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withSpring,
-} from 'react-native-reanimated';
 import { Home, Heart, ShoppingBag, Settings } from 'lucide-react-native';
 import Text from '@/components/ThemedText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptics } from '@/utils/haptics';
 import PressableScale from '@/components/ui/PressableScale';
-
-const { width } = Dimensions.get('window');
 
 const TAB_ICONS: { [key: string]: any } = {
     index: Home,
@@ -92,10 +85,11 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: 'white',
         borderTopWidth: 1,
-        borderTopColor: '#e2e8f0',
+        borderTopColor: '#e5e7eb',
+        paddingTop: 6,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.05,
+        shadowOpacity: 0.06,
         shadowRadius: 8,
         elevation: 8,
     },
@@ -103,28 +97,28 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        height: 60,
-        paddingHorizontal: 8,
+        height: 64,
+        paddingHorizontal: 12,
     },
     tabItem: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 8,
+        paddingVertical: 6,
     },
     iconContainer: {
-        width: 44,
-        height: 32,
+        width: 40,
+        height: 28,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 16,
-        marginBottom: 4,
+        borderRadius: 14,
+        marginBottom: 2,
     },
     iconContainerActive: {
         backgroundColor: '#eff6ff',
     },
     label: {
-        fontSize: 11,
+        fontSize: 10,
         fontFamily: 'TajawalCustom',
         color: '#64748b',
     },

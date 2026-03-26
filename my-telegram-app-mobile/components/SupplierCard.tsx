@@ -1,9 +1,9 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import Text from '@/components/ThemedText';
 import { MapPin, Star } from 'lucide-react-native';
-import PressableScale from '@/components/ui/PressableScale';
+import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
 
 interface SupplierCardProps {
     supplier: any;
@@ -12,17 +12,21 @@ interface SupplierCardProps {
 
 const SupplierCard = React.memo(({ supplier, onShowDetails }: SupplierCardProps) => {
     return (
-        <PressableScale
-            className="bg-white rounded-xl shadow-sm mb-4 p-4 flex-row items-center border border-gray-100"
+        <Pressable
             onPress={() => onShowDetails(supplier.id)}
-            scaleTo={0.98}
+            android_ripple={{ color: '#e2e8f0' }}
+            style={({ pressed }) => [{ opacity: pressed ? 0.96 : 1 }]}
+            className="bg-white rounded-xl shadow-sm mb-4 p-4 flex-row items-center border border-gray-100"
         >
-            {supplier.logoUrl?.startsWith('http') ? (
+            {(supplier.logoUrl || supplier.logo_url || supplier.logo)?.startsWith('http') ? (
                 <Image
-                    source={{ uri: supplier.logoUrl }}
+                    source={{ uri: supplier.logoUrl || supplier.logo_url || supplier.logo }}
                     style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#f3f4f6' }}
                     contentFit="cover"
                     transition={200}
+                    cachePolicy="memory-disk"
+                    placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+                    recyclingKey={`supplier-${supplier.id ?? supplier.name}`}
                 />
             ) : (
                 <View className="w-16 h-16 rounded-full bg-primary-100 items-center justify-center">
@@ -43,7 +47,7 @@ const SupplierCard = React.memo(({ supplier, onShowDetails }: SupplierCardProps)
                     <Text className="text-gray-400 text-xs">{supplier.city}</Text>
                 </View>
             </View>
-        </PressableScale>
+        </Pressable>
     );
 });
 

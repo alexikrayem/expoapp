@@ -10,12 +10,61 @@
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
+const REDACT_KEYS = [
+    /password/i,
+    /token/i,
+    /secret/i,
+    /authorization/i,
+    /refresh/i,
+    /otp/i,
+    /code/i
+];
+
+const MASK_KEYS = [
+    /email/i,
+    /phone/i
+];
+
+const maskValue = (value) => {
+    if (value === null || value === undefined) return value;
+    const text = String(value);
+    if (text.length <= 4) return '***';
+    return `${text.slice(0, 2)}***${text.slice(-2)}`;
+};
+
+const shouldRedactKey = (key) => REDACT_KEYS.some((regex) => regex.test(key));
+const shouldMaskKey = (key) => MASK_KEYS.some((regex) => regex.test(key));
+
+const sanitize = (value, depth = 0) => {
+    if (depth > 5) return value;
+    if (Array.isArray(value)) {
+        return value.map((item) => sanitize(item, depth + 1));
+    }
+    if (value && typeof value === 'object') {
+        const sanitized = {};
+        for (const [key, entry] of Object.entries(value)) {
+            if (shouldRedactKey(key)) {
+                sanitized[key] = '[REDACTED]';
+                continue;
+            }
+            if (shouldMaskKey(key)) {
+                sanitized[key] = maskValue(entry);
+                continue;
+            }
+            sanitized[key] = sanitize(entry, depth + 1);
+        }
+        return sanitized;
+    }
+    return value;
+};
+
 const formatLog = (level, message, context = {}) => {
+    const safeContext = sanitize(context);
     const logEntry = {
         timestamp: new Date().toISOString(),
         level: level.toUpperCase(),
         message,
-        ...context
+        ...safeContext
     };
 
     // In production, output JSON for log aggregators

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { View, ActivityIndicator, Modal, TextInput } from "react-native"
 import { FlashList } from "@shopify/flash-list"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -57,26 +57,35 @@ export default function SearchModal({ visible, onClose, openModal }: SearchModal
     openModal("productDetail", { product })
   }
 
-  const renderProductItem = ({ item }: { item: any }) => (
-    <ProductCard
-      product={item}
-      onAddToCart={() => {}}
-      onToggleFavorite={toggleFavorite}
-      onShowDetails={handleShowProductDetails}
-      isFavorite={favoriteIds.has(item.id)}
-    />
+  const renderProductItem = useCallback(
+    ({ item }: { item: any }) => (
+      <ProductCard
+        product={item}
+        onAddToCart={() => {}}
+        onToggleFavorite={toggleFavorite}
+        onShowDetails={handleShowProductDetails}
+        isFavorite={favoriteIds.has(item.id)}
+      />
+    ),
+    [favoriteIds, handleShowProductDetails, toggleFavorite],
   )
 
-  const renderDealItem = ({ item }: { item: any }) => (
-    <View className="px-4">
-      <DealCard deal={item} onShowDetails={() => {}} />
-    </View>
+  const renderDealItem = useCallback(
+    ({ item }: { item: any }) => (
+      <View className="px-4">
+        <DealCard deal={item} onShowDetails={() => {}} />
+      </View>
+    ),
+    [],
   )
 
-  const renderSupplierItem = ({ item }: { item: any }) => (
-    <View className="px-4">
-      <SupplierCard supplier={item} onShowDetails={() => {}} />
-    </View>
+  const renderSupplierItem = useCallback(
+    ({ item }: { item: any }) => (
+      <View className="px-4">
+        <SupplierCard supplier={item} onShowDetails={() => {}} />
+      </View>
+    ),
+    [],
   )
 
   const renderContent = () => {
@@ -131,6 +140,12 @@ export default function SearchModal({ visible, onClose, openModal }: SearchModal
           ListEmptyComponent={<Text className="text-center mt-10 text-gray-500">لا توجد منتجات مطابقة</Text>}
           estimatedItemSize={250}
           extraData={favoriteIds}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          removeClippedSubviews
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={5}
         />
       )
     }
@@ -144,6 +159,12 @@ export default function SearchModal({ visible, onClose, openModal }: SearchModal
           contentContainerStyle={{ paddingVertical: 8 }}
           ListEmptyComponent={<Text className="text-center mt-10 text-gray-500">لا توجد عروض مطابقة</Text>}
           estimatedItemSize={300}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          removeClippedSubviews
+          initialNumToRender={3}
+          maxToRenderPerBatch={4}
+          windowSize={4}
         />
       )
     }
@@ -157,6 +178,12 @@ export default function SearchModal({ visible, onClose, openModal }: SearchModal
           contentContainerStyle={{ paddingVertical: 8 }}
           ListEmptyComponent={<Text className="text-center mt-10 text-gray-500">لا يوجد موردون مطابقون</Text>}
           estimatedItemSize={100}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          removeClippedSubviews
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={5}
         />
       )
     }
@@ -167,7 +194,7 @@ export default function SearchModal({ visible, onClose, openModal }: SearchModal
       <SafeAreaView className="flex-1 bg-surface">
         {/* Header */}
         <View className="bg-white px-4 py-3 border-b border-border flex-row items-center">
-          <PressableScale onPress={handleClose} scaleTo={0.92} className="p-2 bg-surface rounded-full border border-border">
+          <PressableScale onPress={handleClose} scaleTo={0.92} haptic="selection" className="p-2 bg-surface rounded-full border border-border">
             <ArrowRight size={20} color="#64748b" />
           </PressableScale>
           <Input
@@ -183,7 +210,7 @@ export default function SearchModal({ visible, onClose, openModal }: SearchModal
             leftIcon={<Search size={20} color="#64748b" />}
             rightIcon={
               searchTerm.length > 0 ? (
-                <PressableScale onPress={() => handleSearchTermChange("")} scaleTo={0.9} className="bg-gray-200 p-1 rounded-full">
+                <PressableScale onPress={() => handleSearchTermChange("")} scaleTo={0.9} haptic="selection" className="bg-gray-200 p-1 rounded-full">
                   <X size={14} color="#64748b" />
                 </PressableScale>
               ) : null
@@ -209,6 +236,7 @@ export default function SearchModal({ visible, onClose, openModal }: SearchModal
                   key={tab.id}
                   onPress={() => setActiveTab(tab.id)}
                   scaleTo={0.98}
+                  haptic="selection"
                   className={`flex-1 flex-row items-center justify-center py-2.5 mx-1 rounded-xl border ${
                     isActive ? "bg-primary-50 border-primary-200" : "bg-white border-transparent"
                   }`}

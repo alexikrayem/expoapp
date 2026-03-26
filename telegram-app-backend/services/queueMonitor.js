@@ -4,6 +4,7 @@
 const { isQueueEnabled } = require('../config/queue');
 const { getNotificationQueue } = require('./notificationQueue');
 const { getPricingQueue } = require('./pricingQueue');
+const { getLinkingQueue } = require('./linkingQueue');
 
 const getQueueCounts = async (queue) => {
   return queue.getJobCounts('waiting', 'active', 'completed', 'failed', 'delayed', 'paused');
@@ -17,6 +18,7 @@ const getQueueStats = async () => {
   const queues = {
     notifications: getNotificationQueue(),
     pricing: getPricingQueue(),
+    linking: getLinkingQueue(),
   };
 
   const result = {};

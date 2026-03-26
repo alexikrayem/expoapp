@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import Text from '@/components/ThemedText';
 import { FlashList } from "@shopify/flash-list";
@@ -28,6 +28,23 @@ export const RelatedProductsSection = ({ currentProductId, category }: RelatedPr
 
     if (isLoading || !relatedProducts || relatedProducts.length === 0) return null;
 
+    const renderItem = useCallback(
+        ({ item }: { item: Product }) => (
+            <View style={{ width: 160, marginRight: 12, height: 240 }}>
+                <ProductCard
+                    product={item}
+                    onAddToCart={() => addToCart(item)}
+                    onToggleFavorite={() => toggleFavorite(item.id)}
+                    onShowDetails={() => openModal("productDetail", { product: item })}
+                    isFavorite={isFavorite(item.id)}
+                />
+            </View>
+        ),
+        [addToCart, isFavorite, openModal, toggleFavorite]
+    );
+
+    const keyExtractor = useCallback((item: Product) => item.id, []);
+
     return (
         <View className="mt-4 mb-4">
             <Text className="text-xl font-bold text-text-main mb-4 text-right px-4">منتجات مشابهة</Text>
@@ -37,22 +54,16 @@ export const RelatedProductsSection = ({ currentProductId, category }: RelatedPr
                 data={relatedProducts}
 
                 // Explicitly type the item parameter here to eliminate the 'implicit any' error
-                renderItem={({ item }: { item: Product }) => (
-                    <View style={{ width: 160, marginRight: 12, height: 240 }}>
-                        <ProductCard
-                            product={item}
-                            onAddToCart={() => addToCart(item)}
-                            onToggleFavorite={() => toggleFavorite(item.id)}
-                            onShowDetails={() => openModal("productDetail", { product: item })}
-                            isFavorite={isFavorite(item.id)}
-                        />
-                    </View>
-                )}
-                keyExtractor={(item: Product) => item.id}
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 16 }}
                 inverted={true} // RTL support
                 estimatedItemSize={172}
+                removeClippedSubviews
+                initialNumToRender={4}
+                maxToRenderPerBatch={4}
+                windowSize={3}
             />
         </View>
     );

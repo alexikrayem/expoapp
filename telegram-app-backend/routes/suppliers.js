@@ -3,7 +3,49 @@ const router = express.Router();
 const db = require('../config/db');
 const authSupplier = require('../middleware/authSupplier');
 const bcrypt = require('bcrypt');
-const { invalidateCache } = require('../middleware/cache');
+const { query, param } = require('express-validator');
+const validateRequest = require('../middleware/validateRequest');
+const { invalidateCache, cacheResponse } = require('../middleware/cache');
+const {
+    indexProductById,
+    indexSupplierById,
+    reindexProductsBySupplierId,
+    reindexDealsBySupplierId
+} = require('../services/searchIndexer');
+const { validatePassword } = require('../services/passwordPolicy');
+const { recordAuditEvent } = require('../services/auditService');
+const { revokeAllForSubject } = require('../services/tokenService');
+const { enqueueProductLinking } = require('../services/linkingQueue');
+const { linkProduct } = require('../services/productLinkingService');
+const logger = require('../services/logger');
+const { EFFECTIVE_PRICE_SQL } = require('../utils/pricing');
+
+const triggerProductLinking = async (productId, options = {}) => {
+    try {
+        const enqueued = await enqueueProductLinking(productId, options);
+        if (!enqueued) {
+            await linkProduct(productId, options);
+        }
+    } catch (error) {
+        logger.error('Product linking trigger failed', error, { productId });
+    }
+};
+
+const isPublicSupplierRequest = (req) => {
+    if (req.method !== 'GET') return false;
+    if (req.path === '/' || req.path === '') return true;
+    return /^\/\d+$/.test(req.path);
+};
+
+router.use((req, res, next) => {
+    if (req.baseUrl === '/api/supplier') {
+        return authSupplier(req, res, next);
+    }
+    if (isPublicSupplierRequest(req)) {
+        return next();
+    }
+    return authSupplier(req, res, next);
+});
 
 // ------------------------
 // Authenticated Supplier Routes (Protected)
@@ -15,7 +57,18 @@ router.get('/profile', authSupplier, async (req, res) => {
         const supplierId = req.supplier.supplierId;
         
         const query = `
-            SELECT s.*, 
+            SELECT 
+                   s.id,
+                   s.name,
+                   s.category,
+                   s.location,
+                   s.rating,
+                   s.image_url,
+                   s.description,
+                   s.email,
+                   s.is_active,
+                   s.created_at,
+                   s.updated_at,
                    array_agg(sc.city_id) FILTER (WHERE sc.city_id IS NOT NULL) as city_ids,
                    array_agg(c.name) FILTER (WHERE c.name IS NOT NULL) as city_names
             FROM suppliers s
@@ -32,7 +85,7 @@ router.get('/profile', authSupplier, async (req, res) => {
         }
         
         const supplier = result.rows[0];
-        delete supplier.password_hash; // Remove sensitive data
+        delete supplier.password_hash; // Remove sensitive data (defense-in-depth)
         
         res.json(supplier);
         
@@ -97,7 +150,29 @@ router.put('/cities', authSupplier, async (req, res) => {
             }
             
             await client.query('COMMIT');
-            void invalidateCache(['products:list', 'deals:list', 'search']);
+            void invalidateCache([
+                'products:list',
+                'products:categories',
+                'products:detail',
+                'products:batch',
+                'products:favorite-details',
+                'suppliers:list',
+                'suppliers:detail',
+                'deals:list',
+                'search'
+            ]);
+            void indexSupplierById(supplierId);
+            void reindexProductsBySupplierId(supplierId);
+            void reindexDealsBySupplierId(supplierId);
+            void recordAuditEvent({
+                req,
+                action: 'supplier_cities_update',
+                actorRole: 'supplier',
+                actorId: supplierId,
+                targetType: 'supplier',
+                targetId: supplierId,
+                metadata: { city_count: city_ids.length }
+            });
             res.json({ message: 'Cities updated successfully' });
             
         } catch (error) {
@@ -124,12 +199,9 @@ router.get('/products', authSupplier, async (req, res) => {
         const query = `
             SELECT 
                 p.*,
-                CASE 
-                    WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL 
-                    THEN p.discount_price 
-                    ELSE p.price 
-                END as effective_selling_price
+                ${EFFECTIVE_PRICE_SQL} as effective_selling_price
             FROM products p
+            LEFT JOIN master_products mp ON p.master_product_id = mp.id
             WHERE p.supplier_id = $1
             ORDER BY p.created_at DESC
             LIMIT $2 OFFSET $3
@@ -172,7 +244,30 @@ router.post('/products', authSupplier, async (req, res) => {
             supplierId
         ]);
 
-        void invalidateCache(['products:list', 'products:categories', 'search', 'featured:items', 'featured:list', 'deals:list']);
+        void invalidateCache([
+            'products:list',
+            'products:categories',
+            'products:detail',
+            'products:batch',
+            'products:favorite-details',
+            'suppliers:list',
+            'suppliers:detail',
+            'search',
+            'featured:items',
+            'featured:list',
+            'deals:list'
+        ]);
+        void indexProductById(result.rows[0].id);
+        void recordAuditEvent({
+            req,
+            action: 'product_create',
+            actorRole: 'supplier',
+            actorId: supplierId,
+            targetType: 'product',
+            targetId: result.rows[0].id,
+            metadata: { name }
+        });
+        void triggerProductLinking(result.rows[0].id, { reason: 'product_create' });
         res.status(201).json(result.rows[0]);
 
     } catch (error) {
@@ -191,12 +286,18 @@ router.put('/products/:id', authSupplier, async (req, res) => {
             category, image_url, is_on_sale, stock_level
         } = req.body;
 
-        const verifyQuery = 'SELECT id FROM products WHERE id = $1 AND supplier_id = $2';
+        const verifyQuery = `
+            SELECT id, name, standardized_name_input, category, description, linking_status
+            FROM products
+            WHERE id = $1 AND supplier_id = $2
+        `;
         const verifyResult = await db.query(verifyQuery, [id, supplierId]);
 
         if (verifyResult.rows.length === 0) {
             return res.status(404).json({ error: 'Product not found or not owned by you' });
         }
+
+        const existingProduct = verifyResult.rows[0];
 
         const updateFields = [];
         const updateValues = [];
@@ -263,7 +364,39 @@ router.put('/products/:id', authSupplier, async (req, res) => {
         `;
 
         const result = await db.query(updateQuery, updateValues);
-        void invalidateCache(['products:list', 'products:categories', 'search', 'featured:items', 'featured:list', 'deals:list']);
+        void invalidateCache([
+            'products:list',
+            'products:categories',
+            'products:detail',
+            'products:batch',
+            'products:favorite-details',
+            'suppliers:list',
+            'suppliers:detail',
+            'search',
+            'featured:items',
+            'featured:list',
+            'deals:list'
+        ]);
+        void indexProductById(result.rows[0].id);
+        void recordAuditEvent({
+            req,
+            action: 'product_update',
+            actorRole: 'supplier',
+            actorId: supplierId,
+            targetType: 'product',
+            targetId: result.rows[0].id,
+            metadata: { updated_fields: updateFields.map((field) => field.split(' ')[0]) }
+        });
+
+        const shouldRelink =
+            (name !== undefined && name !== existingProduct.name) ||
+            (standardized_name_input !== undefined && standardized_name_input !== existingProduct.standardized_name_input) ||
+            (category !== undefined && category !== existingProduct.category) ||
+            (description !== undefined && description !== existingProduct.description);
+
+        if (shouldRelink || result.rows[0].linking_status === 'pending') {
+            void triggerProductLinking(result.rows[0].id, { reason: 'product_update', forceRelink: shouldRelink });
+        }
         res.json(result.rows[0]);
 
     } catch (error) {
@@ -291,12 +424,42 @@ router.delete('/products/:id', authSupplier, async (req, res) => {
         if (parseInt(orderCheckResult.rows[0].order_count) > 0) {
             const deactivateQuery = 'UPDATE products SET is_active = false WHERE id = $1 RETURNING *';
             const result = await db.query(deactivateQuery, [id]);
+            void indexProductById(id);
+            void recordAuditEvent({
+                req,
+                action: 'product_deactivate',
+                actorRole: 'supplier',
+                actorId: supplierId,
+                targetType: 'product',
+                targetId: Number(id)
+            });
             return res.json({ message: 'Product deactivated (has existing orders)', product: result.rows[0] });
         }
 
         const deleteQuery = 'DELETE FROM products WHERE id = $1';
         await db.query(deleteQuery, [id]);
-        void invalidateCache(['products:list', 'products:categories', 'search', 'featured:items', 'featured:list', 'deals:list']);
+        void invalidateCache([
+            'products:list',
+            'products:categories',
+            'products:detail',
+            'products:batch',
+            'products:favorite-details',
+            'suppliers:list',
+            'suppliers:detail',
+            'search',
+            'featured:items',
+            'featured:list',
+            'deals:list'
+        ]);
+        void indexProductById(id);
+        void recordAuditEvent({
+            req,
+            action: 'product_delete',
+            actorRole: 'supplier',
+            actorId: supplierId,
+            targetType: 'product',
+            targetId: Number(id)
+        });
         res.json({ message: 'Product deleted successfully' });
 
     } catch (error) {
@@ -319,29 +482,73 @@ router.put('/products/bulk-stock', authSupplier, async (req, res) => {
         
         try {
             await client.query('BEGIN');
-            
+            const updateMap = new Map();
             for (const update of updates) {
-                const { id, stock_level } = update;
-                
-                // Verify product belongs to this supplier
-                const verifyQuery = 'SELECT id FROM products WHERE id = $1 AND supplier_id = $2';
-                const verifyResult = await client.query(verifyQuery, [id, supplierId]);
-                
-                if (verifyResult.rows.length === 0) {
+                const id = Number(update?.id);
+                const stockLevel = Number(update?.stock_level);
+
+                if (!Number.isInteger(id) || id <= 0) {
                     await client.query('ROLLBACK');
-                    return res.status(404).json({ error: `Product ${id} not found or not owned by you` });
+                    return res.status(400).json({ error: 'Each update must include a valid product id' });
                 }
-                
-                // Update stock level
-                await client.query(
-                    'UPDATE products SET stock_level = $1, updated_at = NOW() WHERE id = $2',
-                    [stock_level, id]
-                );
+
+                if (!Number.isFinite(stockLevel) || stockLevel < 0) {
+                    await client.query('ROLLBACK');
+                    return res.status(400).json({ error: 'Each update must include a non-negative stock_level' });
+                }
+
+                updateMap.set(id, Math.trunc(stockLevel));
             }
+
+            const productIds = Array.from(updateMap.keys());
+            const stockLevels = Array.from(updateMap.values());
+
+            if (productIds.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: 'Updates array is required' });
+            }
+
+            // Verify all products belong to this supplier
+            const verifyQuery = 'SELECT id FROM products WHERE supplier_id = $1 AND id = ANY($2::int[])';
+            const verifyResult = await client.query(verifyQuery, [supplierId, productIds]);
+
+            if (verifyResult.rows.length !== productIds.length) {
+                const foundIds = new Set(verifyResult.rows.map((row) => row.id));
+                const missingIds = productIds.filter((id) => !foundIds.has(id));
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: `Product(s) not found or not owned by you: ${missingIds.join(', ')}` });
+            }
+
+            const updateQuery = `
+                UPDATE products p
+                SET stock_level = u.stock_level, updated_at = NOW()
+                FROM (
+                    SELECT unnest($1::int[]) AS id, unnest($2::int[]) AS stock_level
+                ) AS u
+                WHERE p.id = u.id AND p.supplier_id = $3
+                RETURNING p.id
+            `;
+            const updateResult = await client.query(updateQuery, [productIds, stockLevels, supplierId]);
+            const updatedProductIds = updateResult.rows.map((row) => row.id);
             
             await client.query('COMMIT');
-            void invalidateCache(['products:list', 'products:categories', 'search', 'featured:items', 'featured:list', 'deals:list']);
-            res.json({ message: 'Stock levels updated successfully', updated_count: updates.length });
+            void invalidateCache([
+                'products:list',
+                'products:categories',
+                'products:detail',
+                'products:batch',
+                'products:favorite-details',
+                'suppliers:list',
+                'suppliers:detail',
+                'search',
+                'featured:items',
+                'featured:list',
+                'deals:list'
+            ]);
+            updatedProductIds.forEach((productId) => {
+                void indexProductById(productId);
+            });
+            res.json({ message: 'Stock levels updated successfully', updated_count: updatedProductIds.length });
             
         } catch (error) {
             await client.query('ROLLBACK');
@@ -437,7 +644,8 @@ router.get('/orders', authSupplier, async (req, res) => {
                         'delivery_item_status', oi.delivery_item_status
                     )
                 ) as items_for_this_supplier,
-                SUM(oi.quantity * oi.price_at_time_of_order) as supplier_order_value
+                SUM(oi.quantity * oi.price_at_time_of_order) as supplier_order_value,
+                COUNT(*) OVER() as total_count
             FROM orders o
             JOIN order_items oi ON o.id = oi.order_id
             JOIN products p ON oi.product_id = p.id
@@ -452,23 +660,12 @@ router.get('/orders', authSupplier, async (req, res) => {
         queryParams.push(parseInt(limit), offset);
         
         const result = await db.query(query, queryParams);
-        
-        // Get total count
-        const countQuery = `
-            SELECT COUNT(DISTINCT o.id) as total
-            FROM orders o
-            JOIN order_items oi ON o.id = oi.order_id
-            JOIN products p ON oi.product_id = p.id
-            ${whereClause}
-        `;
-        
-        const countResult = await db.query(countQuery, queryParams.slice(0, -2));
-        const totalItems = parseInt(countResult.rows[0].total);
+        const totalItems = result.rows.length > 0 ? parseInt(result.rows[0].total_count) : 0;
         
         res.json({
             items: result.rows,
             currentPage: parseInt(page),
-            totalPages: Math.ceil(totalItems / parseInt(limit)),
+            totalPages: totalItems === 0 ? 0 : Math.ceil(totalItems / parseInt(limit)),
             totalItems
         });
         
@@ -507,9 +704,14 @@ router.post('/delivery-agents', authSupplier, async (req, res) => {
         const supplierId = req.supplier.supplierId;
         const { full_name, phone_number, email, telegram_user_id, password, is_active = true } = req.body;
         
-        if (!full_name || !phone_number || !password) {
-            return res.status(400).json({ error: 'Full name, phone number, and password are required' });
-        }
+    if (!full_name || !phone_number || !password) {
+        return res.status(400).json({ error: 'Full name, phone number, and password are required' });
+    }
+
+    const passwordErrors = validatePassword(password);
+    if (passwordErrors.length > 0) {
+        return res.status(400).json({ error: 'Password does not meet requirements', details: passwordErrors });
+    }
         
         // Check if phone number already exists
         const existingQuery = 'SELECT id FROM delivery_agents WHERE phone_number = $1';
@@ -520,7 +722,8 @@ router.post('/delivery-agents', authSupplier, async (req, res) => {
         }
         
         // Hash password
-        const passwordHash = await bcrypt.hash(password, 10);
+        const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS || 12);
+        const passwordHash = await bcrypt.hash(password, saltRounds);
         
         const insertQuery = `
             INSERT INTO delivery_agents (
@@ -534,7 +737,16 @@ router.post('/delivery-agents', authSupplier, async (req, res) => {
             supplierId, full_name, phone_number, email || null,
             telegram_user_id || null, passwordHash, is_active
         ]);
-        
+
+        void recordAuditEvent({
+            req,
+            action: 'delivery_agent_create',
+            actorRole: 'supplier',
+            actorId: supplierId,
+            targetType: 'delivery_agent',
+            targetId: result.rows[0]?.id,
+            metadata: { phone_number }
+        });
         res.status(201).json(result.rows[0]);
         
     } catch (error) {
@@ -607,6 +819,18 @@ router.put('/delivery-agents/:id', authSupplier, async (req, res) => {
         `;
         
         const result = await db.query(updateQuery, updateValues);
+        if (result.rows[0]?.is_active === false) {
+            await revokeAllForSubject(Number(id), 'delivery_agent');
+        }
+        void recordAuditEvent({
+            req,
+            action: 'delivery_agent_update',
+            actorRole: 'supplier',
+            actorId: supplierId,
+            targetType: 'delivery_agent',
+            targetId: Number(id),
+            metadata: { updated_fields: updateFields.map((field) => field.split(' ')[0]) }
+        });
         res.json(result.rows[0]);
         
     } catch (error) {
@@ -647,7 +871,17 @@ router.delete('/delivery-agents/:id', authSupplier, async (req, res) => {
         
         const deleteQuery = 'DELETE FROM delivery_agents WHERE id = $1';
         await db.query(deleteQuery, [id]);
+
+        await revokeAllForSubject(Number(id), 'delivery_agent');
         
+        void recordAuditEvent({
+            req,
+            action: 'delivery_agent_delete',
+            actorRole: 'supplier',
+            actorId: supplierId,
+            targetType: 'delivery_agent',
+            targetId: Number(id)
+        });
         res.json({ message: 'Delivery agent deleted successfully' });
         
     } catch (error) {
@@ -678,6 +912,18 @@ router.put('/delivery-agents/:id/toggle-active', authSupplier, async (req, res) 
         `;
         
         const result = await db.query(updateQuery, [id]);
+        if (result.rows[0]?.is_active === false) {
+            await revokeAllForSubject(Number(id), 'delivery_agent');
+        }
+        void recordAuditEvent({
+            req,
+            action: 'delivery_agent_toggle_active',
+            actorRole: 'supplier',
+            actorId: supplierId,
+            targetType: 'delivery_agent',
+            targetId: Number(id),
+            metadata: { is_active: result.rows[0]?.is_active }
+        });
         res.json(result.rows[0]);
         
     } catch (error) {
@@ -691,13 +937,25 @@ router.put('/delivery-agents/:id/toggle-active', authSupplier, async (req, res) 
 // ------------------------
 
 // Get all suppliers (public)
-router.get('/', async (req, res) => {
+router.get('/', [
+    query('cityId').optional().isInt({ min: 1 }).withMessage('City ID must be a positive integer'),
+    validateRequest,
+    cacheResponse(60, 'suppliers:list')
+], async (req, res) => {
     try {
         const { cityId } = req.query;
 
         let query = `
             SELECT 
-                s.*,
+                s.id,
+                s.name,
+                s.category,
+                s.location,
+                s.rating,
+                s.image_url,
+                s.description,
+                s.created_at,
+                s.updated_at,
                 COUNT(p.id) as product_count
             FROM suppliers s
             LEFT JOIN products p ON s.id = p.supplier_id
@@ -722,11 +980,28 @@ router.get('/', async (req, res) => {
 });
 
 // Get supplier details (public)
-router.get('/:id', async (req, res) => {
+router.get('/:id', [
+    param('id').isInt({ min: 1 }).withMessage('Supplier ID must be a positive integer'),
+    validateRequest,
+    cacheResponse(120, 'suppliers:detail')
+], async (req, res) => {
     try {
         const { id } = req.params;
 
-        const supplierQuery = 'SELECT * FROM suppliers WHERE id = $1 AND is_active = true';
+        const supplierQuery = `
+            SELECT 
+                id,
+                name,
+                category,
+                location,
+                rating,
+                image_url,
+                description,
+                created_at,
+                updated_at
+            FROM suppliers
+            WHERE id = $1 AND is_active = true
+        `;
         const supplierResult = await db.query(supplierQuery, [id]);
 
         if (supplierResult.rows.length === 0) {
@@ -736,12 +1011,9 @@ router.get('/:id', async (req, res) => {
         const productsQuery = `
             SELECT 
                 p.*,
-                CASE 
-                    WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL 
-                    THEN p.discount_price 
-                    ELSE p.price 
-                END as effective_selling_price
+                ${EFFECTIVE_PRICE_SQL} as effective_selling_price
             FROM products p
+            LEFT JOIN master_products mp ON p.master_product_id = mp.id
             WHERE p.supplier_id = $1
             ORDER BY p.created_at DESC
             LIMIT 6

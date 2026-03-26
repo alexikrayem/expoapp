@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useCallback, useMemo } from "react"
-import { View, ActivityIndicator, RefreshControl } from "react-native"
+import { View, ActivityIndicator, RefreshControl, ScrollView } from "react-native"
 import { FlashList } from "@shopify/flash-list"
 import Text from "@/components/ThemedText"
 import { useProducts } from "@/hooks/useProducts"
@@ -47,12 +47,19 @@ const TabButton = React.memo(
       <PressableScale
         onPress={onPress}
         scaleTo={0.98}
-        className={`flex-1 flex-row items-center justify-center py-2.5 mx-1 rounded-full ${
+        haptic="selection"
+        className={`flex-row items-center justify-center py-2 px-3.5 mx-1 rounded-full ${
           isActive ? "bg-primary-500" : "bg-gray-100"
         }`}
+        style={{ minWidth: 100 }}
       >
-        <Icon size={18} color={isActive ? "#ffffff" : "#64748b"} />
-        <Text className={`ml-2 text-sm font-bold ${isActive ? "text-white" : "text-text-secondary"}`}>{tab.label}</Text>
+        <Icon size={16} color={isActive ? "#ffffff" : "#64748b"} />
+        <Text
+          numberOfLines={1}
+          className={`ml-2 text-xs font-semibold ${isActive ? "text-white" : "text-text-secondary"}`}
+        >
+          {tab.label}
+        </Text>
       </PressableScale>
     )
   },
@@ -241,6 +248,10 @@ export default function HomeScreen() {
           estimatedItemSize={250}
           extraData={favoriteIds}
           drawDistance={500}
+          removeClippedSubviews
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={5}
         />
       )
     }
@@ -257,6 +268,10 @@ export default function HomeScreen() {
           ListEmptyComponent={DealsEmptyComponent}
           estimatedItemSize={300}
           drawDistance={500}
+          removeClippedSubviews
+          initialNumToRender={3}
+          maxToRenderPerBatch={4}
+          windowSize={4}
         />
       )
     }
@@ -273,6 +288,10 @@ export default function HomeScreen() {
           ListEmptyComponent={SuppliersEmptyComponent}
           estimatedItemSize={100}
           drawDistance={500}
+          removeClippedSubviews
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={5}
         />
       )
     }
@@ -283,7 +302,11 @@ export default function HomeScreen() {
       <AnimatedScreen>
         <View className="bg-white z-10 shadow-sm pb-2">
           <Header />
-          <View className="flex-row justify-between px-4 py-2">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
+          >
             {TABS.map((tab) => (
               <TabButton
                 key={tab.id}
@@ -292,7 +315,7 @@ export default function HomeScreen() {
                 onPress={() => handleTabPress(tab.id)}
               />
             ))}
-          </View>
+          </ScrollView>
         </View>
 
         {renderContent()}

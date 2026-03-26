@@ -1,6 +1,7 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useEffect } from 'react';
-import { View, Image, ScrollView, Modal, StyleSheet, Platform, StatusBar } from 'react-native';
+import { View, ScrollView, Modal, StyleSheet, Platform, StatusBar } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import Animated, {
@@ -25,6 +26,7 @@ import { useRelatedProducts } from '@/hooks/useRelatedProducts';
 import ProductCard from '@/components/ProductCard';
 import { RelatedProductsSection } from '@/components/RelatedProductsSection';
 import PressableScale from '@/components/ui/PressableScale';
+import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
 
 
 export default function ProductDetailModal({ show, onClose, product }: any) {
@@ -152,7 +154,11 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                                     <Image
                                         source={{ uri: displayProduct.image_url }}
                                         className="w-full h-96 bg-surface"
-                                        resizeMode="cover"
+                                        contentFit="cover"
+                                        transition={200}
+                                        cachePolicy="memory-disk"
+                                        placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+                                        recyclingKey={`product-detail-${displayProduct.id}`}
                                     />
                                 </PressableScale>
 

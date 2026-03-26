@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const { verifyJwt } = require('../services/jwtService');
 
 const validateTelegramAuth = (req, res, next) => {
   // Development bypass REMOVED for security
@@ -18,7 +18,7 @@ const validateTelegramAuth = (req, res, next) => {
     if (!secret) {
       return res.status(500).json({ message: 'JWT secret not configured.' });
     }
-    const decoded = jwt.verify(token, secret);
+    const decoded = verifyJwt(token, secret);
 
     // Enforce customer role to prevent role confusion
     if (decoded.role !== 'customer') {

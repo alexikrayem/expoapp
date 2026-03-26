@@ -1,6 +1,6 @@
 // telegram-app-backend/createAdminHash.js
 const bcrypt = require('bcrypt');
-const saltRounds = 10; // Standard number of salt rounds for bcrypt
+const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS || 12); // Standard number of salt rounds for bcrypt
 
 // --- CHOOSE YOUR ADMIN PASSWORD HERE ---
 const adminPlainPassword = ''; 

@@ -2,6 +2,9 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const requireCustomer = require('../middleware/requireCustomer');
+
+router.use(requireCustomer);
 
 // GET all favorite product IDs for the authenticated user
 router.get('/', async (req, res) => {

@@ -1,7 +1,8 @@
 import { decode } from "base-64"
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "../api/apiClient"
+import { API_CONFIG } from "./constants"
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL
+const API_BASE_URL = API_CONFIG.BASE_URL
 const REQUEST_TIMEOUT = 30000
 
 // Helper to decode JWT token without verification (for expiration check)
@@ -56,12 +57,12 @@ export const ensureValidToken = async () => {
   const accessToken = await getAccessToken()
   const refreshToken = await getRefreshToken()
 
-  if (!refreshToken) {
-    throw new Error("No refresh token available")
-  }
-
   if (accessToken && !isTokenExpiringSoon(accessToken)) {
     return accessToken
+  }
+
+  if (!refreshToken) {
+    throw new Error("No refresh token available")
   }
 
   try {

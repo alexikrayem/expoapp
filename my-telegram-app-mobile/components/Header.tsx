@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { View, Image } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import Text from "@/components/ThemedText"
 import { useRouter } from "expo-router"
 import { Search, Settings } from "lucide-react-native"
@@ -21,7 +22,8 @@ export default function Header() {
   }
 
   return (
-    <View className="bg-white pt-[60px] pb-4 px-4 shadow-sm flex-row justify-between items-center z-50 border-b border-border">
+    <SafeAreaView edges={["top", "left", "right"]} className="bg-white border-b border-border">
+      <View className="px-4 py-3 flex-row justify-between items-center">
       {/* Search Modal */}
       <SearchModal visible={isSearchVisible} onClose={() => setIsSearchVisible(false)} openModal={openModal} />
 
@@ -30,6 +32,8 @@ export default function Header() {
         <PressableScale
           onPress={() => setIsSearchVisible(true)}
           scaleTo={0.96}
+          haptic="selection"
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           className="w-10 h-10 bg-surface rounded-xl items-center justify-center border border-border"
         >
           <Search size={20} color="#64748b" />
@@ -38,6 +42,8 @@ export default function Header() {
         <PressableScale
           onPress={() => router.push("/settings")}
           scaleTo={0.96}
+          haptic="selection"
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           className="w-10 h-10 bg-surface rounded-xl items-center justify-center border border-border"
         >
           <Settings size={20} color="#64748b" />
@@ -46,6 +52,8 @@ export default function Header() {
         <PressableScale
           onPress={handleProfilePress}
           scaleTo={0.96}
+          haptic="selection"
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           className="w-10 h-10 bg-surface rounded-xl items-center justify-center border border-border overflow-hidden"
         >
           {userProfile?.photo_url ? (
@@ -71,8 +79,9 @@ export default function Header() {
           </Text>
         </View>
 
-        <Image source={require("../assets/images/logo.png")} className="h-20 w-20" resizeMode="contain" />
+        <Image source={require("../assets/images/logo.png")} className="h-16 w-16" resizeMode="contain" />
       </View>
-    </View>
+      </View>
+    </SafeAreaView>
   )
 }

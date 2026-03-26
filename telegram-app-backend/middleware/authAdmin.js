@@ -1,5 +1,5 @@
 // telegram-app-backend/middleware/authAdmin.js
-const jwt = require('jsonwebtoken');
+const { verifyJwt } = require('../services/jwtService');
 
 const authAdmin = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -15,8 +15,12 @@ const authAdmin = (req, res, next) => {
     }
 
     try {
+        const secret = process.env.JWT_ADMIN_SECRET;
+        if (!secret) {
+            return res.status(500).json({ message: 'JWT admin secret not configured.' });
+        }
         // Verify the token using the ADMIN specific secret
-        const decoded = jwt.verify(token, process.env.JWT_ADMIN_SECRET);
+        const decoded = verifyJwt(token, secret);
 
         // Attach decoded payload (admin info) to the request object
         req.admin = decoded; // e.g., req.admin will have { adminId, email, role, name }

@@ -8,9 +8,10 @@ import Text from "@/components/ThemedText"
 import { LinearGradient } from "expo-linear-gradient"
 import { Sparkles } from "lucide-react-native"
 import PressableScale from "@/components/ui/PressableScale"
+import { IMAGE_PLACEHOLDER_BLURHASH } from "@/utils/image"
 
 const { width } = Dimensions.get("window")
-const SLIDER_HEIGHT = 200
+const SLIDER_HEIGHT = 240
 const CARD_WIDTH = width - 32
 const CARD_SPACING = 16
 const AUTO_PLAY_INTERVAL = 4000
@@ -42,7 +43,8 @@ const SlideItem = React.memo(
             contentFit="cover"
             transition={200}
             cachePolicy="memory-disk"
-            recyclingKey={`featured-${item.id}`}
+            placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+            recyclingKey={`featured-${item.id ?? "item"}-${index}`}
           />
         ) : (
           <LinearGradient
@@ -135,7 +137,10 @@ const FeaturedSlider = React.memo(({ items, onSlideClick, isLoading }: FeaturedS
     [items, onSlideClick],
   )
 
-  const keyExtractor = useCallback((item: any, index: number) => `featured-${item.id || index}`, [])
+  const keyExtractor = useCallback(
+    (item: any, index: number) => `featured-${item.id ?? "item"}-${index}`,
+    [],
+  )
 
   const getItemLayout = useCallback(
     (data: any, index: number) => ({

@@ -3,6 +3,9 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const router = express.Router();
 const db = require('../config/db');
+const requireCustomer = require('../middleware/requireCustomer');
+
+router.use(requireCustomer);
 
 // --- Helper Function for a clean and safe "UPSERT" ---
 const upsertUserProfile = async (userId, profileData) => {

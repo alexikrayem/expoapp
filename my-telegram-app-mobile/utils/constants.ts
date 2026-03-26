@@ -1,8 +1,57 @@
+import Constants from "expo-constants"
+import { Platform } from "react-native"
+
+const DEFAULT_API_PORT = 3001
+const DEFAULT_API_PATH = "/api"
+
+const normalizeBaseUrl = (baseUrl: string) => baseUrl.trim().replace(/\/+$/, "")
+
+const getDevHost = () => {
+    const hostUri =
+        Constants.expoConfig?.hostUri ??
+        (Constants as any).manifest2?.hostUri ??
+        (Constants as any).manifest?.hostUri
+
+    if (!hostUri) return null
+
+    const normalized = hostUri.replace(/^https?:\/\//, "")
+    const hostPort = normalized.split("/")[0]
+    const host = hostPort.split(":")[0]
+    return host || null
+}
+
+const replaceLocalhost = (baseUrl: string, host: string) => {
+    return baseUrl
+        .replace("://localhost", `://${host}`)
+        .replace("://127.0.0.1", `://${host}`)
+        .replace("://[::1]", `://${host}`)
+}
+
+const resolveBaseUrl = () => {
+    const envBase = process.env.EXPO_PUBLIC_API_BASE_URL
+    const shouldInferHost = (__DEV__ && Platform.OS !== "web")
+    const inferredHost = shouldInferHost ? getDevHost() : null
+
+    if (envBase) {
+        const normalized = normalizeBaseUrl(envBase)
+        if (inferredHost && /localhost|127\.0\.0\.1|\[::1\]/.test(normalized)) {
+            return normalizeBaseUrl(replaceLocalhost(normalized, inferredHost))
+        }
+        return normalized
+    }
+
+    if (inferredHost) {
+        return `http://${inferredHost}:${DEFAULT_API_PORT}${DEFAULT_API_PATH}`
+    }
+
+    return `http://localhost:${DEFAULT_API_PORT}${DEFAULT_API_PATH}`
+}
+
 export const API_CONFIG = {
-    BASE_URL: process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3001',
+    BASE_URL: resolveBaseUrl(),
     TIMEOUT: 30000,
     MAX_RETRIES: 3,
-};
+}
 
 export const PAGINATION = {
     PRODUCTS_PER_PAGE: 10,

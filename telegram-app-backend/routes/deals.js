@@ -5,6 +5,8 @@ const db = require('../config/db');
 const authSupplier = require('../middleware/authSupplier');
 const { invalidateCache } = require('../middleware/cache');
 const { cacheResponse } = require('../middleware/cache');
+const { indexDealById } = require('../services/searchIndexer');
+const { recordAuditEvent } = require('../services/auditService');
 
 // Get deals (with optional city filter)
 router.get('/', cacheResponse(60, 'deals:list'), async (req, res) => {
@@ -49,7 +51,7 @@ router.get('/', cacheResponse(60, 'deals:list'), async (req, res) => {
 });
 
 // Get deal details
-router.get('/:id', async (req, res) => {
+router.get('/:id', cacheResponse(60, 'deals:detail'), async (req, res) => {
     try {
         const { id } = req.params;
         
@@ -131,7 +133,17 @@ router.post('/supplier/deals', authSupplier, async (req, res) => {
             image_url, Boolean(is_active), supplierId
         ]);
         
-        void invalidateCache(['deals:list', 'search', 'featured:items', 'featured:list']);
+        void invalidateCache(['deals:list', 'deals:detail', 'search', 'featured:items', 'featured:list']);
+        void indexDealById(result.rows[0].id);
+        void recordAuditEvent({
+            req,
+            action: 'deal_create',
+            actorRole: 'supplier',
+            actorId: supplierId,
+            targetType: 'deal',
+            targetId: result.rows[0].id,
+            metadata: { title }
+        });
         res.status(201).json(result.rows[0]);
         
     } catch (error) {
@@ -225,7 +237,17 @@ router.put('/supplier/deals/:id', authSupplier, async (req, res) => {
         `;
         
         const result = await db.query(updateQuery, updateValues);
-        void invalidateCache(['deals:list', 'search', 'featured:items', 'featured:list']);
+        void invalidateCache(['deals:list', 'deals:detail', 'search', 'featured:items', 'featured:list']);
+        void indexDealById(result.rows[0].id);
+        void recordAuditEvent({
+            req,
+            action: 'deal_update',
+            actorRole: 'supplier',
+            actorId: supplierId,
+            targetType: 'deal',
+            targetId: result.rows[0].id,
+            metadata: { updated_fields: updateFields.map((field) => field.split(' ')[0]) }
+        });
         res.json(result.rows[0]);
         
     } catch (error) {
@@ -251,6 +273,16 @@ router.delete('/supplier/deals/:id', authSupplier, async (req, res) => {
         const deleteQuery = 'DELETE FROM deals WHERE id = $1';
         await db.query(deleteQuery, [id]);
         
+        void invalidateCache(['deals:list', 'deals:detail', 'search', 'featured:items', 'featured:list']);
+        void indexDealById(id);
+        void recordAuditEvent({
+            req,
+            action: 'deal_delete',
+            actorRole: 'supplier',
+            actorId: supplierId,
+            targetType: 'deal',
+            targetId: Number(id)
+        });
         res.json({ message: 'Deal deleted successfully' });
         
     } catch (error) {

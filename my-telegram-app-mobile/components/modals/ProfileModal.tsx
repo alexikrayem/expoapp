@@ -75,12 +75,18 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
                     {/* Header */}
                     <View className="flex-row justify-between items-center p-5 border-b border-border bg-white z-10">
                         <Text className="text-xl font-bold text-text-main">الملف الشخصي</Text>
-                        <PressableScale onPress={onClose} scaleTo={0.9} className="p-2 bg-surface rounded-full border border-border">
+                        <PressableScale onPress={onClose} scaleTo={0.9} haptic="selection" className="p-2 bg-surface rounded-full border border-border">
                             <X size={20} color="#64748b" />
                         </PressableScale>
                     </View>
 
-                    <ScrollView className="flex-1 p-5" contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        className="flex-1 p-5"
+                        contentContainerStyle={{ paddingBottom: 40 }}
+                        showsVerticalScrollIndicator={false}
+                        keyboardDismissMode="on-drag"
+                        keyboardShouldPersistTaps="handled"
+                    >
                         {/* Avatar Section */}
                         <View className="items-center mb-8 mt-2">
                             <View className="relative">

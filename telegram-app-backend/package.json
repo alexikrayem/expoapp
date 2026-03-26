@@ -10,6 +10,8 @@
     "dev": "nodemon server.js",
     "worker:notifications": "node workers/notificationWorker.js",
     "worker:pricing": "node workers/pricingWorker.js",
+    "opensearch:setup": "node scripts/opensearch_setup.js",
+    "opensearch:reindex": "node scripts/opensearch_reindex.js",
     "build": "echo 'No build step'"
   },
   "keywords": [],
@@ -17,7 +19,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@opensearch-project/opensearch": "^2.13.0",
+    "@supabase/supabase-js": "^2.99.3",
     "bcrypt": "^6.0.0",
+    "bullmq": "^5.12.0",
+    "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -27,7 +33,6 @@
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.2",
-    "bullmq": "^5.12.0",
     "node-cron": "^4.1.0",
     "node-telegram-bot-api": "^0.66.0",
     "pg": "^8.15.6",

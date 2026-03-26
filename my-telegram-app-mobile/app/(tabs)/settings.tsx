@@ -1,6 +1,6 @@
 /// <reference types="nativewind/types" />
 import React, { useState } from 'react';
-import { View, ScrollView, Alert } from 'react-native';
+import { View, ScrollView, Alert, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
 import { useModal } from '@/context/ModalContext';
@@ -9,24 +9,25 @@ import { User, Briefcase, FileText, Shield, Share2, ChevronLeft, MessageSquare, 
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import CitySelectionModal from '@/components/modals/CitySelectionModal';
 import { useRouter } from 'expo-router';
-import PressableScale from '@/components/ui/PressableScale';
 
-const SettingItem = ({ icon: Icon, title, subtitle, onPress, color }: any) => (
-  <PressableScale
+const SettingItem = React.memo(({ icon: Icon, title, subtitle, onPress, color }: any) => (
+  <Pressable
     onPress={onPress}
-    scaleTo={0.98}
-    className="flex-row items-center p-4 bg-white"
+    android_ripple={{ color: '#e2e8f0' }}
+    style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
   >
-    <View className="p-2.5 bg-gray-50 rounded-xl mr-4 border border-gray-100">
-      <Icon size={22} color={color} />
+    <View className="flex-row items-center p-4 bg-white">
+      <View className="p-2.5 bg-gray-50 rounded-xl mr-4 border border-gray-100">
+        <Icon size={22} color={color} />
+      </View>
+      <View className="flex-1">
+        <Text className="font-bold text-text-main text-base text-right mb-0.5">{title}</Text>
+        {subtitle && <Text className="text-xs text-text-secondary text-right font-medium">{subtitle}</Text>}
+      </View>
+      <ChevronLeft size={18} color="#94a3b8" />
     </View>
-    <View className="flex-1">
-      <Text className="font-bold text-text-main text-base text-right mb-0.5">{title}</Text>
-      {subtitle && <Text className="text-xs text-text-secondary text-right font-medium">{subtitle}</Text>}
-    </View>
-    <ChevronLeft size={18} color="#94a3b8" />
-  </PressableScale>
-);
+  </Pressable>
+));
 
 export default function SettingsScreen() {
   const { openModal } = useModal();
@@ -50,14 +51,19 @@ export default function SettingsScreen() {
       {/* City Selection Modal */}
       <CitySelectionModal visible={isCityModalVisible} onClose={() => setIsCityModalVisible(false)} />
 
-      <SafeAreaView className="flex-1 bg-surface">
-        <View className="bg-white p-5 border-b border-border shadow-sm">
+      <SafeAreaView className="flex-1 bg-surface" edges={["left", "right", "bottom"]}>
+        <View className="bg-white px-5 py-3 border-b border-border shadow-sm">
           <Text className="text-2xl font-bold text-text-main text-right">الإعدادات</Text>
         </View>
 
-        <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-          <View className="mb-8">
-            <Text className="text-sm font-bold text-primary-600 mb-3 px-2 text-right uppercase tracking-wider">التفضيلات</Text>
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+        >
+          <View className="mb-6">
+            <Text className="text-xs font-semibold text-text-secondary mb-3 px-2 text-right">التفضيلات</Text>
             <View className="bg-white rounded-2xl overflow-hidden border border-border shadow-sm">
               <SettingItem
                 icon={MapPin}
@@ -69,8 +75,8 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          <View className="mb-8">
-            <Text className="text-sm font-bold text-primary-600 mb-3 px-2 text-right uppercase tracking-wider">الحساب</Text>
+          <View className="mb-6">
+            <Text className="text-xs font-semibold text-text-secondary mb-3 px-2 text-right">الحساب</Text>
             <View className="bg-white rounded-2xl overflow-hidden border border-border shadow-sm">
               <SettingItem
                 icon={User}
@@ -90,8 +96,8 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          <View className="mb-8">
-            <Text className="text-sm font-bold text-primary-600 mb-3 px-2 text-right uppercase tracking-wider">قانوني</Text>
+          <View className="mb-6">
+            <Text className="text-xs font-semibold text-text-secondary mb-3 px-2 text-right">قانوني</Text>
             <View className="bg-white rounded-2xl overflow-hidden border border-border shadow-sm">
               <SettingItem
                 icon={Shield}
@@ -109,8 +115,8 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          <View className="mb-8">
-            <Text className="text-sm font-bold text-primary-600 mb-3 px-2 text-right uppercase tracking-wider">تواصل معنا</Text>
+          <View className="mb-6">
+            <Text className="text-xs font-semibold text-text-secondary mb-3 px-2 text-right">تواصل معنا</Text>
             <View className="bg-white rounded-2xl overflow-hidden border border-border shadow-sm">
               <SettingItem
                 icon={Share2}
@@ -130,8 +136,8 @@ export default function SettingsScreen() {
           </View>
 
           {/* Logout Section */}
-          <View className="mb-8">
-            <PressableScale
+          <View className="mb-6">
+            <Pressable
               onPress={() => {
                 Alert.alert(
                   'تسجيل الخروج',
@@ -149,12 +155,14 @@ export default function SettingsScreen() {
                   ]
                 );
               }}
-              scaleTo={0.98}
-              className="bg-red-50 rounded-2xl p-4 flex-row items-center justify-center border border-red-200"
+              android_ripple={{ color: '#fecaca' }}
+              style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
             >
-              <Text className="text-red-600 font-bold text-base mr-2">تسجيل الخروج</Text>
-              <LogOut size={20} color="#dc2626" />
-            </PressableScale>
+              <View className="bg-red-50 rounded-2xl p-4 flex-row items-center justify-center border border-red-200">
+                <Text className="text-red-600 font-bold text-base mr-2">تسجيل الخروج</Text>
+                <LogOut size={20} color="#dc2626" />
+              </View>
+            </Pressable>
           </View>
         </ScrollView>
       </SafeAreaView>

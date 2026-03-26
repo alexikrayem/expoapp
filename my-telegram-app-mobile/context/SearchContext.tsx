@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { searchService } from '@/services/searchService';
 import { useAuth } from './AuthContext';
+import { prefetchImages } from '@/utils/image';
 
 interface SearchContextType {
     searchTerm: string;
@@ -65,6 +66,13 @@ export const SearchProvider = ({ children }: { children: React.ReactNode }) => {
 
         performSearch();
     }, [debouncedSearchTerm, cityId]);
+
+    useEffect(() => {
+        const productUrls = searchResults.products?.items?.map((item: any) => item.image_url || item.imageUrl || item.image) || [];
+        const dealUrls = searchResults.deals?.map((item: any) => item.image_url || item.imageUrl || item.image) || [];
+        const supplierUrls = searchResults.suppliers?.map((item: any) => item.logoUrl || item.logo_url || item.logo) || [];
+        prefetchImages([...productUrls, ...dealUrls, ...supplierUrls], 12);
+    }, [searchResults]);
 
     const handleSearchTermChange = (newTerm: string) => {
         setSearchTerm(newTerm);

@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Image } from 'react-native';
+import React, { useCallback } from 'react';
+import { View } from 'react-native';
+import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
@@ -10,6 +11,7 @@ import { useRouter } from 'expo-router';
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import { Button } from '@/components/ui/Button';
 import PressableScale from '@/components/ui/PressableScale';
+import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
 
 export default function CartScreen() {
     const { cartItems, actions, getCartTotal } = useCart();
@@ -33,6 +35,55 @@ export default function CartScreen() {
         );
     }
 
+    const renderItem = useCallback(({ item }: { item: any }) => (
+        <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm flex-row items-center border border-border">
+            <Image
+                source={{ uri: item.image_url }}
+                className="w-20 h-20 rounded-xl bg-surface"
+                contentFit="cover"
+                transition={150}
+                cachePolicy="memory-disk"
+                placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+                recyclingKey={`cart-${item.product_id}`}
+            />
+            <View className="flex-1 ml-4 mr-2">
+                <Text className="text-text-main font-bold text-right text-base" numberOfLines={1}>{item.name}</Text>
+                <Text className="text-text-secondary text-xs text-right mb-2 font-medium">{item.supplier_name}</Text>
+                <Text className="text-primary-600 font-bold text-right text-lg">{formatPrice(item.effective_selling_price)}</Text>
+            </View>
+
+            <View className="items-center">
+                <View className="flex-row items-center bg-surface rounded-xl mb-2 border border-border">
+                    <PressableScale
+                        onPress={() => actions.increaseQuantity(item.product_id)}
+                        scaleTo={0.92}
+                        haptic="light"
+                        className="p-2 rounded-l-xl"
+                    >
+                        <Plus size={16} color="#4B5563" />
+                    </PressableScale>
+                    <Text className="font-bold w-8 text-center text-text-main">{item.quantity}</Text>
+                    <PressableScale
+                        onPress={() => actions.decreaseQuantity(item.product_id)}
+                        scaleTo={0.92}
+                        haptic="light"
+                        className="p-2 rounded-r-xl"
+                    >
+                        <Minus size={16} color="#4B5563" />
+                    </PressableScale>
+                </View>
+                <PressableScale
+                    onPress={() => actions.removeItem(item.product_id)}
+                    scaleTo={0.92}
+                    haptic="medium"
+                    className="p-2 bg-red-50 rounded-full"
+                >
+                    <Trash2 size={18} color="#EF4444" />
+                </PressableScale>
+            </View>
+        </View>
+    ), [actions, formatPrice]);
+
     return (
         <SafeAreaView className="flex-1 bg-surface">
             <AnimatedScreen>
@@ -43,47 +94,11 @@ export default function CartScreen() {
                         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
                         // @ts-ignore
                         estimatedItemSize={120}
-                        renderItem={({ item }: { item: any }) => (
-                            <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm flex-row items-center border border-border">
-                                <Image
-                                    source={{ uri: item.image_url }}
-                                    className="w-20 h-20 rounded-xl bg-surface"
-                                    resizeMode="cover"
-                                />
-                                <View className="flex-1 ml-4 mr-2">
-                                    <Text className="text-text-main font-bold text-right text-base" numberOfLines={1}>{item.name}</Text>
-                                    <Text className="text-text-secondary text-xs text-right mb-2 font-medium">{item.supplier_name}</Text>
-                                    <Text className="text-primary-600 font-bold text-right text-lg">{formatPrice(item.effective_selling_price)}</Text>
-                                </View>
-
-                                <View className="items-center">
-                                    <View className="flex-row items-center bg-surface rounded-xl mb-2 border border-border">
-                                        <PressableScale
-                                            onPress={() => actions.increaseQuantity(item.product_id)}
-                                            scaleTo={0.92}
-                                            className="p-2 rounded-l-xl"
-                                        >
-                                            <Plus size={16} color="#4B5563" />
-                                        </PressableScale>
-                                        <Text className="font-bold w-8 text-center text-text-main">{item.quantity}</Text>
-                                        <PressableScale
-                                            onPress={() => actions.decreaseQuantity(item.product_id)}
-                                            scaleTo={0.92}
-                                            className="p-2 rounded-r-xl"
-                                        >
-                                            <Minus size={16} color="#4B5563" />
-                                        </PressableScale>
-                                    </View>
-                                    <PressableScale
-                                        onPress={() => actions.removeItem(item.product_id)}
-                                        scaleTo={0.92}
-                                        className="p-2 bg-red-50 rounded-full"
-                                    >
-                                        <Trash2 size={18} color="#EF4444" />
-                                    </PressableScale>
-                                </View>
-                            </View>
-                        )}
+                        removeClippedSubviews
+                        initialNumToRender={6}
+                        maxToRenderPerBatch={8}
+                        windowSize={5}
+                        renderItem={renderItem}
                     />
                 </View>
 

@@ -2,7 +2,7 @@ import { storage } from "../utils/storage"
 import { API_CONFIG } from "../utils/constants"
 import { logger } from "../utils/logger"
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL
+const API_BASE_URL = API_CONFIG.BASE_URL
 
 const REQUEST_TIMEOUT = API_CONFIG.TIMEOUT
 
@@ -152,6 +152,13 @@ export async function apiClient<T = any>(
       // Save tokens if the response includes them
       if (data.accessToken && data.refreshToken) {
         await setTokens(data.accessToken, data.refreshToken)
+      } else {
+        if (data.accessToken) {
+          await storage.setItem("accessToken", data.accessToken)
+        }
+        if (data.refreshToken) {
+          await storage.setItem("refreshToken", data.refreshToken)
+        }
       }
 
       return data as T

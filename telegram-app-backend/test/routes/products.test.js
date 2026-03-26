@@ -1,5 +1,10 @@
-const request = require('supertest');
+jest.mock('../../services/relatedProductsService', () => ({
+  getRelatedProducts: jest.fn(),
+}));
+
+const request = require('../utils/request');
 const express = require('express');
+const { getRelatedProducts } = require('../../services/relatedProductsService');
 
 // Create a test app
 const createTestApp = () => {
@@ -17,6 +22,7 @@ describe('Product Routes', () => {
 
   beforeEach(() => {
     global.mockDb.reset();
+    getRelatedProducts.mockReset();
     app = createTestApp();
   });
 
@@ -144,6 +150,24 @@ describe('Product Routes', () => {
       expect(res.body.id).toBe(1);
     });
 
+    it('returns product with related items when includeRelated is true', async () => {
+      global.mockDb.query.mockResolvedValueOnce({
+        rows: [{ id: 1, name: 'Test Product', price: 100 }]
+      });
+      getRelatedProducts.mockResolvedValueOnce({
+        items: [{ id: 2, name: 'Related' }],
+        total: 1
+      });
+
+      const res = await request(app)
+        .get('/api/products/1')
+        .query({ includeRelated: 'true' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.related).toBeDefined();
+      expect(res.body.related.total).toBe(1);
+    });
+
     it('returns 404 for non-existent product', async () => {
       global.mockDb.query.mockResolvedValueOnce({ rows: [] });
 
@@ -156,6 +180,20 @@ describe('Product Routes', () => {
       const res = await request(app).get('/api/products/abc');
 
       expect(res.status).toBe(400);
+    });
+  });
+
+  describe('GET /api/products/:id/related', () => {
+    it('returns related products', async () => {
+      getRelatedProducts.mockResolvedValueOnce({
+        items: [{ id: 2, name: 'Related' }],
+        total: 1
+      });
+
+      const res = await request(app).get('/api/products/1/related');
+
+      expect(res.status).toBe(200);
+      expect(res.body.total).toBe(1);
     });
   });
 

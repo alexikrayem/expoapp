@@ -1,8 +1,10 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { productService } from '../services/productService';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { PAGINATION } from '../utils/constants';
 import { Product } from '@/types';
+import { useDebounce } from '@/hooks/useDebounce';
+import { prefetchImages } from '@/utils/image';
 
 export const useProducts = (cityId: string | null | undefined, externalFilters: any = {}) => {
     const effectiveFilters = useMemo(() => ({
@@ -21,6 +23,8 @@ export const useProducts = (cityId: string | null | undefined, externalFilters: 
         externalFilters.searchQuery
     ]);
 
+    const debouncedFilters = useDebounce(effectiveFilters, 250);
+
     const {
         data,
         isLoading,
@@ -32,7 +36,7 @@ export const useProducts = (cityId: string | null | undefined, externalFilters: 
         refetch,
         isRefetching
     } = useInfiniteQuery({
-        queryKey: ['products', cityId, effectiveFilters],
+        queryKey: ['products', cityId, debouncedFilters],
         queryFn: async ({ pageParam = 1 }) => {
             if (!cityId) return { items: [], currentPage: 1, totalPages: 1 };
 
@@ -40,7 +44,7 @@ export const useProducts = (cityId: string | null | undefined, externalFilters: 
                 page: pageParam,
                 limit: PAGINATION.PRODUCTS_PER_PAGE,
                 cityId,
-                ...effectiveFilters,
+                ...debouncedFilters,
             };
 
             Object.keys(params).forEach(key => {
@@ -65,6 +69,14 @@ export const useProducts = (cityId: string | null | undefined, externalFilters: 
     const products = useMemo(() => {
         return (data?.pages.flatMap(page => page.items || []) || []) as Product[];
     }, [data]);
+
+    useEffect(() => {
+        if (products.length === 0) return;
+        prefetchImages(
+            products.map((item: any) => item.image_url || item.imageUrl || item.image),
+            12
+        );
+    }, [products]);
 
     return {
         products,

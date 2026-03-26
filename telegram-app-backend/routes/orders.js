@@ -5,14 +5,23 @@ const router = express.Router();
 const db = require('../config/db');
 const telegramBotService = require('../services/telegramBot');
 const { enqueueOrderNotification } = require('../services/notificationQueue');
+const { idempotency } = require('../middleware/idempotency');
+const { orderCreateLimiter } = require('../middleware/rateLimiters');
+const requireCustomer = require('../middleware/requireCustomer');
+const { EFFECTIVE_PRICE_SQL } = require('../utils/pricing');
+
+const idempotencyCreateOrder = idempotency({ scope: 'orders:create', requireKey: true });
+const idempotencyCreateFromCart = idempotency({ scope: 'orders:create-from-cart', requireKey: true });
+
+router.use(requireCustomer);
 
 // Validation middleware for order operations
 const validateCreateOrder = [
     body('items').isArray({ min: 1, max: 50 }).withMessage('Items must be a non-empty array with max 50 items'),
     body('items.*.product_id').isInt({ min: 1, max: 999999 }).withMessage('Each product ID must be a positive integer'),
     body('items.*.quantity').isInt({ min: 1, max: 999 }).withMessage('Each quantity must be between 1 and 999'),
-    body('items.*.price_at_time_of_order').isFloat({ min: 0, max: 999999 }).withMessage('Price at time of order must be a positive number'),
-    body('total_amount').isFloat({ min: 0, max: 9999999 }).withMessage('Total amount must be a positive number')
+    body('items.*.price_at_time_of_order').optional().isFloat({ min: 0, max: 999999 }).withMessage('Price at time of order must be a positive number'),
+    body('total_amount').optional().isFloat({ min: 0, max: 9999999 }).withMessage('Total amount must be a positive number')
 ];
 
 const validateOrderStatusUpdate = [
@@ -21,7 +30,7 @@ const validateOrderStatusUpdate = [
 ];
 
 // POST /from-cart - Create a new order from frontend cart data
-router.post('/from-cart', validateCreateOrder, async (req, res) => {
+router.post('/from-cart', orderCreateLimiter, idempotencyCreateFromCart, validateCreateOrder, async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -29,7 +38,7 @@ router.post('/from-cart', validateCreateOrder, async (req, res) => {
         }
         
         const { userId } = req.user;
-        const { items, total_amount } = req.body;
+        const { items } = req.body;
         
         if (!items || !Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ error: 'Cart items are required' });
@@ -49,10 +58,12 @@ router.post('/from-cart', validateCreateOrder, async (req, res) => {
 
             const uniqueProductIds = Array.from(requestedQuantityByProduct.keys());
             const productsQuery = `
-                SELECT id, name, stock_level, supplier_id
-                FROM products
-                WHERE id = ANY($1::int[])
-                FOR UPDATE
+                SELECT p.id, p.name, p.stock_level, p.supplier_id,
+                       ${EFFECTIVE_PRICE_SQL} as effective_price
+                FROM products p
+                LEFT JOIN master_products mp ON p.master_product_id = mp.id
+                WHERE p.id = ANY($1::int[])
+                FOR UPDATE OF p
             `;
             const productsResult = await client.query(productsQuery, [uniqueProductIds]);
 
@@ -77,34 +88,66 @@ router.post('/from-cart', validateCreateOrder, async (req, res) => {
             }
             
             // Step 2: Get user's profile for validation
-            const userResult = await client.query('SELECT * FROM user_profiles WHERE user_id = $1', [userId]);
+            const userResult = await client.query(
+                'SELECT address_line1 FROM user_profiles WHERE user_id = $1',
+                [userId]
+            );
             if (userResult.rows.length === 0 || !userResult.rows[0].address_line1) {
                 await client.query('ROLLBACK');
                 return res.status(400).json({ error: 'User profile or address is incomplete.' });
             }
 
-            // Step 3: Create the main order record
+            // Step 3: Compute prices server-side (ignore client totals/prices)
+            const effectivePriceByProduct = new Map();
+            const productNameById = new Map();
+            for (const row of productsResult.rows) {
+                const price = Number(row.effective_price);
+                effectivePriceByProduct.set(row.id, Number.isFinite(price) ? price : null);
+                productNameById.set(row.id, row.name);
+            }
+
+            const itemProductIds = items.map((item) => item.product_id);
+            const itemQuantities = items.map((item) => item.quantity);
+            const itemPrices = items.map((item) => effectivePriceByProduct.get(item.product_id));
+
+            if (itemPrices.some((price) => !Number.isFinite(price))) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: 'Unable to compute product pricing.' });
+            }
+
+            const totalAmountRaw = items.reduce((sum, item, index) => {
+                const price = itemPrices[index] || 0;
+                return sum + price * item.quantity;
+            }, 0);
+            const totalAmount = Number(totalAmountRaw.toFixed(2));
+
+            // Step 4: Create the main order record
             const orderQuery = `
                 INSERT INTO orders (user_id, total_amount, order_date, status, delivery_status)
                 VALUES ($1, $2, NOW(), 'pending', 'pending_pickup')
                 RETURNING id
             `;
-            const orderResult = await client.query(orderQuery, [userId, total_amount]);
+            const orderResult = await client.query(orderQuery, [userId, totalAmount]);
             const orderId = orderResult.rows[0].id;
 
-            // Step 4: Create order_items records and update product stock
-            for (const item of items) {
-                const orderItemQuery = `
-                    INSERT INTO order_items (
-                        order_id, product_id, quantity, price_at_time_of_order
-                    ) VALUES ($1, $2, $3, $4)
-                `;
-                await client.query(orderItemQuery, [orderId, item.product_id, item.quantity, item.price_at_time_of_order]);
-                
-                // Update stock
-                const updateStockQuery = 'UPDATE products SET stock_level = stock_level - $1 WHERE id = $2';
-                await client.query(updateStockQuery, [item.quantity, item.product_id]);
-            }
+            // Step 5: Create order_items records and update product stock
+            const orderItemsQuery = `
+                INSERT INTO order_items (order_id, product_id, quantity, price_at_time_of_order)
+                SELECT $1, unnest($2::int[]), unnest($3::int[]), unnest($4::numeric[])
+            `;
+            await client.query(orderItemsQuery, [orderId, itemProductIds, itemQuantities, itemPrices]);
+
+            const stockProductIds = Array.from(requestedQuantityByProduct.keys());
+            const stockQuantities = stockProductIds.map((productId) => requestedQuantityByProduct.get(productId));
+            const updateStockQuery = `
+                UPDATE products p
+                SET stock_level = p.stock_level - u.qty
+                FROM (
+                    SELECT unnest($1::int[]) AS id, unnest($2::int[]) AS qty
+                ) AS u
+                WHERE p.id = u.id
+            `;
+            await client.query(updateStockQuery, [stockProductIds, stockQuantities]);
 
             await client.query('COMMIT');
             
@@ -124,18 +167,22 @@ router.post('/from-cart', validateCreateOrder, async (req, res) => {
                     const supplier = supplierResult.rows[0];
                     
                     // Get customer info
-                    const customerQuery = 'SELECT * FROM user_profiles WHERE user_id = $1';
+                    const customerQuery = `
+                        SELECT full_name, phone_number, address_line1, address_line2, city
+                        FROM user_profiles
+                        WHERE user_id = $1
+                    `;
                     const customerResult = await client.query(customerQuery, [userId]);
                     const customer = customerResult.rows[0];
                     
                     const orderNotificationData = {
                         orderId,
                         supplierId: supplier.id,
-                        total_amount,
-                        items: items.map(item => ({
-                            product_name: item.name || 'Unknown Product',
+                        total_amount: totalAmount,
+                        items: items.map((item, index) => ({
+                            product_name: productNameById.get(item.product_id) || 'Unknown Product',
                             quantity: item.quantity,
-                            price_at_time_of_order: item.price_at_time_of_order
+                            price_at_time_of_order: itemPrices[index]
                         })),
                         customerInfo: {
                             name: customer?.full_name || 'غير محدد',
@@ -172,7 +219,7 @@ router.post('/from-cart', validateCreateOrder, async (req, res) => {
 });
 
 // POST / - Create a new order for the authenticated user
-router.post('/', async (req, res) => {
+router.post('/', orderCreateLimiter, idempotencyCreateOrder, async (req, res) => {
     try {
         const { userId } = req.user;
         const client = await db.pool.connect();
@@ -185,11 +232,10 @@ router.post('/', async (req, res) => {
             const cartQuery = `
                 SELECT 
                     c.product_id, c.quantity, p.name as product_name, p.supplier_id, p.stock_level,
-                    CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL 
-                         THEN p.discount_price ELSE p.price 
-                    END as effective_price
+                    ${EFFECTIVE_PRICE_SQL} as effective_price
                 FROM cart_items c -- FIX: Corrected table name
                 JOIN products p ON c.product_id = p.id
+                LEFT JOIN master_products mp ON p.master_product_id = mp.id
                 WHERE c.user_id = $1 AND p.stock_level > 0 FOR UPDATE
             `;
             const cartResult = await client.query(cartQuery, [userId]);
@@ -208,7 +254,10 @@ router.post('/', async (req, res) => {
             }
             
             // Step 3: Get user's profile for details (we will now store these in order_items or a separate order_shipping table if needed)
-            const userResult = await client.query('SELECT * FROM user_profiles WHERE user_id = $1', [userId]);
+            const userResult = await client.query(
+                'SELECT address_line1 FROM user_profiles WHERE user_id = $1',
+                [userId]
+            );
             if (userResult.rows.length === 0 || !userResult.rows[0].address_line1) {
                 await client.query('ROLLBACK');
                 return res.status(400).json({ error: 'User profile or address is incomplete.' });
@@ -217,7 +266,8 @@ router.post('/', async (req, res) => {
             // This is acceptable, but for historical accuracy, you might later want an `order_shipping_details` table.
 
             // Step 4: Calculate total amount
-            const totalAmount = cartResult.rows.reduce((sum, item) => sum + (item.effective_price * item.quantity), 0);
+            const totalAmountRaw = cartResult.rows.reduce((sum, item) => sum + (Number(item.effective_price) * item.quantity), 0);
+            const totalAmount = Number(totalAmountRaw.toFixed(2));
 
             // Step 5: Create the main order record with the CORRECT columns
             // FIX: The INSERT statement now matches your actual 'orders' table schema.
@@ -230,20 +280,25 @@ router.post('/', async (req, res) => {
             const orderId = orderResult.rows[0].id;
 
             // Step 6: Create order_items records and update product stock
-           for (const item of cartResult.rows) {
-        // FIX: Removed the non-existent 'supplier_id' column from the query
-        const orderItemQuery = `
-            INSERT INTO order_items (
-                order_id, product_id, quantity, price_at_time_of_order
-            ) VALUES ($1, $2, $3, $4)
-        `;
-        // FIX: Removed item.supplier_id from the values array
-        await client.query(orderItemQuery, [orderId, item.product_id, item.quantity, item.effective_price]);
-        
-        // This part remains the same
-        const updateStockQuery = 'UPDATE products SET stock_level = stock_level - $1 WHERE id = $2';
-        await client.query(updateStockQuery, [item.quantity, item.product_id]);
-    }
+            const itemProductIds = cartResult.rows.map((item) => item.product_id);
+            const itemQuantities = cartResult.rows.map((item) => item.quantity);
+            const itemPrices = cartResult.rows.map((item) => Number(item.effective_price));
+
+            const orderItemsQuery = `
+                INSERT INTO order_items (order_id, product_id, quantity, price_at_time_of_order)
+                SELECT $1, unnest($2::int[]), unnest($3::int[]), unnest($4::numeric[])
+            `;
+            await client.query(orderItemsQuery, [orderId, itemProductIds, itemQuantities, itemPrices]);
+
+            const updateStockQuery = `
+                UPDATE products p
+                SET stock_level = p.stock_level - u.qty
+                FROM (
+                    SELECT unnest($1::int[]) AS id, unnest($2::int[]) AS qty
+                ) AS u
+                WHERE p.id = u.id
+            `;
+            await client.query(updateStockQuery, [itemProductIds, itemQuantities]);
 
             // Step 7: Clear the user's cart from the correct table
             await client.query('DELETE FROM cart_items WHERE user_id = $1', [userId]); // FIX: Corrected table name
@@ -325,10 +380,18 @@ router.put('/:orderId/status', validateOrderStatusUpdate, async (req, res) => {
             if (status === 'cancelled') {
                 const itemsQuery = 'SELECT product_id, quantity FROM order_items WHERE order_id = $1';
                 const itemsResult = await client.query(itemsQuery, [orderId]);
-                
-                for (const item of itemsResult.rows) {
-                    const stockUpdateQuery = 'UPDATE products SET stock_level = stock_level + $1 WHERE id = $2';
-                    await client.query(stockUpdateQuery, [item.quantity, item.product_id]);
+                if (itemsResult.rows.length > 0) {
+                    const itemProductIds = itemsResult.rows.map((item) => item.product_id);
+                    const itemQuantities = itemsResult.rows.map((item) => item.quantity);
+                    const stockUpdateQuery = `
+                        UPDATE products p
+                        SET stock_level = p.stock_level + u.qty
+                        FROM (
+                            SELECT unnest($1::int[]) AS id, unnest($2::int[]) AS qty
+                        ) AS u
+                        WHERE p.id = u.id
+                    `;
+                    await client.query(stockUpdateQuery, [itemProductIds, itemQuantities]);
                 }
             }
             

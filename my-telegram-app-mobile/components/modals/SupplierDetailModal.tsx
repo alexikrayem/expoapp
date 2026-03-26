@@ -1,6 +1,7 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useEffect } from 'react';
-import { View, Image, Modal, ActivityIndicator, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Modal, ActivityIndicator, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
@@ -11,6 +12,7 @@ import ProductCard from '../ProductCard';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../hooks/useFavorites';
 import PressableScale from '@/components/ui/PressableScale';
+import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
 
 export default function SupplierDetailModal({ show, onClose, supplierId, onProductClick }: any) {
     const [supplier, setSupplier] = useState<any>(null);
@@ -60,6 +62,26 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
         if (categoryFilter === 'all') return supplier.products;
         return supplier.products.filter((p: any) => p.category === categoryFilter);
     }, [supplier?.products, categoryFilter]);
+
+    const renderProductItem = React.useCallback(
+        ({ item }: { item: any }) => (
+            <View className="w-full px-2 mb-4">
+                <ProductCard
+                    product={item}
+                    onShowDetails={() => {
+                        onClose();
+                        if (onProductClick) onProductClick(item.id);
+                    }}
+                    onAddToCart={addToCart}
+                    onToggleFavorite={toggleFavorite}
+                    isFavorite={isFavorite(item.id)}
+                />
+            </View>
+        ),
+        [addToCart, isFavorite, onClose, onProductClick, toggleFavorite]
+    );
+
+    const productKeyExtractor = React.useCallback((item: any) => item.id.toString(), []);
 
     if (!show) return null;
 
@@ -133,9 +155,13 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
                             numColumns={2}
                             // @ts-ignore
                             estimatedItemSize={280}
-                            keyExtractor={(item: any) => item.id.toString()}
+                            keyExtractor={productKeyExtractor}
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={{ paddingBottom: 40 }}
+                            removeClippedSubviews
+                            initialNumToRender={6}
+                            maxToRenderPerBatch={8}
+                            windowSize={5}
                             ListHeaderComponent={
                                 <>
                                     {/* Supplier Header Image */}
@@ -144,7 +170,11 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
                                             <Image
                                                 source={{ uri: supplier.image_url }}
                                                 className="w-full h-full"
-                                                resizeMode="cover"
+                                                contentFit="cover"
+                                                transition={200}
+                                                cachePolicy="memory-disk"
+                                                placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+                                                recyclingKey={`supplier-detail-${supplier.id}`}
                                             />
                                         ) : (
                                             <View className="items-center">
@@ -208,20 +238,7 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
                                     </View>
                                 </>
                             }
-                            renderItem={({ item }: { item: any }) => (
-                                <View className="w-full px-2 mb-4">
-                                    <ProductCard
-                                        product={item}
-                                        onShowDetails={() => {
-                                            onClose();
-                                            if (onProductClick) onProductClick(item.id);
-                                        }}
-                                        onAddToCart={addToCart}
-                                        onToggleFavorite={toggleFavorite}
-                                        isFavorite={isFavorite(item.id)}
-                                    />
-                                </View>
-                            )}
+                            renderItem={renderProductItem}
                             ListEmptyComponent={
                                 <View className="py-12 items-center">
                                     <View className="w-16 h-16 bg-surface rounded-full items-center justify-center mb-4 border border-border">

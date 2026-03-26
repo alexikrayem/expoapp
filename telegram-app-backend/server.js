@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const RateLimitRedis = require('rate-limit-redis');
 const RedisStore = RateLimitRedis.default || RateLimitRedis;
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 
 // Import our security middleware
 const { validateTelegramAuth } = require('./middleware/authMiddleware');
@@ -31,12 +32,14 @@ const favoritesRoutes = require('./routes/favorites');
 const featuredItemsRoutes = require('./routes/featuredItems');
 const deliveryRoutes = require('./routes/delivery');
 const adminRoutes = require('./routes/admin');
+const storageRoutes = require('./routes/storage');
 
 // Import Telegram Bot Service
 const telegramBotService = require('./services/telegramBot');
 const telegramWebhookPath = telegramBotService.getWebhookPath?.() || '/api/telegram/webhook';
 
 const app = express();
+app.disable('x-powered-by');
 
 const PORT = process.env.PORT || 3001;
 if (process.env.NODE_ENV === 'production') {
@@ -119,7 +122,7 @@ const corsOptions = {
 const hpp = require('hpp');
 const xss = require('xss-clean');
 
-// Configure Helmet with Content Security Policy (CSP)
+// Configure Helmet with Content Security Policy (CSP) and hardening
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -133,10 +136,16 @@ app.use(helmet({
       upgradeInsecureRequests: [],
     },
   },
+  frameguard: { action: 'deny' },
+  referrerPolicy: { policy: 'no-referrer' },
+  hsts: process.env.NODE_ENV === 'production'
+    ? { maxAge: 15552000, includeSubDomains: true, preload: true }
+    : false,
 }));
 
 app.use(cookieParser());
 app.use(cors(corsOptions));
+app.use(compression());
 
 // Add request ID for tracing
 app.use(requestIdMiddleware);
@@ -213,6 +222,25 @@ app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(hpp()); // Protect against HTTP Parameter Pollution attacks
 app.use(xss()); // Sanitize user input to prevent XSS attacks
 
+// Enforce content-type for requests with bodies (protect against unexpected payloads)
+app.use((req, res, next) => {
+  const hasBody = Number(req.headers['content-length'] || 0) > 0;
+  if (!hasBody) return next();
+
+  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    const contentType = (req.headers['content-type'] || '').toLowerCase();
+    const allowed =
+      contentType.includes('application/json') ||
+      contentType.includes('application/x-www-form-urlencoded') ||
+      contentType.includes('multipart/form-data');
+
+    if (!allowed && !req.path.startsWith(telegramWebhookPath)) {
+      return res.status(415).json({ error: 'Unsupported content type' });
+    }
+  }
+  return next();
+});
+
 // Serve static files from 'public' directory
 
 app.use(express.static('public'));
@@ -222,6 +250,11 @@ app.use(express.static('public'));
 // 1. SPECIALIZED ROUTES (Auth, Admin) - These should be accessible without JWT validation
 // These might have their own separate authentication logic (like login endpoints).
 console.log('✅ Applying SPECIALIZED routes...');
+app.use('/api/auth', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  res.set('Pragma', 'no-cache');
+  next();
+});
 app.use('/api/auth', authLimiter, authRoutes); // e.g., for JWT login/password, not Telegram based
 app.use('/api/admin', adminRoutes);
 
@@ -241,6 +274,9 @@ app.post(telegramWebhookPath, (req, res) => telegramBotService.handleWebhookUpda
 // Add supplier-specific authenticated routes
 app.use('/api/supplier', supplierRoutes);
 
+// Storage routes (admin/supplier auth inside the router)
+app.use('/api/storage', storageRoutes);
+
 // 3. JWT AUTHENTICATION MIDDLEWARE - Apply only to routes that need protection
 // Apply validation only to routes that should be protected (not /api/auth)
 app.use('/api', (req, res, next) => {
@@ -248,7 +284,7 @@ app.use('/api', (req, res, next) => {
   console.log(`[Middleware] Path: ${req.path}, Method: ${req.method}, Url: ${req.url}, BaseUrl: ${req.baseUrl}`);
 
   // Skip JWT validation for auth routes only
-  if (req.path.startsWith('/auth') || req.path.startsWith('/telegram')) {
+  if (req.path.startsWith('/auth') || req.path.startsWith('/telegram') || req.path.startsWith('/delivery')) {
     console.log('[Middleware] Skipping JWT for auth route');
     return next();
   }

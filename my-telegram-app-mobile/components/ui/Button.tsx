@@ -3,6 +3,7 @@ import { ActivityIndicator, View, PressableProps } from "react-native"
 
 import Text from "@/components/ThemedText"
 import PressableScale from "@/components/ui/PressableScale"
+import { MOTION } from "@/utils/motion"
 
 interface ButtonProps extends Omit<PressableProps, "children"> {
   title: string
@@ -59,7 +60,8 @@ export const Button = ({
   return (
     <PressableScale
       accessibilityRole="button"
-      scaleTo={isDisabled ? 1 : 0.98}
+      scaleTo={isDisabled ? 1 : MOTION.pressScale}
+      haptic={isDisabled ? false : "selection"}
       disabled={isDisabled}
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${isDisabled ? "opacity-60" : ""} ${className}`}
       {...props}

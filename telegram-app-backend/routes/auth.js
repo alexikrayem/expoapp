@@ -5,15 +5,77 @@ const bcrypt = require('bcrypt');
 const db = require('../config/db');
 const crypto = require('crypto');
 const { issueTokens, rotateRefreshToken, revokeRefreshToken } = require('../services/tokenService');
+const rateLimit = require('express-rate-limit');
+const RateLimitRedis = require('rate-limit-redis');
+const RedisStore = RateLimitRedis.default || RateLimitRedis;
+const { getRedisClient } = require('../config/redis');
+const { recordAuditEvent } = require('../services/auditService');
 
 
 const validateRequest = require('../middleware/validateRequest');
+
+const buildRateLimitStore = () => {
+    const redisClient = getRedisClient();
+    if (!redisClient) return undefined;
+    return new RedisStore({
+        sendCommand: (...args) => redisClient.sendCommand(args),
+    });
+};
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+const otpSendLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: isDev ? 50 : 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: buildRateLimitStore(),
+    keyGenerator: (req) => `otp-send:${req.ip}:${req.body?.phone_number || 'unknown'}`,
+    message: { error: 'Too many OTP requests. Please try again later.' },
+});
+
+const otpVerifyLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: isDev ? 100 : 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: buildRateLimitStore(),
+    keyGenerator: (req) => `otp-verify:${req.ip}:${req.body?.phone_number || 'unknown'}`,
+    message: { error: 'Too many OTP verification attempts. Please try again later.' },
+});
+
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: isDev ? 200 : 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: buildRateLimitStore(),
+    keyGenerator: (req) => `login:${req.ip}:${req.body?.email || req.body?.phoneNumber || 'unknown'}`,
+    message: { error: 'Too many login attempts. Please try again later.' },
+});
+
+const refreshLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    max: isDev ? 200 : 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: buildRateLimitStore(),
+    keyGenerator: (req) => `refresh:${req.ip}`,
+    message: { error: 'Too many refresh attempts. Please try again later.' },
+});
+
+const hashIdentifier = (value) => {
+    if (!value) return null;
+    return crypto.createHash('sha256').update(String(value)).digest('hex');
+};
 
 const buildCookieOptions = () => ({
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/api/auth',
+    ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {})
 });
 
 const setRefreshCookie = (res, refreshToken) => {
@@ -45,7 +107,7 @@ const generateSecureUserId = async () => {
 };
 
 // Supplier Login
-router.post('/supplier/login', [
+router.post('/supplier/login', loginLimiter, [
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password').notEmpty().withMessage('Password is required'),
     validateRequest
@@ -54,13 +116,26 @@ router.post('/supplier/login', [
         const { email, password } = req.body;
 
         // Find supplier by email
-        const supplierQuery = 'SELECT * FROM suppliers WHERE email = $1 AND is_active = true';
+        const supplierQuery = `
+            SELECT id, name, email, category, location, password_hash, is_active
+            FROM suppliers
+            WHERE email = $1 AND is_active = true
+        `;
         const supplierResult = await db.query(supplierQuery, [email.toLowerCase()]);
 
         // Don't distinguish between user not found vs wrong password to prevent enumeration
         if (supplierResult.rows.length === 0) {
             // Still hash the password to prevent timing attacks
             await bcrypt.compare(password, '$2b$10$NQ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9y'); // dummy hash
+            void recordAuditEvent({
+                req,
+                action: 'login_failed',
+                actorRole: 'supplier',
+                actorId: null,
+                targetType: 'supplier',
+                targetId: null,
+                metadata: { identifier_hash: hashIdentifier(email.toLowerCase()) }
+            });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -69,6 +144,15 @@ router.post('/supplier/login', [
         // Check password
         const isValidPassword = await bcrypt.compare(password, supplier.password_hash);
         if (!isValidPassword) {
+            void recordAuditEvent({
+                req,
+                action: 'login_failed',
+                actorRole: 'supplier',
+                actorId: supplier.id,
+                targetType: 'supplier',
+                targetId: supplier.id,
+                metadata: { identifier_hash: hashIdentifier(email.toLowerCase()) }
+            });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -87,6 +171,14 @@ router.post('/supplier/login', [
 
         setRefreshCookie(res, refreshToken);
 
+        void recordAuditEvent({
+            req,
+            action: 'login_success',
+            actorRole: 'supplier',
+            actorId: supplier.id,
+            targetType: 'supplier',
+            targetId: supplier.id
+        });
         res.json({
             accessToken,
             refreshToken,
@@ -106,7 +198,7 @@ router.post('/supplier/login', [
 });
 
 // Admin Login
-router.post('/admin/login', [
+router.post('/admin/login', loginLimiter, [
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password').notEmpty().withMessage('Password is required'),
     validateRequest
@@ -114,12 +206,25 @@ router.post('/admin/login', [
     try {
         const { email, password } = req.body;
 
-        const adminQuery = 'SELECT * FROM admins WHERE email = $1';
+        const adminQuery = `
+            SELECT id, email, full_name, role, password_hash
+            FROM admins
+            WHERE email = $1
+        `;
         const adminResult = await db.query(adminQuery, [email.toLowerCase()]);
 
         if (adminResult.rows.length === 0) {
             // Still hash the password to prevent timing attacks
             await bcrypt.compare(password, '$2b$10$NQ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9y'); // dummy hash
+            void recordAuditEvent({
+                req,
+                action: 'login_failed',
+                actorRole: 'admin',
+                actorId: null,
+                targetType: 'admin',
+                targetId: null,
+                metadata: { identifier_hash: hashIdentifier(email.toLowerCase()) }
+            });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -127,6 +232,15 @@ router.post('/admin/login', [
 
         const isValidPassword = await bcrypt.compare(password, admin.password_hash);
         if (!isValidPassword) {
+            void recordAuditEvent({
+                req,
+                action: 'login_failed',
+                actorRole: 'admin',
+                actorId: admin.id,
+                targetType: 'admin',
+                targetId: admin.id,
+                metadata: { identifier_hash: hashIdentifier(email.toLowerCase()) }
+            });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -139,6 +253,14 @@ router.post('/admin/login', [
 
         setRefreshCookie(res, refreshToken);
 
+        void recordAuditEvent({
+            req,
+            action: 'login_success',
+            actorRole: 'admin',
+            actorId: admin.id,
+            targetType: 'admin',
+            targetId: admin.id
+        });
         res.json({
             accessToken,
             refreshToken,
@@ -153,7 +275,7 @@ router.post('/admin/login', [
 
 
 // Delivery Agent Login
-router.post('/delivery/login', [
+router.post('/delivery/login', loginLimiter, [
     body('phoneNumber').notEmpty().withMessage('Phone number is required'),
     body('password').notEmpty().withMessage('Password is required'),
     validateRequest
@@ -162,12 +284,25 @@ router.post('/delivery/login', [
         const { phoneNumber, password } = req.body;
 
         // Find delivery agent by phone
-        const agentQuery = 'SELECT * FROM delivery_agents WHERE phone_number = $1 AND is_active = true';
+        const agentQuery = `
+            SELECT id, supplier_id, full_name, phone_number, password_hash, is_active
+            FROM delivery_agents
+            WHERE phone_number = $1 AND is_active = true
+        `;
         const agentResult = await db.query(agentQuery, [phoneNumber]);
 
         if (agentResult.rows.length === 0) {
             // Still hash the password to prevent timing attacks
             await bcrypt.compare(password, '$2b$10$NQ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9yO6jRZ5pZ4q9y'); // dummy hash
+            void recordAuditEvent({
+                req,
+                action: 'login_failed',
+                actorRole: 'delivery_agent',
+                actorId: null,
+                targetType: 'delivery_agent',
+                targetId: null,
+                metadata: { identifier_hash: hashIdentifier(phoneNumber) }
+            });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -176,6 +311,15 @@ router.post('/delivery/login', [
         // Check password
         const isValidPassword = await bcrypt.compare(password, agent.password_hash);
         if (!isValidPassword) {
+            void recordAuditEvent({
+                req,
+                action: 'login_failed',
+                actorRole: 'delivery_agent',
+                actorId: agent.id,
+                targetType: 'delivery_agent',
+                targetId: agent.id,
+                metadata: { identifier_hash: hashIdentifier(phoneNumber) }
+            });
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -194,6 +338,14 @@ router.post('/delivery/login', [
 
         setRefreshCookie(res, refreshToken);
 
+        void recordAuditEvent({
+            req,
+            action: 'login_success',
+            actorRole: 'delivery_agent',
+            actorId: agent.id,
+            targetType: 'delivery_agent',
+            targetId: agent.id
+        });
         res.json({
             accessToken,
             refreshToken,
@@ -212,10 +364,19 @@ router.post('/delivery/login', [
 });
 
 // Refresh token endpoint
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', refreshLimiter, async (req, res) => {
     const refreshToken = getRefreshTokenFromRequest(req);
 
     if (!refreshToken) {
+        void recordAuditEvent({
+            req,
+            action: 'refresh_failed',
+            actorRole: null,
+            actorId: null,
+            targetType: 'auth',
+            targetId: null,
+            metadata: { reason: 'missing_token' }
+        });
         return res.status(401).json({ error: 'Refresh token required' });
     }
 
@@ -230,6 +391,15 @@ router.post('/refresh', async (req, res) => {
         res.json({ accessToken, refreshToken: newRefreshToken });
     } catch (error) {
         console.error('Refresh token error:', error);
+        void recordAuditEvent({
+            req,
+            action: 'refresh_failed',
+            actorRole: null,
+            actorId: null,
+            targetType: 'auth',
+            targetId: null,
+            metadata: { reason: error.message }
+        });
         return res.status(403).json({ error: error.message || 'Invalid or expired refresh token' });
     }
 });
@@ -242,6 +412,14 @@ router.post('/logout', async (req, res) => {
             await revokeRefreshToken(refreshToken);
         }
         clearRefreshCookie(res);
+        void recordAuditEvent({
+            req,
+            action: 'logout',
+            actorRole: null,
+            actorId: null,
+            targetType: 'auth',
+            targetId: null
+        });
         res.json({ message: 'Logged out' });
     } catch (error) {
         console.error('Logout error:', error);
@@ -253,11 +431,10 @@ router.post('/logout', async (req, res) => {
 // --- Phone Number OTP Authentication ---
 
 // 1. Send OTP
-router.post('/send-otp', [
+router.post('/send-otp', otpSendLimiter, [
     body('phone_number').notEmpty().withMessage('Phone number is required'),
     validateRequest
 ], async (req, res) => {
-    console.log('[AuthRoute] Hit /send-otp with body:', req.body);
     try {
         const { phone_number } = req.body;
         // Validation handled by middleware
@@ -297,7 +474,7 @@ router.post('/send-otp', [
 });
 
 // 2. Verify OTP
-router.post('/verify-otp', [
+router.post('/verify-otp', otpVerifyLimiter, [
     body('phone_number').notEmpty().withMessage('Phone number is required'),
     body('code').notEmpty().withMessage('Code is required'),
     validateRequest
@@ -317,7 +494,7 @@ router.post('/verify-otp', [
 
         if (!isDevBypass) {
             // Check OTP
-            const otpQuery = 'SELECT * FROM otp_verifications WHERE phone_number = $1';
+            const otpQuery = 'SELECT code, expires_at, attempts FROM otp_verifications WHERE phone_number = $1';
             const otpResult = await db.query(otpQuery, [phone_number]);
 
             if (otpResult.rows.length === 0) {
@@ -403,7 +580,7 @@ router.post('/register-phone', [
         }
 
         if (!isDevBypass) {
-            const otpQuery = 'SELECT * FROM otp_verifications WHERE phone_number = $1 AND code = $2';
+            const otpQuery = 'SELECT expires_at FROM otp_verifications WHERE phone_number = $1 AND code = $2';
             const otpResult = await db.query(otpQuery, [phone_number, code]);
 
             if (otpResult.rows.length === 0 || new Date() > new Date(otpResult.rows[0].expires_at)) {
@@ -412,7 +589,7 @@ router.post('/register-phone', [
         }
 
         // Check duplicates again
-        const userQuery = 'SELECT * FROM user_profiles WHERE phone_number = $1';
+        const userQuery = 'SELECT 1 FROM user_profiles WHERE phone_number = $1';
         const duplicateCheck = await db.query(userQuery, [phone_number]);
         if (duplicateCheck.rows.length > 0) {
             return res.status(409).json({ error: 'User already exists with this phone number.' });

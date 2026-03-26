@@ -49,7 +49,7 @@ export default function FeedbackModal({ visible, onClose }: FeedbackModalProps) 
                     >
                         <View className="bg-surface rounded-3xl p-6 shadow-2xl w-full">
                             <View className="flex-row justify-between items-center mb-6">
-                                <PressableScale onPress={onClose} scaleTo={0.9} className="p-2 bg-gray-100 rounded-full">
+                                <PressableScale onPress={onClose} scaleTo={0.9} haptic="selection" className="p-2 bg-gray-100 rounded-full">
                                     <X size={20} color="#64748b" />
                                 </PressableScale>
                                 <Text className="text-xl font-bold text-text-main">أرسل ملاحظاتك</Text>
@@ -63,6 +63,7 @@ export default function FeedbackModal({ visible, onClose }: FeedbackModalProps) 
                                             key={star}
                                             onPress={() => setRating(star)}
                                             scaleTo={1.06}
+                                            haptic="selection"
                                         >
                                             <Star
                                                 size={32}

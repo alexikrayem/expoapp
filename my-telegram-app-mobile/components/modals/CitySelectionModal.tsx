@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator, Modal, Animated, StyleSheet } from 'react-native';
+import { View, Modal, Animated, StyleSheet, Pressable } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
@@ -85,9 +85,8 @@ export default function CitySelectionModal({ visible, onClose }: CitySelectionMo
             navigationBarTranslucent
         >
             <View className="flex-1 justify-end bg-black/60 backdrop-blur-sm">
-                <PressableScale
+                <Pressable
                     onPress={onClose}
-                    scaleTo={1}
                     style={StyleSheet.absoluteFill}
                 />
                 <Animated.View
@@ -132,13 +131,18 @@ export default function CitySelectionModal({ visible, onClose }: CitySelectionMo
                             contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
                             // @ts-ignore
                             estimatedItemSize={80}
+                            removeClippedSubviews
+                            initialNumToRender={10}
+                            maxToRenderPerBatch={10}
+                            windowSize={5}
                             renderItem={({ item }: { item: any }) => {
                                 const isSelected = userProfile?.selected_city_id === item.id;
                                 return (
-                                    <PressableScale
+                                    <Pressable
                                         onPress={() => handleSelectCity(item)}
                                         disabled={isUpdating}
-                                        scaleTo={0.98}
+                                        android_ripple={{ color: '#e2e8f0' }}
+                                        style={({ pressed }) => [{ opacity: pressed ? 0.96 : 1 }]}
                                         className={`flex-row items-center justify-between p-4 mb-3 rounded-2xl border active:scale-[0.99] ${isSelected
                                             ? 'bg-primary-50 border-primary-200'
                                             : 'bg-white border-border'
@@ -153,7 +157,7 @@ export default function CitySelectionModal({ visible, onClose }: CitySelectionMo
                                         <View className={`p-2.5 rounded-xl ml-3 ${isSelected ? 'bg-primary-100' : 'bg-surface border border-border'}`}>
                                             <MapPin size={20} color={isSelected ? '#2563EB' : '#94a3b8'} />
                                         </View>
-                                    </PressableScale>
+                                    </Pressable>
                                 );
                             }}
                         />

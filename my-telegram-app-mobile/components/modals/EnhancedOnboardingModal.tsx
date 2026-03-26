@@ -189,12 +189,19 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
 
             <View className="mb-5">
                 <Text className="text-right text-text-secondary mb-2 font-medium text-sm">المدينة <Text className="text-red-500">*</Text></Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row py-1" contentContainerStyle={{ paddingRight: 4 }}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    className="flex-row py-1"
+                    contentContainerStyle={{ paddingRight: 4 }}
+                    keyboardShouldPersistTaps="handled"
+                >
                     {cities.map((city) => (
                         <PressableScale
                             key={city.id}
                             onPress={() => updateField('selected_city_id', city.id)}
                             scaleTo={0.98}
+                            haptic="selection"
                             className={`mr-2 px-5 py-3 rounded-2xl border shadow-sm ${formData.selected_city_id === city.id
                                 ? 'bg-primary-600 border-primary-600 shadow-primary-200'
                                 : 'bg-white border-gray-200'
@@ -236,14 +243,18 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
                     className="flex-1"
                 >
                     <View className="flex-row justify-between items-center p-4 bg-white border-b border-gray-100 shadow-sm z-10">
-                        <PressableScale onPress={onSkip} scaleTo={0.98} className="px-4 py-2 bg-gray-100 rounded-full">
+                        <PressableScale onPress={onSkip} scaleTo={0.98} haptic="selection" className="px-4 py-2 bg-gray-100 rounded-full">
                             <Text className="text-slate-600 font-medium text-sm">تخطي</Text>
                         </PressableScale>
                         <Text className="text-lg font-bold text-slate-800">إكمال الملف الشخصي</Text>
                         <View className="w-16" />
                     </View>
 
-                    <ScrollView className="flex-1 p-6">
+                    <ScrollView
+                        className="flex-1 p-6"
+                        keyboardDismissMode="on-drag"
+                        keyboardShouldPersistTaps="handled"
+                    >
                         {renderStepIndicator()}
 
                         {step === 1 && renderPersonalInfo()}

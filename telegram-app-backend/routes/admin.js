@@ -7,13 +7,46 @@ const bcrypt = require("bcrypt")
 const telegramBotService = require("../services/telegramBot")
 const { invalidateCache } = require("../middleware/cache")
 const { getQueueStats } = require("../services/queueMonitor")
+const { revokeAllForSubject } = require("../services/tokenService")
+const {
+  indexSupplierById,
+  reindexProductsBySupplierId,
+  reindexDealsBySupplierId,
+  deleteProductsBySupplierId,
+  deleteDealsBySupplierId,
+} = require("../services/searchIndexer")
+const { validatePassword } = require("../services/passwordPolicy")
+const { recordAuditEvent } = require("../services/auditService")
+
+router.use(authAdmin)
+
+const revokeSupplierSessions = async (supplierId) => {
+  if (!supplierId) return
+  await revokeAllForSubject(supplierId, "supplier")
+  const agents = await db.query("SELECT id FROM delivery_agents WHERE supplier_id = $1", [supplierId])
+  if (agents.rows.length > 0) {
+    await Promise.all(
+      agents.rows.map((row) => revokeAllForSubject(row.id, "delivery_agent"))
+    )
+  }
+}
 
 // Get all suppliers (admin only)
-router.get("/suppliers", authAdmin, async (req, res) => {
+router.get("/suppliers", async (req, res) => {
   try {
     const query = `
             SELECT 
-                s.*,
+                s.id,
+                s.name,
+                s.email,
+                s.category,
+                s.location,
+                s.rating,
+                s.image_url,
+                s.description,
+                s.is_active,
+                s.created_at,
+                s.updated_at,
                 COUNT(p.id) as product_count,
                 COUNT(CASE WHEN o.status = 'pending' THEN 1 END) as pending_orders
             FROM suppliers s
@@ -33,12 +66,17 @@ router.get("/suppliers", authAdmin, async (req, res) => {
 })
 
 // Create new supplier (admin only)
-router.post("/suppliers", authAdmin, async (req, res) => {
+router.post("/suppliers", async (req, res) => {
   try {
     const { name, email, password, category, location, rating, description, image_url, is_active = true } = req.body
 
     if (!name || !email || !password || !category) {
       return res.status(400).json({ error: "Name, email, password, and category are required" })
+    }
+
+    const passwordErrors = validatePassword(password)
+    if (passwordErrors.length > 0) {
+      return res.status(400).json({ error: "Password does not meet requirements", details: passwordErrors })
     }
 
     // Check if email already exists
@@ -50,7 +88,8 @@ router.post("/suppliers", authAdmin, async (req, res) => {
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 10)
+    const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS || 12)
+    const passwordHash = await bcrypt.hash(password, saltRounds)
 
     const insertQuery = `
             INSERT INTO suppliers (
@@ -76,14 +115,34 @@ router.post("/suppliers", authAdmin, async (req, res) => {
     const supplier = result.rows[0]
     delete supplier.password_hash
 
+    if (supplier.is_active === false) {
+      await revokeSupplierSessions(supplier.id)
+    }
+
     void invalidateCache([
       "products:list",
       "products:categories",
+      "products:detail",
+      "products:batch",
+      "products:favorite-details",
+      "suppliers:list",
+      "suppliers:detail",
       "deals:list",
+      "deals:detail",
       "search",
       "featured:items",
       "featured:list",
     ])
+    void indexSupplierById(supplier.id)
+    void recordAuditEvent({
+      req,
+      action: "supplier_create",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "supplier",
+      targetId: supplier.id,
+      metadata: { email: supplier.email },
+    })
     res.status(201).json(supplier)
   } catch (error) {
     console.error("Error creating supplier:", error)
@@ -92,7 +151,7 @@ router.post("/suppliers", authAdmin, async (req, res) => {
 })
 
 // Update supplier (admin only)
-router.put("/suppliers/:id", authAdmin, async (req, res) => {
+router.put("/suppliers/:id", async (req, res) => {
   try {
     const { id } = req.params
     const { name, email, category, location, rating, description, image_url, is_active } = req.body
@@ -173,14 +232,36 @@ router.put("/suppliers/:id", authAdmin, async (req, res) => {
     const supplier = result.rows[0]
     delete supplier.password_hash
 
+    if (supplier.is_active === false) {
+      await revokeSupplierSessions(supplier.id)
+    }
+
     void invalidateCache([
       "products:list",
       "products:categories",
+      "products:detail",
+      "products:batch",
+      "products:favorite-details",
+      "suppliers:list",
+      "suppliers:detail",
       "deals:list",
+      "deals:detail",
       "search",
       "featured:items",
       "featured:list",
     ])
+    void indexSupplierById(supplier.id)
+    void reindexProductsBySupplierId(supplier.id)
+    void reindexDealsBySupplierId(supplier.id)
+    void recordAuditEvent({
+      req,
+      action: "supplier_update",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "supplier",
+      targetId: supplier.id,
+      metadata: { updated_fields: updateFields.map((field) => field.split(" ")[0]) },
+    })
     res.json(supplier)
   } catch (error) {
     console.error("Error updating supplier:", error)
@@ -189,7 +270,7 @@ router.put("/suppliers/:id", authAdmin, async (req, res) => {
 })
 
 // Toggle supplier active status (admin only)
-router.put("/suppliers/:id/toggle-active", authAdmin, async (req, res) => {
+router.put("/suppliers/:id/toggle-active", async (req, res) => {
   try {
     const { id } = req.params
 
@@ -213,11 +294,29 @@ router.put("/suppliers/:id/toggle-active", authAdmin, async (req, res) => {
     void invalidateCache([
       "products:list",
       "products:categories",
+      "products:detail",
+      "products:batch",
+      "products:favorite-details",
+      "suppliers:list",
+      "suppliers:detail",
       "deals:list",
+      "deals:detail",
       "search",
       "featured:items",
       "featured:list",
     ])
+    void indexSupplierById(supplier.id)
+    void reindexProductsBySupplierId(supplier.id)
+    void reindexDealsBySupplierId(supplier.id)
+    void recordAuditEvent({
+      req,
+      action: "supplier_toggle_active",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "supplier",
+      targetId: supplier.id,
+      metadata: { is_active: supplier.is_active },
+    })
     res.json(supplier)
   } catch (error) {
     console.error("Error toggling supplier status:", error)
@@ -226,7 +325,7 @@ router.put("/suppliers/:id/toggle-active", authAdmin, async (req, res) => {
 })
 
 // Delete supplier (admin only)
-router.delete("/suppliers/:id", authAdmin, async (req, res) => {
+router.delete("/suppliers/:id", async (req, res) => {
   try {
     const { id } = req.params
 
@@ -257,14 +356,33 @@ router.delete("/suppliers/:id", authAdmin, async (req, res) => {
       return res.status(404).json({ error: "Supplier not found" })
     }
 
+    await revokeSupplierSessions(id)
+
     void invalidateCache([
       "products:list",
       "products:categories",
+      "products:detail",
+      "products:batch",
+      "products:favorite-details",
+      "suppliers:list",
+      "suppliers:detail",
       "deals:list",
+      "deals:detail",
       "search",
       "featured:items",
       "featured:list",
     ])
+    void indexSupplierById(id)
+    void deleteProductsBySupplierId(id)
+    void deleteDealsBySupplierId(id)
+    void recordAuditEvent({
+      req,
+      action: "supplier_delete",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "supplier",
+      targetId: Number(id),
+    })
     res.json({ message: "Supplier deleted successfully" })
   } catch (error) {
     console.error("Error deleting supplier:", error)
@@ -273,7 +391,7 @@ router.delete("/suppliers/:id", authAdmin, async (req, res) => {
 })
 
 // Get featured items definitions (admin only)
-router.get("/featured-items-definitions", authAdmin, async (req, res) => {
+router.get("/featured-items-definitions", async (req, res) => {
   try {
     const query = `
             SELECT 
@@ -299,7 +417,7 @@ router.get("/featured-items-definitions", authAdmin, async (req, res) => {
 })
 
 // Create featured item (admin only)
-router.post("/featured-items", authAdmin, async (req, res) => {
+router.post("/featured-items", async (req, res) => {
   try {
     const {
       item_type,
@@ -339,6 +457,15 @@ router.post("/featured-items", authAdmin, async (req, res) => {
     ])
 
     void invalidateCache(["featured:items", "featured:list"])
+    void recordAuditEvent({
+      req,
+      action: "featured_item_create",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "featured_item",
+      targetId: result.rows[0]?.id,
+      metadata: { item_type, item_id },
+    })
     res.status(201).json(result.rows[0])
   } catch (error) {
     console.error("Error creating featured item:", error)
@@ -347,7 +474,7 @@ router.post("/featured-items", authAdmin, async (req, res) => {
 })
 
 // Update featured item (admin only)
-router.put("/featured-items-definitions/:id", authAdmin, async (req, res) => {
+router.put("/featured-items-definitions/:id", async (req, res) => {
   try {
     const { id } = req.params
     const {
@@ -441,6 +568,15 @@ router.put("/featured-items-definitions/:id", authAdmin, async (req, res) => {
     }
 
     void invalidateCache(["featured:items", "featured:list"])
+    void recordAuditEvent({
+      req,
+      action: "featured_item_update",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "featured_item",
+      targetId: Number(id),
+      metadata: { updated_fields: updateFields.map((field) => field.split(" ")[0]) },
+    })
     res.json(result.rows[0])
   } catch (error) {
     console.error("Error updating featured item:", error)
@@ -449,7 +585,7 @@ router.put("/featured-items-definitions/:id", authAdmin, async (req, res) => {
 })
 
 // Delete featured item (admin only)
-router.delete("/featured-items-definitions/:id", authAdmin, async (req, res) => {
+router.delete("/featured-items-definitions/:id", async (req, res) => {
   try {
     const { id } = req.params
 
@@ -461,6 +597,14 @@ router.delete("/featured-items-definitions/:id", authAdmin, async (req, res) => 
     }
 
     void invalidateCache(["featured:items", "featured:list"])
+    void recordAuditEvent({
+      req,
+      action: "featured_item_delete",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "featured_item",
+      targetId: Number(id),
+    })
     res.json({ message: "Featured item deleted successfully" })
   } catch (error) {
     console.error("Error deleting featured item:", error)
@@ -469,7 +613,7 @@ router.delete("/featured-items-definitions/:id", authAdmin, async (req, res) => 
 })
 
 // Send broadcast message (admin only)
-router.post("/broadcast", authAdmin, async (req, res) => {
+router.post("/broadcast", async (req, res) => {
   try {
     const { message } = req.body
 
@@ -479,6 +623,19 @@ router.post("/broadcast", authAdmin, async (req, res) => {
 
     const result = await telegramBotService.broadcastToAllUsers(message.trim(), req.admin.adminId)
 
+    void recordAuditEvent({
+      req,
+      action: "broadcast_send",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "broadcast",
+      targetId: null,
+      metadata: {
+        message_length: message.trim().length,
+        successCount: result.successCount,
+        failCount: result.failCount,
+      },
+    })
     res.json({
       message: "Broadcast sent successfully",
       successCount: result.successCount,
@@ -491,7 +648,7 @@ router.post("/broadcast", authAdmin, async (req, res) => {
 })
 
 // Get platform statistics (admin only)
-router.get("/stats", authAdmin, async (req, res) => {
+router.get("/stats", async (req, res) => {
   try {
     const stats = await telegramBotService.getPlatformStats()
     res.json(stats)
@@ -502,7 +659,7 @@ router.get("/stats", authAdmin, async (req, res) => {
 })
 
 // Queue stats (admin only)
-router.get("/queue-stats", authAdmin, async (req, res) => {
+router.get("/queue-stats", async (req, res) => {
   try {
     const stats = await getQueueStats()
     res.json(stats)
@@ -513,7 +670,7 @@ router.get("/queue-stats", authAdmin, async (req, res) => {
 })
 
 // Get all featured lists (admin only)
-router.get("/featured-lists", authAdmin, async (req, res) => {
+router.get("/featured-lists", async (req, res) => {
   try {
     const query = `
             SELECT 
@@ -542,7 +699,7 @@ router.get("/featured-lists", authAdmin, async (req, res) => {
 })
 
 // Get featured list with all its items (admin only)
-router.get("/featured-lists/:id", authAdmin, async (req, res) => {
+router.get("/featured-lists/:id", async (req, res) => {
   try {
     const { id } = req.params
 
@@ -603,7 +760,7 @@ router.get("/featured-lists/:id", authAdmin, async (req, res) => {
 })
 
 // Create featured list (admin only)
-router.post("/featured-lists", authAdmin, async (req, res) => {
+router.post("/featured-lists", async (req, res) => {
   try {
     const {
       list_name,
@@ -663,6 +820,15 @@ router.post("/featured-lists", authAdmin, async (req, res) => {
     }
 
     void invalidateCache(["featured:list", "featured:items"])
+    void recordAuditEvent({
+      req,
+      action: "featured_list_create",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "featured_list",
+      targetId: listId,
+      metadata: { list_type, item_count: items?.length || 0 },
+    })
     res.status(201).json({
       id: listId,
       message: "Featured list created successfully",
@@ -674,7 +840,7 @@ router.post("/featured-lists", authAdmin, async (req, res) => {
 })
 
 // Update featured list (admin only)
-router.put("/featured-lists/:id", authAdmin, async (req, res) => {
+router.put("/featured-lists/:id", async (req, res) => {
   try {
     const { id } = req.params
     const {
@@ -761,6 +927,18 @@ router.put("/featured-lists/:id", authAdmin, async (req, res) => {
     }
 
     void invalidateCache(["featured:list", "featured:items"])
+    void recordAuditEvent({
+      req,
+      action: "featured_list_update",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "featured_list",
+      targetId: Number(id),
+      metadata: {
+        updated_fields: updateFields.map((field) => field.split(" ")[0]),
+        item_count: items?.length,
+      },
+    })
     res.json({ message: "Featured list updated successfully" })
   } catch (error) {
     console.error("Error updating featured list:", error)
@@ -769,7 +947,7 @@ router.put("/featured-lists/:id", authAdmin, async (req, res) => {
 })
 
 // Delete featured list (admin only)
-router.delete("/featured-lists/:id", authAdmin, async (req, res) => {
+router.delete("/featured-lists/:id", async (req, res) => {
   try {
     const { id } = req.params
 
@@ -781,6 +959,14 @@ router.delete("/featured-lists/:id", authAdmin, async (req, res) => {
     }
 
     void invalidateCache(["featured:list", "featured:items"])
+    void recordAuditEvent({
+      req,
+      action: "featured_list_delete",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "featured_list",
+      targetId: Number(id),
+    })
     res.json({ message: "Featured list deleted successfully" })
   } catch (error) {
     console.error("Error deleting featured list:", error)
@@ -789,7 +975,7 @@ router.delete("/featured-lists/:id", authAdmin, async (req, res) => {
 })
 
 // Add items to featured list (admin only)
-router.post("/featured-lists/:id/items", authAdmin, async (req, res) => {
+router.post("/featured-lists/:id/items", async (req, res) => {
   try {
     const { id } = req.params
     const { item_type, item_id, display_order = 0 } = req.body
@@ -809,6 +995,15 @@ router.post("/featured-lists/:id/items", authAdmin, async (req, res) => {
 
     const result = await db.query(insertQuery, [id, item_type, item_id, display_order])
     void invalidateCache(["featured:list", "featured:items"])
+    void recordAuditEvent({
+      req,
+      action: "featured_list_item_add",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "featured_list",
+      targetId: Number(id),
+      metadata: { item_type, item_id },
+    })
     res.status(201).json(result.rows[0])
   } catch (error) {
     console.error("Error adding item to list:", error)
@@ -817,7 +1012,7 @@ router.post("/featured-lists/:id/items", authAdmin, async (req, res) => {
 })
 
 // Remove item from featured list (admin only)
-router.delete("/featured-lists/:id/items/:itemId", authAdmin, async (req, res) => {
+router.delete("/featured-lists/:id/items/:itemId", async (req, res) => {
   try {
     const { id, itemId } = req.params
 
@@ -834,6 +1029,15 @@ router.delete("/featured-lists/:id/items/:itemId", authAdmin, async (req, res) =
     }
 
     void invalidateCache(["featured:list", "featured:items"])
+    void recordAuditEvent({
+      req,
+      action: "featured_list_item_remove",
+      actorRole: "admin",
+      actorId: req.admin?.adminId,
+      targetType: "featured_list",
+      targetId: Number(id),
+      metadata: { list_item_id: Number(itemId) },
+    })
     res.json({ message: "Item removed from list" })
   } catch (error) {
     console.error("Error removing item from list:", error)

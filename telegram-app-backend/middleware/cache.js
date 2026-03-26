@@ -29,6 +29,10 @@ const cacheResponse = (ttlSeconds, prefix) => async (req, res, next) => {
   }
 
   res.set('X-Cache', 'MISS');
+  if (!res.get('Cache-Control')) {
+    res.set('Cache-Control', `public, max-age=${ttlSeconds}`);
+  }
+  res.vary('Accept-Encoding');
   const originalJson = res.json.bind(res);
 
   res.json = (body) => {

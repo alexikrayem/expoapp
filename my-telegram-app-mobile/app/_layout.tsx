@@ -3,6 +3,7 @@
 import "react-native-reanimated"
 import "../global.css"
 import FontAwesome from "@expo/vector-icons/FontAwesome"
+import { enableFreeze, enableScreens } from "react-native-screens"
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native"
 import { useFonts, Inter_400Regular, Inter_700Bold, Inter_500Medium } from "@expo-google-fonts/inter"
 import { Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold } from "@expo-google-fonts/tajawal"
@@ -28,6 +29,9 @@ import ErrorBoundary from "@/components/ErrorBoundary"
 import { emitter } from "@/utils/emitter"
 import { logDevDiagnostics } from "@/utils/devDiagnostics"
 import LoadingScreen from "@/components/ui/LoadingScreen"
+
+enableScreens(true)
+enableFreeze(true)
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -172,14 +176,15 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!isMounted || isLoading) return
 
-    const inLogin = segments[0] === "login"
+    const rootSegment = segments[0] ?? ""
+    const inAuthFlow = rootSegment === "login" || rootSegment === "register"
 
-    if (!isAuthenticated && !inLogin) {
+    if (!isAuthenticated && !inAuthFlow) {
       router.replace("/login")
-    } else if (isAuthenticated && inLogin) {
+    } else if (isAuthenticated && inAuthFlow) {
       router.replace("/(tabs)")
     }
-  }, [isAuthenticated, segments, isLoading, isMounted])
+  }, [isAuthenticated, segments, isLoading, isMounted, router])
 
   const [showEnhancedOnboarding, setShowEnhancedOnboarding] = useState(false)
 
@@ -214,20 +219,46 @@ function RootLayoutNav() {
     return <LoadingScreen message="جاري التحقق من الحساب..." />
   }
 
-  const inLogin = segments[0] === "login"
-  if (!isAuthenticated && !inLogin) {
+  const rootSegment = segments[0] ?? ""
+  const inAuthFlow = rootSegment === "login" || rootSegment === "register"
+  if (!isAuthenticated && !inAuthFlow) {
     return <LoadingScreen message="جاري تحويلك لصفحة تسجيل الدخول..." />
   }
+
+  const stackScreenOptions = {
+    animation: "default",
+    gestureEnabled: true,
+    fullScreenGestureEnabled: true,
+  } as const
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <OfflineOverlay />
-      <Stack>
+      <Stack screenOptions={stackScreenOptions}>
         {isAuthenticated ? <Stack.Screen name="(tabs)" options={{ headerShown: false }} /> : null}
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-        <Stack.Screen name="cart" options={{ presentation: "modal" }} />
-        <Stack.Screen name="checkout" options={{ presentation: "modal" }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="modal" options={{ presentation: "modal", animation: "fade" }} />
+        <Stack.Screen
+          name="cart"
+          options={{
+            presentation: "modal",
+            animation: "slide_from_bottom",
+            headerShown: false,
+            gestureEnabled: true,
+            gestureDirection: "vertical",
+          }}
+        />
+        <Stack.Screen
+          name="checkout"
+          options={{
+            presentation: "modal",
+            animation: "slide_from_bottom",
+            headerShown: false,
+            gestureEnabled: true,
+            gestureDirection: "vertical",
+          }}
+        />
+        <Stack.Screen name="login" options={{ headerShown: false, animation: "fade" }} />
+        <Stack.Screen name="register" options={{ headerShown: false, animation: "slide_from_right" }} />
       </Stack>
 
       <EnhancedOnboardingModal

@@ -108,7 +108,7 @@ export default function CheckoutScreen() {
                     {/* Address Section */}
                     <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-border">
                         <View className="flex-row justify-between items-center mb-4">
-                            <PressableScale onPress={handleEditAddress} scaleTo={0.98} className="flex-row items-center bg-primary-50 px-3 py-1.5 rounded-lg">
+                            <PressableScale onPress={handleEditAddress} scaleTo={0.98} haptic="selection" className="flex-row items-center bg-primary-50 px-3 py-1.5 rounded-lg">
                                 <Text className="text-primary-600 text-sm font-semibold mr-1.5">
                                     {hasAddress ? 'تغيير' : 'إضافة عنوان'}
                                 </Text>
@@ -135,6 +135,7 @@ export default function CheckoutScreen() {
                             <PressableScale
                                 onPress={handleEditAddress}
                                 scaleTo={0.98}
+                                haptic="selection"
                                 className="bg-surface border-2 border-dashed border-border rounded-xl p-8 items-center justify-center active:bg-gray-50"
                             >
                                 <Text className="text-text-secondary font-medium">أضف عنوان التوصيل</Text>
@@ -152,6 +153,7 @@ export default function CheckoutScreen() {
                         <PressableScale
                             onPress={() => setPaymentMethod('cod')}
                             scaleTo={0.98}
+                            haptic="selection"
                             className={`flex-row items-center justify-between p-4 rounded-xl border ${paymentMethod === 'cod' ? 'border-primary-500 bg-primary-50' : 'border-border bg-surface'
                                 }`}
                         >

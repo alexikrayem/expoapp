@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Modal, ActivityIndicator } from 'react-native';
+import { View, Modal, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import Text from '@/components/ThemedText';
@@ -8,6 +8,7 @@ import { X, Package, Zap } from 'lucide-react-native';
 import { useCurrency } from '@/context/CurrencyContext';
 import { apiClient } from '../../api/apiClient';
 import PressableScale from '@/components/ui/PressableScale';
+import { IMAGE_PLACEHOLDER_BLURHASH, prefetchImages } from '@/utils/image';
 
 interface FeaturedListModalProps {
     show: boolean;
@@ -37,6 +38,14 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
             setError(null);
         }
     }, [show, list?.id]);
+
+    useEffect(() => {
+        if (!items || items.length === 0) return;
+        prefetchImages(
+            items.map((item: any) => item.imageUrl || item.image_url || item.image),
+            12
+        );
+    }, [items]);
 
     const fetchListItems = async () => {
         setIsLoading(true);
@@ -80,9 +89,10 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
     }, [onClose, openModal]);
 
     const renderItem = useCallback(({ item }: { item: any }) => (
-        <PressableScale
+        <Pressable
             onPress={() => handleItemClick(item)}
-            scaleTo={0.98}
+            android_ripple={{ color: '#e2e8f0' }}
+            style={({ pressed }) => [{ opacity: pressed ? 0.96 : 1 }]}
             className="flex-row items-start p-4 mb-4 bg-white rounded-2xl shadow-sm border border-border"
         >
             {/* Text Content (Right side for RTL) */}
@@ -115,13 +125,16 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
             {/* Image (Left side) */}
             <View className="w-24 h-24 bg-surface rounded-xl overflow-hidden border border-border">
                 <Image
-                    source={{ uri: item.imageUrl }}
+                    source={{ uri: item.imageUrl || item.image_url }}
                     style={{ width: '100%', height: '100%' }}
                     contentFit="cover"
                     transition={200}
+                    cachePolicy="memory-disk"
+                    placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+                    recyclingKey={`featured-list-${item.type}-${item.id}`}
                 />
             </View>
-        </PressableScale>
+        </Pressable>
     ), [formatPrice, handleItemClick]);
 
     if (!show) return null;
@@ -137,12 +150,15 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
             <View className="flex-1 bg-surface">
                 {/* Header Image & Info */}
                 <View className="relative w-full h-64">
-                    {list.imageUrl?.startsWith('http') ? (
+                    {(list.imageUrl || list.image_url)?.startsWith('http') ? (
                         <Image
-                            source={{ uri: list.imageUrl }}
+                            source={{ uri: list.imageUrl || list.image_url }}
                             style={{ width: '100%', height: '100%' }}
                             contentFit="cover"
                             transition={200}
+                            cachePolicy="memory-disk"
+                            placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+                            recyclingKey={`featured-list-header-${list.id}`}
                         />
                     ) : (
                         <View className="w-full h-full bg-primary-600" />
@@ -210,6 +226,10 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
                                 keyExtractor={(item: any) => `${item.type}-${item.id}`}
                                 showsVerticalScrollIndicator={false}
                                 contentContainerStyle={{ paddingBottom: 20 }}
+                                removeClippedSubviews
+                                initialNumToRender={6}
+                                maxToRenderPerBatch={8}
+                                windowSize={5}
                                 ListEmptyComponent={
                                     <View className="flex-1 justify-center items-center p-8 mt-10">
                                         <View className="w-16 h-16 bg-surface rounded-full items-center justify-center mb-4 border border-border">

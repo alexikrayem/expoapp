@@ -1,12 +1,12 @@
 "use client"
 
 import React, { useCallback } from "react"
-import { View, StyleSheet } from "react-native"
+import { View, StyleSheet, Pressable } from "react-native"
 import { Image } from "expo-image"
 import Text from "@/components/ThemedText"
 import { Tag, Clock, ArrowRight } from "lucide-react-native"
 import { LinearGradient } from "expo-linear-gradient"
-import PressableScale from "@/components/ui/PressableScale"
+import { IMAGE_PLACEHOLDER_BLURHASH } from "@/utils/image"
 
 interface DealCardProps {
   deal: any
@@ -22,10 +22,11 @@ const DealCard = React.memo(
     const dealImageUrl = deal.imageUrl || deal.image_url
 
     return (
-      <PressableScale
-        className="bg-white rounded-3xl shadow-md mb-6 overflow-hidden border border-gray-100"
+      <Pressable
         onPress={handlePress}
-        scaleTo={0.98}
+        android_ripple={{ color: "#e2e8f0" }}
+        style={({ pressed }) => [{ opacity: pressed ? 0.96 : 1 }]}
+        className="bg-white rounded-3xl shadow-md mb-6 overflow-hidden border border-gray-100"
       >
         <View className="relative">
           {dealImageUrl?.startsWith("http") ? (
@@ -35,6 +36,7 @@ const DealCard = React.memo(
               contentFit="cover"
               transition={200}
               cachePolicy="memory-disk"
+              placeholder={IMAGE_PLACEHOLDER_BLURHASH}
               recyclingKey={`deal-${deal.id}`}
             />
           ) : (
@@ -67,7 +69,7 @@ const DealCard = React.memo(
             <Text className="text-xs text-gray-400 font-medium">عرض خاص</Text>
           </View>
         </View>
-      </PressableScale>
+      </Pressable>
     )
   },
   (prevProps, nextProps) => {

@@ -5,7 +5,8 @@ const router = express.Router();
 const db = require('../config/db');
 const validateRequest = require('../middleware/validateRequest');
 const { cacheResponse } = require('../middleware/cache');
-
+const { getRelatedProducts } = require('../services/relatedProductsService');
+const { EFFECTIVE_PRICE_SQL } = require('../utils/pricing');
 
 // Get all products with filtering, search, and pagination
 router.get('/', [
@@ -61,24 +62,22 @@ router.get('/', [
 
         const productsQuery = `
             SELECT p.*, s.name as supplier_name,
-                   CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
+                   ${EFFECTIVE_PRICE_SQL} as effective_selling_price,
+                   COUNT(*) OVER() as total_count
             FROM products p
             JOIN suppliers s ON p.supplier_id = s.id
+            LEFT JOIN master_products mp ON p.master_product_id = mp.id
             ${whereClause}
             ORDER BY p.created_at DESC
             LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
 
-        const countQuery = `SELECT COUNT(*) as total FROM products p JOIN suppliers s ON p.supplier_id = s.id ${whereClause}`;
-
-        const [productsResult, countResult] = await Promise.all([
-            db.query(productsQuery, [...queryParams, limitNum, offset]),
-            db.query(countQuery, queryParams)
-        ]);
+        const productsResult = await db.query(productsQuery, [...queryParams, limitNum, offset]);
+        const totalCount = productsResult.rows.length > 0 ? parseInt(productsResult.rows[0].total_count) : 0;
 
         res.json({
             items: productsResult.rows,
             currentPage: pageNum,
-            totalPages: Math.ceil(parseInt(countResult.rows[0].total) / limitNum),
+            totalPages: totalCount === 0 ? 0 : Math.ceil(totalCount / limitNum),
         });
     } catch (error) {
         console.error('Error fetching products:', error);
@@ -122,7 +121,7 @@ router.get('/categories', [
 router.get('/batch', [
     query('ids').optional().trim().matches(/^[\d,]+$/).withMessage('IDs must be comma-separated integers'),
     validateRequest
-], async (req, res) => {
+], cacheResponse(60, 'products:batch'), async (req, res) => {
     try {
         const { ids } = req.query;
         if (!ids) return res.json([]);
@@ -138,9 +137,10 @@ router.get('/batch', [
         const placeholders = productIds.map((_, index) => `$${index + 1}`).join(',');
         const query = `
             SELECT p.*, s.name as supplier_name,
-                   CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
+                   ${EFFECTIVE_PRICE_SQL} as effective_selling_price
             FROM products p
             JOIN suppliers s ON p.supplier_id = s.id
+            LEFT JOIN master_products mp ON p.master_product_id = mp.id
             WHERE p.id IN (${placeholders}) AND s.is_active = true
         `;
         const result = await db.query(query, productIds);
@@ -156,15 +156,17 @@ router.get('/batch', [
 router.get('/favorite-details/:productId', [
     param('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
     validateRequest
-], async (req, res) => {
+], cacheResponse(60, 'products:favorite-details'), async (req, res) => {
     try {
         const { productId } = req.params;
 
         // Step 1: Fetch the main product and its supplier in a single, efficient query.
         const productQuery = `
-            SELECT p.*, s.name as supplier_name, s.is_active as supplier_is_active
+            SELECT p.*, s.name as supplier_name, s.is_active as supplier_is_active,
+                   ${EFFECTIVE_PRICE_SQL} as effective_selling_price
             FROM products p
             LEFT JOIN suppliers s ON p.supplier_id = s.id
+            LEFT JOIN master_products mp ON p.master_product_id = mp.id
             WHERE p.id = $1
         `;
         const productPromise = db.query(productQuery, [parseInt(productId)]);
@@ -188,16 +190,20 @@ router.get('/favorite-details/:productId', [
             if (product.master_product_id) {
                 alternativesQuery = `
                     SELECT p.*, s.name as supplier_name,
-                           CASE WHEN p.is_on_sale AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
-                    FROM products p JOIN suppliers s ON p.supplier_id = s.id
+                           ${EFFECTIVE_PRICE_SQL} as effective_selling_price
+                    FROM products p
+                    JOIN suppliers s ON p.supplier_id = s.id
+                    LEFT JOIN master_products mp ON p.master_product_id = mp.id
                     WHERE p.master_product_id = $1 AND p.id != $2 AND s.is_active = true AND p.stock_level > 0
                     ORDER BY p.price ASC LIMIT 5`;
                 alternativesParams = [product.master_product_id, parseInt(productId)];
             } else if (product.standardized_name_input) {
                 alternativesQuery = `
                     SELECT p.*, s.name as supplier_name,
-                           CASE WHEN p.is_on_sale AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
-                    FROM products p JOIN suppliers s ON p.supplier_id = s.id
+                           ${EFFECTIVE_PRICE_SQL} as effective_selling_price
+                    FROM products p
+                    JOIN suppliers s ON p.supplier_id = s.id
+                    LEFT JOIN master_products mp ON p.master_product_id = mp.id
                     WHERE p.standardized_name_input ILIKE $1 AND p.id != $2 AND s.is_active = true AND p.stock_level > 0
                     ORDER BY p.price ASC LIMIT 3`;
                 alternativesParams = [`%${product.standardized_name_input}%`, parseInt(productId)];
@@ -212,7 +218,7 @@ router.get('/favorite-details/:productId', [
         const responseData = {
             originalProduct: {
                 ...product,
-                effective_selling_price: (product.is_on_sale && product.discount_price) ? product.discount_price : product.price
+                effective_selling_price: product.effective_selling_price
             },
             isAvailable,
             alternatives
@@ -228,25 +234,50 @@ router.get('/favorite-details/:productId', [
 
 
 // Get individual product by ID
-router.get('/:id', [
+router.get('/:id/related', [
     param('id').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50'),
     validateRequest
 ], async (req, res) => {
+    try {
+        const productId = parseInt(req.params.id);
+        const { limit } = req.query;
+        const related = await getRelatedProducts(productId, limit);
+        res.json(related);
+    } catch (error) {
+        console.error('Error fetching related products:', error);
+        res.status(500).json({ error: 'Failed to fetch related products' });
+    }
+});
+
+// Get individual product by ID
+router.get('/:id', [
+    param('id').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
+    query('includeRelated').optional().isIn(['true', 'false']).withMessage('includeRelated must be true or false'),
+    validateRequest
+], cacheResponse(60, 'products:detail'), async (req, res) => {
     try {
         const productId = parseInt(req.params.id);
 
         const query = `
             SELECT p.*, s.name as supplier_name,
-                   CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
+                   ${EFFECTIVE_PRICE_SQL} as effective_selling_price
             FROM products p
             JOIN suppliers s ON p.supplier_id = s.id
+            LEFT JOIN master_products mp ON p.master_product_id = mp.id
             WHERE p.id = $1 AND s.is_active = true
         `;
         const result = await db.query(query, [productId]);
 
         if (result.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
 
-        res.json(result.rows[0]);
+        const product = result.rows[0];
+        if (req.query.includeRelated === 'true') {
+            const related = await getRelatedProducts(productId);
+            return res.json({ ...product, related });
+        }
+
+        res.json(product);
     } catch (error) {
         console.error('Error fetching product:', error);
         res.status(500).json({ error: 'Failed to fetch product' });

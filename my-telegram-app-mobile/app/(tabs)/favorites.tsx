@@ -1,8 +1,8 @@
 "use client"
 
 /// <reference types="nativewind/types" />
-import { useState, useMemo } from "react"
-import { View } from "react-native"
+import { useState, useMemo, useCallback } from "react"
+import { View, Pressable } from "react-native"
 import { FlashList } from "@shopify/flash-list"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Text from "@/components/ThemedText"
@@ -15,6 +15,7 @@ import { useCart } from "@/context/CartContext"
 import { useModal } from "@/context/ModalContext"
 import ProductCard from "@/components/ProductCard" // This expects specific props
 import { Search, X, Heart } from "lucide-react-native"
+import { haptics } from "@/utils/haptics"
 import AnimatedScreen from "@/components/ui/AnimatedScreen"
 
 // -------------------------------
@@ -124,6 +125,24 @@ export default function FavoritesScreen() {
     openModal("productDetail", { product })
   }
 
+  const keyExtractor = useCallback((item: Product) => item.id, [])
+
+  const renderProductItem = useCallback(
+    ({ item }: { item: Product }) => (
+      <ProductCard
+        product={item}
+        // ProductCard expects `onAddToCart(product: Product)`
+        onAddToCart={addToCart}
+        // ProductCard expects `onToggleFavorite(id: string)`
+        onToggleFavorite={toggleFavorite}
+        onShowDetails={handleShowDetails}
+        // favoriteIds is Set<string>, and item.id is string. Safe.
+        isFavorite={favoriteIds.has(item.id)}
+      />
+    ),
+    [addToCart, toggleFavorite, handleShowDetails, favoriteIds],
+  )
+
   // -------------------------------
   // Error State
   // -------------------------------
@@ -168,13 +187,14 @@ export default function FavoritesScreen() {
     <View className="flex-1 bg-surface">
       <AnimatedScreen>
         <View className="bg-white shadow-sm mb-1 border-b border-border z-10">
-          <View className="p-6 pb-4">
-            <Text className="text-3xl font-bold text-text-main mb-4 text-right">
+          <View className="px-5 pt-4 pb-3">
+            <Text className="text-2xl font-bold text-text-main mb-3 text-right leading-tight">
               المفضلة
             </Text>
 
             {/* Search */}
             <Input
+              fieldClassName="py-2.5"
               className="text-right font-medium"
               placeholder="ابحث في المفضلة..."
               value={searchQuery}
@@ -182,7 +202,7 @@ export default function FavoritesScreen() {
               leftIcon={<Search size={20} color="#64748b" />}
               rightIcon={
                 searchQuery ? (
-                  <PressableScale onPress={() => setSearchQuery("")} scaleTo={0.9} className="bg-gray-200 p-1 rounded-full">
+                  <PressableScale onPress={() => setSearchQuery("")} scaleTo={0.9} haptic="selection" className="bg-gray-200 p-1 rounded-full">
                     <X size={14} color="#64748b" />
                   </PressableScale>
                 ) : null
@@ -199,23 +219,33 @@ export default function FavoritesScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{
-                paddingHorizontal: 24,
-                paddingBottom: 16,
+                paddingHorizontal: 20,
+                paddingBottom: 12,
               }}
-              estimatedItemSize={80}
+              estimatedItemSize={72}
+              removeClippedSubviews
+              initialNumToRender={8}
+              maxToRenderPerBatch={8}
+              windowSize={4}
               keyExtractor={(item: Category) => item.id}
               renderItem={({ item }: { item: Category }) => (
-                <PressableScale
-                  onPress={() => setActiveCategory(item.id)}
-                  scaleTo={0.98}
-                  className={`mr-2 px-5 py-3 rounded-full border ${
+                <Pressable
+                  onPress={() => {
+                    if (activeCategory !== item.id) {
+                      haptics.selection()
+                      setActiveCategory(item.id)
+                    }
+                  }}
+                  android_ripple={{ color: "#e2e8f0" }}
+                  style={({ pressed }) => [{ opacity: pressed ? 0.96 : 1 }]}
+                  className={`mr-2 px-4 py-2.5 rounded-full border ${
                     activeCategory === item.id
                       ? "bg-blue-600 border-blue-600"
                       : "bg-white border-gray-200"
                   }`}
                 >
                   <Text
-                    className={`text-base font-medium ${
+                    className={`text-sm font-medium ${
                       activeCategory === item.id
                         ? "text-white"
                         : "text-gray-700"
@@ -232,7 +262,7 @@ export default function FavoritesScreen() {
                       ({item.count})
                     </Text>
                   </Text>
-                </PressableScale>
+                </Pressable>
               )}
             />
           )}
@@ -250,20 +280,15 @@ export default function FavoritesScreen() {
             showsVerticalScrollIndicator={false}
             numColumns={2}
             extraData={favoriteIds}
-            keyExtractor={(item: Product) => item.id}
-            contentContainerStyle={{ padding: 12 }}
-            renderItem={({ item }: { item: Product }) => (
-              <ProductCard
-                product={item}
-                // ProductCard expects `onAddToCart(product: Product)`
-                onAddToCart={addToCart} 
-                // ProductCard expects `onToggleFavorite(id: string)`
-                onToggleFavorite={toggleFavorite}
-                onShowDetails={handleShowDetails}
-                // favoriteIds is Set<string>, and item.id is string. Safe.
-                isFavorite={favoriteIds.has(item.id)}
-              />
-            )}
+            keyExtractor={keyExtractor}
+            contentContainerStyle={{ padding: 10, paddingBottom: 20 }}
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled"
+            removeClippedSubviews
+            initialNumToRender={6}
+            maxToRenderPerBatch={8}
+            windowSize={5}
+            renderItem={renderProductItem}
           />
         ) : (
           <View className="flex-1 justify-center items-center p-8">
@@ -271,13 +296,13 @@ export default function FavoritesScreen() {
               <Heart size={56} color="#ef4444" fill="#ef4444" />
             </View>
 
-            <Text className="text-2xl font-bold text-text-main mb-3">
+            <Text className="text-xl font-semibold text-text-main mb-2 leading-tight">
               {searchQuery || activeCategory !== "all"
                 ? "لا توجد نتائج"
                 : "قائمة المفضلة فارغة"}
             </Text>
 
-            <Text className="text-text-secondary text-center leading-6 text-base px-8">
+            <Text className="text-text-secondary text-center leading-6 text-sm px-8">
               {searchQuery || activeCategory !== "all"
                 ? "جرب تغيير فلاتر البحث أو التصنيف"
                 : "أضف منتجات تعجبك بالضغط على أيقونة القلب لتجدها هنا!"}

@@ -14,6 +14,7 @@ export default function TabLayout() {
           header: () => <Header />,
           headerShown: true,
           tabBarHideOnKeyboard: true,
+          freezeOnBlur: true,
         }}>
         <Tabs.Screen
           name="index"

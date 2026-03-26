@@ -3,6 +3,10 @@ const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 const router = express.Router();
 const db = require('../config/db');
+const requireCustomer = require('../middleware/requireCustomer');
+const { EFFECTIVE_PRICE_SQL } = require('../utils/pricing');
+
+router.use(requireCustomer);
 
 // Validation middleware for cart operations
 const validateAddToCart = [
@@ -28,10 +32,11 @@ router.get('/', async (req, res) => {
             SELECT 
                 c.product_id, c.quantity, p.name, p.price, p.discount_price,
                 p.is_on_sale, p.image_url, p.stock_level, s.name as supplier_name,
-                CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
+                ${EFFECTIVE_PRICE_SQL} as effective_selling_price
             FROM cart_items c -- FIX: Corrected table name
             JOIN products p ON c.product_id = p.id
             JOIN suppliers s ON p.supplier_id = s.id
+            LEFT JOIN master_products mp ON p.master_product_id = mp.id
             WHERE c.user_id = $1 AND s.is_active = true -- FIX: Removed p.is_active
             ORDER BY c.added_at DESC
         `;

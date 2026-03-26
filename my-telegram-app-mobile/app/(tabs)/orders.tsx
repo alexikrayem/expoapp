@@ -1,6 +1,7 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, ScrollView, Image, Alert, RefreshControl } from 'react-native';
+import { View, ScrollView, Alert, RefreshControl } from 'react-native';
+import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
@@ -15,6 +16,7 @@ import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import PressableScale from '@/components/ui/PressableScale';
+import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
 
 const CheckoutCard = () => {
   const { cartItems, getCartTotal, actions } = useCart();
@@ -47,6 +49,11 @@ const CheckoutCard = () => {
             <Image
               source={{ uri: item.image_url }}
               className="w-14 h-14 rounded-xl bg-surface"
+              contentFit="cover"
+              transition={150}
+              cachePolicy="memory-disk"
+              placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+              recyclingKey={`order-item-${item.product_id}`}
             />
             <View className="flex-1 mx-3">
               <Text className="font-bold text-sm text-text-main text-right" numberOfLines={1}>{item.name}</Text>
@@ -54,11 +61,11 @@ const CheckoutCard = () => {
               <Text className="text-primary-600 font-bold text-xs text-right">{formatPrice(item.effective_selling_price)}</Text>
             </View>
             <View className="flex-row items-center bg-surface rounded-lg p-1 border border-border">
-              <PressableScale onPress={() => actions.decreaseQuantity(item.product_id)} scaleTo={0.92} className="p-1.5 bg-white rounded-md shadow-sm">
+              <PressableScale onPress={() => actions.decreaseQuantity(item.product_id)} scaleTo={0.92} haptic="light" className="p-1.5 bg-white rounded-md shadow-sm">
                 {item.quantity > 1 ? <Minus size={12} color="#374151" /> : <Trash2 size={12} color="#EF4444" />}
               </PressableScale>
               <Text className="mx-3 font-bold text-sm text-text-main">{item.quantity}</Text>
-              <PressableScale onPress={() => actions.increaseQuantity(item.product_id)} scaleTo={0.92} className="p-1.5 bg-white rounded-md shadow-sm">
+              <PressableScale onPress={() => actions.increaseQuantity(item.product_id)} scaleTo={0.92} haptic="light" className="p-1.5 bg-white rounded-md shadow-sm">
                 <Plus size={12} color="#374151" />
               </PressableScale>
             </View>
@@ -139,6 +146,7 @@ const OrderItem = React.memo(({ order, onCancel }: { order: any, onCancel: (id: 
           <PressableScale
             onPress={() => onCancel(order.id)}
             scaleTo={0.98}
+            haptic="medium"
             className="w-full py-3 rounded-xl border border-red-200 bg-red-50 flex-row items-center justify-center"
           >
             <XCircle size={16} color="#DC2626" />
@@ -161,6 +169,11 @@ export default function OrdersScreen() {
     if (activeFilter === 'all') return orders;
     return orders.filter((order: any) => order.status === activeFilter);
   }, [orders, activeFilter]);
+
+  const renderOrderItem = useCallback(
+    ({ item }: { item: any }) => <OrderItem order={item} onCancel={handleCancelOrder} />,
+    [handleCancelOrder]
+  );
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -224,12 +237,16 @@ export default function OrdersScreen() {
 
         <FlashList
           data={filteredOrders}
-          renderItem={({ item }) => <OrderItem order={item} onCancel={handleCancelOrder} />}
+          renderItem={renderOrderItem}
           // @ts-ignore
           estimatedItemSize={200}
           keyExtractor={(item: any) => item.id.toString()}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews
+          initialNumToRender={4}
+          maxToRenderPerBatch={4}
+          windowSize={4}
           ListHeaderComponent={
             <>
               <CheckoutCard />
@@ -241,6 +258,7 @@ export default function OrdersScreen() {
                       key={filter.key}
                       onPress={() => setActiveFilter(filter.key)}
                       scaleTo={0.98}
+                      haptic="selection"
                       className={`px-5 py-3 rounded-full mr-2 border  ${activeFilter === filter.key
                         ? 'bg-blue-600 border-blue-600'
                         : 'bg-white border-gray-200'

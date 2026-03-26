@@ -1,11 +1,19 @@
 // routes/search.js (UPGRADED SEARCH LOGIC WITH FUZZY MATCHING)
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db');
 const { cacheResponse } = require('../middleware/cache');
+const { searchCatalog } = require('../services/searchService');
+const { searchLimiter } = require('../middleware/rateLimiters');
+const { query } = require('express-validator');
+const validateRequest = require('../middleware/validateRequest');
 
 // Search across products, deals, and suppliers
-router.get('/', cacheResponse(30, 'search'), async (req, res) => {
+router.get('/', [
+    query('searchTerm').optional().trim().isLength({ max: 100 }).withMessage('Search term must be at most 100 characters'),
+    query('cityId').optional().isInt({ min: 1 }).withMessage('City ID must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50'),
+    validateRequest
+], searchLimiter, cacheResponse(30, 'search'), async (req, res) => {
     try {
         const { searchTerm, cityId, limit = 20 } = req.query;
 
@@ -15,91 +23,8 @@ router.get('/', cacheResponse(30, 'search'), async (req, res) => {
             });
         }
 
-        const term = searchTerm.trim();
-        const searchLimit = parseInt(limit);
-
-        // --- Search Products ---
-        // Uses pg_trgm for fuzzy matching (%) and similarity scoring
-        let productsQuery = `
-            SELECT p.*, s.name as supplier_name,
-                   similarity(p.name, $1) as score,
-                   CASE WHEN p.is_on_sale = true AND p.discount_price IS NOT NULL THEN p.discount_price ELSE p.price END as effective_selling_price
-            FROM products p
-            JOIN suppliers s ON p.supplier_id = s.id
-            WHERE s.is_active = true
-            AND (
-                p.name % $1 OR 
-                p.description % $1 OR 
-                p.standardized_name_input % $1 OR 
-                s.name % $1
-            )
-        `;
-        const queryParams = [term];
-        let paramIndex = 2;
-        if (cityId) {
-            productsQuery += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${paramIndex++})`;
-            queryParams.push(cityId);
-        }
-        // Order by similarity score (highest first), then name
-        productsQuery += ` ORDER BY score DESC, p.name ASC LIMIT $${paramIndex}`;
-        queryParams.push(searchLimit);
-
-        // --- Search Deals ---
-        let dealsQuery = `
-            SELECT d.*, s.name as supplier_name, p.name as product_name,
-                   GREATEST(similarity(d.title, $1), similarity(d.description, $1)) as score
-            FROM deals d
-            JOIN suppliers s ON d.supplier_id = s.id
-            LEFT JOIN products p ON d.product_id = p.id
-            WHERE d.is_active = true AND s.is_active = true
-            AND (d.title % $1 OR d.description % $1 OR s.name % $1)
-            AND (d.start_date IS NULL OR d.start_date <= NOW())
-            AND (d.end_date IS NULL OR d.end_date >= NOW())
-        `;
-        const dealsParams = [term];
-        let dealsParamIndex = 2;
-        if (cityId) {
-            dealsQuery += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${dealsParamIndex++})`;
-            dealsParams.push(cityId);
-        }
-        dealsQuery += ` ORDER BY score DESC, d.created_at DESC LIMIT $${dealsParamIndex}`;
-        dealsParams.push(searchLimit);
-
-        // --- Search Suppliers ---
-        let suppliersQuery = `
-            SELECT s.*, COUNT(p.id) as product_count,
-                   similarity(s.name, $1) as score
-            FROM suppliers s
-            LEFT JOIN products p ON s.id = p.supplier_id
-            WHERE s.is_active = true
-            AND (s.name % $1 OR s.category % $1)
-        `;
-        const suppliersParams = [term];
-        let suppliersParamIndex = 2;
-        if (cityId) {
-            suppliersQuery += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${suppliersParamIndex++})`;
-            suppliersParams.push(cityId);
-        }
-        suppliersQuery += ` GROUP BY s.id ORDER BY score DESC, s.name ASC LIMIT $${suppliersParamIndex}`;
-        suppliersParams.push(searchLimit);
-
-        // Execute all searches in parallel
-        const [productsResult, dealsResult, suppliersResult] = await Promise.all([
-            db.query(productsQuery, queryParams),
-            db.query(dealsQuery, dealsParams),
-            db.query(suppliersQuery, suppliersParams)
-        ]);
-
-        res.json({
-            results: {
-                products: {
-                    items: productsResult.rows,
-                    totalItems: productsResult.rows.length
-                },
-                deals: dealsResult.rows,
-                suppliers: suppliersResult.rows
-            }
-        });
+        const search = await searchCatalog({ searchTerm, cityId, limit });
+        res.json(search);
 
     } catch (error) {
         console.error('Error performing search:', error);

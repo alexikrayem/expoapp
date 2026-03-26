@@ -1,4 +1,4 @@
-const request = require('supertest');
+const request = require('../utils/request');
 const express = require('express');
 
 // Mock auth middleware for orders tests

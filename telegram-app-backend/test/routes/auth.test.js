@@ -1,4 +1,4 @@
-const request = require('supertest');
+const request = require('../utils/request');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
@@ -145,7 +145,7 @@ describe('Auth Routes', () => {
 
       const res = await request(app)
         .post('/api/auth/verify-otp')
-        .send({ phone_number: '+963912345678', code: '123456' });
+        .send({ phone_number: '+963912345678', code: '654321' });
 
       expect(res.status).toBe(400);
     });

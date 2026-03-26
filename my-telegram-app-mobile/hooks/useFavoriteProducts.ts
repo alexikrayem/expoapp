@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { productService } from '../services/productService';
 import { useCache } from '../context/CacheContext';
+import { prefetchImages } from '@/utils/image';
 
 export const useFavoriteProducts = (favoriteIds: Set<string>, active: boolean) => {
     const [products, setProducts] = useState<any[]>([]);
@@ -40,6 +41,14 @@ export const useFavoriteProducts = (favoriteIds: Set<string>, active: boolean) =
     useEffect(() => {
         fetchProducts();
     }, [fetchProducts]);
+
+    useEffect(() => {
+        if (!products || products.length === 0) return;
+        prefetchImages(
+            products.map((item: any) => item.image_url || item.imageUrl || item.image),
+            12
+        );
+    }, [products]);
 
     return {
         favoriteProducts: products,

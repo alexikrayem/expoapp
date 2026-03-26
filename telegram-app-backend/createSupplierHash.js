@@ -1,6 +1,6 @@
 // telegram-app-backend/createSupplierHash.js
 const bcrypt = require('bcrypt');
-const saltRounds = 10;
+const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS || 12);
 
 // --- CHOOSE YOUR SUPPLIER PASSWORD HERE ---
 const supplierPlainPassword = 'supplier123'; // Change this to your desired password

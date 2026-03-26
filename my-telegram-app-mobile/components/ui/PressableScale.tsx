@@ -1,10 +1,13 @@
 import React from "react"
 import { Pressable, PressableProps } from "react-native"
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
+import { haptics } from "@/utils/haptics"
+import { MOTION } from "@/utils/motion"
 
 interface PressableScaleProps extends PressableProps {
   scaleTo?: number
   duration?: number
+  haptic?: "light" | "medium" | "heavy" | "selection" | false
   className?: string
   pressableClassName?: string
   style?: any
@@ -12,8 +15,9 @@ interface PressableScaleProps extends PressableProps {
 
 export default function PressableScale({
   children,
-  scaleTo = 0.98,
-  duration = 120,
+  scaleTo = MOTION.pressScale,
+  duration = MOTION.pressDurationMs,
+  haptic,
   disabled,
   onPressIn,
   onPressOut,
@@ -35,6 +39,9 @@ export default function PressableScale({
       disabled={disabled}
       onPressIn={(event) => {
         if (!disabled) {
+          if (haptic) {
+            haptics[haptic]?.()
+          }
           scale.value = withTiming(scaleTo, { duration })
         }
         onPressIn?.(event)

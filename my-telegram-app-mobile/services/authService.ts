@@ -1,8 +1,9 @@
 import { ensureValidToken } from "../utils/tokenManager"
 import { apiClient, getRefreshToken, clearTokens } from "../api/apiClient"
 import { logger } from "../utils/logger"
+import { API_CONFIG } from "../utils/constants"
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL
+const API_BASE_URL = API_CONFIG.BASE_URL
 
 export const authService = {
   // --- Phone Number OTP Auth ---

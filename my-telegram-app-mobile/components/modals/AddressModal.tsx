@@ -91,12 +91,18 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
                     {/* Header */}
                     <View className="flex-row justify-between items-center p-5 border-b border-border bg-white z-10">
                         <Text className="text-xl font-bold text-text-main">تفاصيل التوصيل</Text>
-                        <PressableScale onPress={onClose} disabled={isSaving} scaleTo={0.9} className="p-2 bg-surface rounded-full border border-border">
+                        <PressableScale onPress={onClose} disabled={isSaving} scaleTo={0.9} haptic="selection" className="p-2 bg-surface rounded-full border border-border">
                             <X size={20} color="#64748b" />
                         </PressableScale>
                     </View>
 
-                    <ScrollView className="flex-1 p-5" contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        className="flex-1 p-5"
+                        contentContainerStyle={{ paddingBottom: 40 }}
+                        showsVerticalScrollIndicator={false}
+                        keyboardDismissMode="on-drag"
+                        keyboardShouldPersistTaps="handled"
+                    >
                         {error && (
                             <View className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex-row items-center">
                                 <AlertCircle size={20} color="#ef4444" className="mr-2" />

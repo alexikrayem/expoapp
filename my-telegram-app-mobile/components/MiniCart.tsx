@@ -10,6 +10,7 @@ import { useCurrency } from "@/context/CurrencyContext"
 import { ArrowRight, ChevronUp, ChevronDown } from "lucide-react-native"
 import { useRouter } from "expo-router"
 import PressableScale from "@/components/ui/PressableScale"
+import { IMAGE_PLACEHOLDER_BLURHASH } from "@/utils/image"
 
 const CartItem = React.memo(({ item, formatPrice }: { item: any; formatPrice: (price: number) => string }) => (
   <View className="flex-row items-center p-3 border-b border-border last:border-0">
@@ -18,6 +19,7 @@ const CartItem = React.memo(({ item, formatPrice }: { item: any; formatPrice: (p
       style={{ width: 48, height: 48, borderRadius: 8, backgroundColor: "#f3f4f6" }}
       contentFit="cover"
       cachePolicy="memory-disk"
+      placeholder={IMAGE_PLACEHOLDER_BLURHASH}
       recyclingKey={`cart-${item.product_id}`}
     />
     <View className="flex-1 mx-3 items-end">

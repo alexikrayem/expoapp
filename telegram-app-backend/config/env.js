@@ -56,6 +56,10 @@ ensureAny(
   { requiredInProd: true }
 );
 
+if (isProd && isSet(process.env.JWT_ISSUER) && !isSet(process.env.JWT_AUDIENCE)) {
+  console.warn('[ENV] JWT_ISSUER is set without JWT_AUDIENCE. Consider setting both for stricter validation.');
+}
+
 // Safety warnings
 if (isProd && process.env.EXPOSE_OTP === 'true') {
   console.warn('[ENV] EXPOSE_OTP is true in production. Disable immediately.');
@@ -75,6 +79,33 @@ if (isProd && !isSet(process.env.REDIS_URL)) {
 
 if (isProd && !isSet(process.env.PRICING_ADJUSTMENT_CRON)) {
   console.warn('[ENV] PRICING_ADJUSTMENT_CRON not set. Using default schedule (every 6 hours).');
+}
+
+if (isProd && (!isSet(process.env.SUPABASE_URL) || !isSet(process.env.SUPABASE_SERVICE_ROLE_KEY))) {
+  console.warn('[ENV] Supabase storage is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+}
+
+if (isProd && !isSet(process.env.SUPABASE_STORAGE_BUCKET)) {
+  console.warn('[ENV] SUPABASE_STORAGE_BUCKET not set. Using default bucket name.');
+}
+
+if (isProd && !isSet(process.env.OPENSEARCH_URL)) {
+  console.warn('[ENV] OPENSEARCH_URL not set. Search will use Postgres fallback only.');
+}
+
+if (isProd && isSet(process.env.EMBEDDINGS_URL) && !isSet(process.env.EMBEDDINGS_DIM)) {
+  console.warn('[ENV] EMBEDDINGS_DIM not set. OpenSearch kNN mapping needs the embedding dimension.');
+}
+
+if (isProd && isSet(process.env.BCRYPT_SALT_ROUNDS)) {
+  const rounds = Number(process.env.BCRYPT_SALT_ROUNDS);
+  if (Number.isFinite(rounds) && rounds < 10) {
+    console.warn('[ENV] BCRYPT_SALT_ROUNDS is below 10. Consider increasing for stronger hashing.');
+  }
+}
+
+if (isProd && process.env.ENFORCE_ACCOUNT_STATUS === 'false') {
+  console.warn('[ENV] ENFORCE_ACCOUNT_STATUS is disabled in production. Inactive accounts may retain access.');
 }
 
 module.exports = { isProd };

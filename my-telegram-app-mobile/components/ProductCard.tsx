@@ -1,16 +1,15 @@
 "use client"
 
 /// <reference types="nativewind/types" />
-import React, { useState } from "react"
-import { View, Dimensions } from "react-native"
+import React from "react"
+import { View, Dimensions, Pressable } from "react-native"
 import { Image } from "expo-image"
 import Text from "@/components/ThemedText"
 import { ShoppingCart, Heart } from "lucide-react-native"
 import { useCurrency } from "../context/CurrencyContext"
-import { Skeleton } from "./ui/Skeleton"
 import { haptics } from "@/utils/haptics"
 import { Product } from "@/types"
-import PressableScale from "@/components/ui/PressableScale"
+import { IMAGE_PLACEHOLDER_BLURHASH } from "@/utils/image"
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window")
 const CARD_MARGIN = 6
@@ -29,10 +28,6 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = React.memo(
   ({ product, onAddToCart, onToggleFavorite, onShowDetails, isFavorite }) => {
     const { formatPrice } = useCurrency()
-    const [isImageLoading, setIsImageLoading] = useState(true)
-
-    // The Image component's onLoadStart already handles this
-
     const handleAddToCart = React.useCallback(() => {
       haptics.medium()
       onAddToCart(product)
@@ -49,30 +44,23 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
 
     return (
       <View className="flex-1 m-1.5">
-        <PressableScale
+        <Pressable
           onPress={handleShowDetails}
-          scaleTo={0.98}
+          android_ripple={{ color: "#e2e8f0" }}
+          style={({ pressed }) => [{ opacity: pressed ? 0.96 : 1 }]}
           className="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden"
         >
           <View className="h-[150px] w-full bg-slate-50 relative overflow-hidden">
             {product.image_url && !product.image_url.startsWith("linear-gradient") ? (
-              <>
-                <Image
-                  source={{ uri: product.image_url }}
-                  className="w-full h-full"
-                  contentFit="cover"
-                  transition={200}
-                  recyclingKey={product.id}
-                  cachePolicy="memory-disk"
-                  onLoadStart={() => setIsImageLoading(true)}
-                  onLoad={() => setIsImageLoading(false)}
-                />
-                {isImageLoading && (
-                  <View className="absolute inset-0">
-                    <Skeleton width="100%" height="100%" />
-                  </View>
-                )}
-              </>
+              <Image
+                source={{ uri: product.image_url }}
+                className="w-full h-full"
+                contentFit="cover"
+                transition={200}
+                recyclingKey={`product-${product.id}`}
+                cachePolicy="memory-disk"
+                placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+              />
             ) : (
               <View className="w-full h-full items-center justify-center bg-slate-100">
                 <Text className="text-xs text-text-secondary">No Image</Text>
@@ -85,9 +73,10 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
               </View>
             )}
 
-            <PressableScale
+            <Pressable
               onPress={handleToggleFavorite}
-              scaleTo={0.92}
+              android_ripple={{ color: "#e2e8f0", borderless: true }}
+              style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
               className="absolute top-2 right-2 p-2 bg-white/90 rounded-full z-10 shadow-sm"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
@@ -96,7 +85,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
                 color={isFavorite ? "#ef4444" : "#64748b"}
                 fill={isFavorite ? "#ef4444" : "transparent"}
               />
-            </PressableScale>
+            </Pressable>
           </View>
 
           <View className="p-3">
@@ -109,14 +98,15 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
             </Text>
 
             <View className="flex-row items-end justify-between">
-              <PressableScale
+              <Pressable
                 onPress={handleAddToCart}
-                scaleTo={0.92}
+                android_ripple={{ color: "#e2e8f0" }}
+                style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
                 className="p-2.5 bg-blue-50 rounded-xl"
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <ShoppingCart size={18} color="#2563eb" />
-              </PressableScale>
+              </Pressable>
 
               <View className="items-end">
                 {product.is_on_sale && product.discount_price && (
@@ -130,7 +120,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
               </View>
             </View>
           </View>
-        </PressableScale>
+        </Pressable>
       </View>
     )
   },

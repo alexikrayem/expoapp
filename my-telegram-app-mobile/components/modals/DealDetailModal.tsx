@@ -1,6 +1,7 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useEffect } from 'react';
-import { View, Image, ScrollView, Modal, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Modal, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -9,6 +10,7 @@ import { cityService } from '../../services/cityService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
 import PressableScale from '@/components/ui/PressableScale';
+import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
 
 export default function DealDetailModal({ show, onClose, dealId, onProductClick, onSupplierClick }: any) {
     const [deal, setDeal] = useState<any>(null);
@@ -171,7 +173,11 @@ export default function DealDetailModal({ show, onClose, dealId, onProductClick,
                                             <Image
                                                 source={{ uri: deal.image_url }}
                                                 className="w-full h-full"
-                                                resizeMode="cover"
+                                                contentFit="cover"
+                                                transition={200}
+                                                cachePolicy="memory-disk"
+                                                placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+                                                recyclingKey={`deal-detail-${deal.id}`}
                                             />
                                         ) : (
                                             <View className="items-center bg-gradient-to-br from-primary-400 to-primary-600 w-full h-full justify-center">

@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { cacheResponse } = require('../middleware/cache');
+const { param } = require('express-validator');
+const validateRequest = require('../middleware/validateRequest');
 
 // Get all cities
 router.get('/', cacheResponse(600, 'cities:list'), async (req, res) => {
@@ -17,7 +19,10 @@ router.get('/', cacheResponse(600, 'cities:list'), async (req, res) => {
 });
 
 // Get suppliers in a city
-router.get('/:cityId/suppliers', async (req, res) => {
+router.get('/:cityId/suppliers', [
+    param('cityId').isInt({ min: 1 }).withMessage('City ID must be a positive integer'),
+    validateRequest
+], async (req, res) => {
     try {
         const { cityId } = req.params;
         
@@ -25,7 +30,15 @@ router.get('/:cityId/suppliers', async (req, res) => {
         // It also removes the incorrect `p.is_active` check.
         const query = `
             SELECT 
-                s.*,
+                s.id,
+                s.name,
+                s.category,
+                s.location,
+                s.rating,
+                s.image_url,
+                s.description,
+                s.created_at,
+                s.updated_at,
                 COUNT(p.id) as product_count
             FROM suppliers s
             JOIN supplier_cities sc ON s.id = sc.supplier_id
@@ -44,7 +57,10 @@ router.get('/:cityId/suppliers', async (req, res) => {
 });
 
 // Get deals in a city
-router.get('/:cityId/deals', async (req, res) => {
+router.get('/:cityId/deals', [
+    param('cityId').isInt({ min: 1 }).withMessage('City ID must be a positive integer'),
+    validateRequest
+], async (req, res) => {
     try {
         const { cityId } = req.params;
         

@@ -56,6 +56,7 @@ export default function ProductFilterBar({ currentFilters, onFiltersChange, sele
                             key={`${cat.category}-${index}`}
                             onPress={() => handleCategoryClick(cat.category)}
                             scaleTo={0.98}
+                            haptic="selection"
                             className={`px-5 py-3 rounded-full border ${isSelected
                                 ? 'bg-blue-600 border-blue-600'
                                 : 'bg-white border-gray-200'

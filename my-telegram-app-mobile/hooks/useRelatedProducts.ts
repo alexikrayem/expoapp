@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query"
 import { apiClient } from "@/api/apiClient"
+import { useEffect } from "react"
+import { prefetchImages } from "@/utils/image"
 
 export const useRelatedProducts = (currentProductId: string, categoryId?: string) => {
-    return useQuery({
+    const query = useQuery({
         queryKey: ["related-products", currentProductId, categoryId],
         queryFn: async () => {
             // If we don't have a category, we can't really fetch "related" by category.
@@ -18,4 +20,14 @@ export const useRelatedProducts = (currentProductId: string, categoryId?: string
         enabled: !!currentProductId && !!categoryId,
         staleTime: 1000 * 60 * 5, // 5 minutes
     })
+
+    useEffect(() => {
+        if (!query.data || query.data.length === 0) return
+        prefetchImages(
+            query.data.map((item: any) => item.image_url || item.imageUrl || item.image),
+            6
+        )
+    }, [query.data])
+
+    return query
 }
