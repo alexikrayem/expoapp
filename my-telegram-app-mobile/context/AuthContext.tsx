@@ -1,10 +1,9 @@
 "use client"
 
 import type React from "react"
-import { createContext, useState, useEffect, useContext } from "react"
+import { createContext, useState, useEffect, useContext, useCallback, useMemo } from "react"
 import { userService } from "@/services/userService"
-import { getAccessToken } from "@/api/apiClient"
-import { ensureValidToken } from "@/utils/tokenManager"
+import { getAccessToken, ensureValidToken } from "@/utils/tokenManager"
 import { authService } from "@/services/authService"
 import { UserProfile } from "@/types"
 
@@ -32,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const profile = await userService.getProfile()
       setUserProfile(profile)
@@ -40,7 +39,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error("[AuthContext] Failed to fetch profile:", error)
       throw error
     }
-  }
+  }, [])
+
+  const logout = useCallback(async () => {
+    await authService.logout()
+    setIsAuthenticated(false)
+    setUserProfile(null)
+  }, [])
 
   useEffect(() => {
     const initAuth = async () => {
@@ -57,10 +62,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           await ensureValidToken()
           await fetchProfile()
           setIsAuthenticated(true)
-        } catch (error) {
+        } catch (_error) {
           await logout()
         }
-      } catch (error) {
+      } catch (_error) {
         await logout()
       } finally {
         setIsLoading(false)
@@ -68,15 +73,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     initAuth()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const logout = async () => {
-    await authService.logout()
-    setIsAuthenticated(false)
-    setUserProfile(null)
-  }
-
-  const refreshAuth = async () => {
+  const refreshAuth = useCallback(async () => {
     setIsLoading(true)
     try {
       const token = await getAccessToken()
@@ -89,12 +89,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [fetchProfile])
+
+  const value = useMemo(
+    () => ({ isAuthenticated, isLoading, userProfile, logout, refreshProfile: fetchProfile, refreshAuth }),
+    [isAuthenticated, isLoading, userProfile, logout, fetchProfile, refreshAuth],
+  )
 
   return (
-    <AuthContext.Provider
-      value={{ isAuthenticated, isLoading, userProfile, logout, refreshProfile: fetchProfile, refreshAuth }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

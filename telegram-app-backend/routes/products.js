@@ -3,23 +3,54 @@ const express = require('express');
 const { query, param, body } = require('express-validator');
 const router = express.Router();
 const db = require('../config/db');
+const logger = require('../services/logger');
 const validateRequest = require('../middleware/validateRequest');
 const { cacheResponse } = require('../middleware/cache');
 const { getRelatedProducts } = require('../services/relatedProductsService');
 const { EFFECTIVE_PRICE_SQL } = require('../utils/pricing');
 
+const HTTP = Object.freeze({
+    BAD_REQUEST: Number.parseInt('400', 10),
+    NOT_FOUND: Number.parseInt('404', 10),
+    INTERNAL_SERVER_ERROR: Number.parseInt('500', 10)
+});
+
+const VALIDATION_LIMITS = Object.freeze({
+    MAX_PAGE: Number.parseInt('1000', 10),
+    MAX_LIMIT: Number.parseInt('100', 10),
+    MAX_SEARCH_TERM_LENGTH: Number.parseInt('100', 10)
+});
+
+const CACHE_TTL_SECONDS = Object.freeze({
+    PRODUCTS_LIST: Number.parseInt('60', 10),
+    PRODUCTS_CATEGORIES: Number.parseInt('300', 10),
+    PRODUCTS_BATCH: Number.parseInt('60', 10),
+    FAVORITE_DETAILS: Number.parseInt('60', 10),
+    PRODUCT_DETAIL: Number.parseInt('60', 10)
+});
+
 // Get all products with filtering, search, and pagination
 router.get('/', [
-    query('page').optional().isInt({ min: 1, max: 1000 }).withMessage('Page must be an integer between 1 and 1000'),
-    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be an integer between 1 and 100'),
+    query('page')
+        .optional()
+        .isInt({ min: 1, max: VALIDATION_LIMITS.MAX_PAGE })
+        .withMessage(`Page must be an integer between 1 and ${VALIDATION_LIMITS.MAX_PAGE}`),
+    query('limit')
+        .optional()
+        .isInt({ min: 1, max: VALIDATION_LIMITS.MAX_LIMIT })
+        .withMessage(`Limit must be an integer between 1 and ${VALIDATION_LIMITS.MAX_LIMIT}`),
     query('cityId').optional().isInt({ min: 1 }).withMessage('City ID must be a positive integer'),
     query('category').optional().trim().isLength({ max: 50 }).withMessage('Category must be at most 50 characters'),
-    query('searchTerm').optional().trim().isLength({ max: 100 }).withMessage('Search term must be at most 100 characters'),
+    query('searchTerm')
+        .optional()
+        .trim()
+        .isLength({ max: VALIDATION_LIMITS.MAX_SEARCH_TERM_LENGTH })
+        .withMessage(`Search term must be at most ${VALIDATION_LIMITS.MAX_SEARCH_TERM_LENGTH} characters`),
     query('minPrice').optional().isFloat({ min: 0 }).withMessage('Min price must be a positive number'),
     query('maxPrice').optional().isFloat({ min: 0 }).withMessage('Max price must be a positive number'),
     query('onSale').optional().isIn(['true', 'false']).withMessage('onSale must be true or false'),
     validateRequest,
-    cacheResponse(60, 'products:list')
+    cacheResponse(CACHE_TTL_SECONDS.PRODUCTS_LIST, 'products:list')
 ], async (req, res) => {
     try {
         // Validation handled by middleware
@@ -80,8 +111,8 @@ router.get('/', [
             totalPages: totalCount === 0 ? 0 : Math.ceil(totalCount / limitNum),
         });
     } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({ error: 'Failed to fetch products' });
+        logger.error('Error fetching products', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch products' });
     }
 });
 
@@ -89,7 +120,7 @@ router.get('/', [
 router.get('/categories', [
     query('cityId').optional().isInt({ min: 1 }).withMessage('City ID must be a positive integer'),
     validateRequest,
-    cacheResponse(300, 'products:categories')
+    cacheResponse(CACHE_TTL_SECONDS.PRODUCTS_CATEGORIES, 'products:categories')
 ], async (req, res) => {
     try {
         const { cityId } = req.query;
@@ -112,8 +143,8 @@ router.get('/categories', [
         const result = await db.query(query, queryParams);
         res.json({ categories: result.rows });
     } catch (error) {
-        console.error('Error fetching categories:', error);
-        res.status(500).json({ error: 'Failed to fetch categories' });
+        logger.error('Error fetching categories', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch categories' });
     }
 });
 
@@ -121,7 +152,7 @@ router.get('/categories', [
 router.get('/batch', [
     query('ids').optional().trim().matches(/^[\d,]+$/).withMessage('IDs must be comma-separated integers'),
     validateRequest
-], cacheResponse(60, 'products:batch'), async (req, res) => {
+], cacheResponse(CACHE_TTL_SECONDS.PRODUCTS_BATCH, 'products:batch'), async (req, res) => {
     try {
         const { ids } = req.query;
         if (!ids) return res.json([]);
@@ -131,7 +162,7 @@ router.get('/batch', [
             .filter(id => !isNaN(id) && id > 0);
 
         if (productIds.length === 0 || productIds.length > 50) {
-            return res.status(400).json({ error: 'Invalid product IDs provided' });
+            return res.status(HTTP.BAD_REQUEST).json({ error: 'Invalid product IDs provided' });
         }
 
         const placeholders = productIds.map((_, index) => `$${index + 1}`).join(',');
@@ -146,8 +177,8 @@ router.get('/batch', [
         const result = await db.query(query, productIds);
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching products batch:', error);
-        res.status(500).json({ error: 'Failed to fetch products' });
+        logger.error('Error fetching products batch', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch products' });
     }
 });
 
@@ -156,7 +187,7 @@ router.get('/batch', [
 router.get('/favorite-details/:productId', [
     param('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
     validateRequest
-], cacheResponse(60, 'products:favorite-details'), async (req, res) => {
+], cacheResponse(CACHE_TTL_SECONDS.FAVORITE_DETAILS, 'products:favorite-details'), async (req, res) => {
     try {
         const { productId } = req.params;
 
@@ -175,7 +206,7 @@ router.get('/favorite-details/:productId', [
         const [productResult] = await Promise.all([productPromise]);
 
         if (productResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Product not found' });
+            return res.status(HTTP.NOT_FOUND).json({ error: 'Product not found' });
         }
 
         const product = productResult.rows[0];
@@ -227,8 +258,8 @@ router.get('/favorite-details/:productId', [
         res.json(responseData);
 
     } catch (error) {
-        console.error('Error fetching product details:', error);
-        res.status(500).json({ error: 'Failed to fetch product details' });
+        logger.error('Error fetching product details', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch product details' });
     }
 });
 
@@ -245,8 +276,8 @@ router.get('/:id/related', [
         const related = await getRelatedProducts(productId, limit);
         res.json(related);
     } catch (error) {
-        console.error('Error fetching related products:', error);
-        res.status(500).json({ error: 'Failed to fetch related products' });
+        logger.error('Error fetching related products', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch related products' });
     }
 });
 
@@ -269,7 +300,7 @@ router.get('/:id', [
         `;
         const result = await db.query(query, [productId]);
 
-        if (result.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
+        if (result.rows.length === 0) return res.status(HTTP.NOT_FOUND).json({ error: 'Product not found' });
 
         const product = result.rows[0];
         if (req.query.includeRelated === 'true') {
@@ -279,8 +310,8 @@ router.get('/:id', [
 
         res.json(product);
     } catch (error) {
-        console.error('Error fetching product:', error);
-        res.status(500).json({ error: 'Failed to fetch product' });
+        logger.error('Error fetching product', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch product' });
     }
 });
 

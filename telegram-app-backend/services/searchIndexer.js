@@ -126,9 +126,9 @@ const fetchMasterProductRow = async (masterProductId) => {
   return result.rows[0];
 };
 
-const mapProductDoc = async (row) => {
+const mapProductDoc = async (row, providedCityIds = null) => {
   if (!row) return null;
-  const cityIds = await fetchCityIds(row.supplier_id);
+  const cityIds = providedCityIds || await fetchCityIds(row.supplier_id);
   const embeddingText = [
     row.name,
     row.standardized_name_input,
@@ -163,9 +163,9 @@ const mapProductDoc = async (row) => {
   };
 };
 
-const mapDealDoc = async (row) => {
+const mapDealDoc = async (row, providedCityIds = null) => {
   if (!row) return null;
-  const cityIds = await fetchCityIds(row.supplier_id);
+  const cityIds = providedCityIds || await fetchCityIds(row.supplier_id);
   const embeddingText = [
     row.title,
     row.description,
@@ -252,26 +252,26 @@ const mapMasterProductDoc = async (row) => {
   };
 };
 
-const indexProductById = async (productId) => {
+const indexProductById = async (productId, providedCityIds = null) => {
   if (!isOpenSearchEnabled()) return;
   const row = await fetchProductRow(productId);
   if (!row) {
     await safeDelete(getIndexName('products'), productId);
     return;
   }
-  const doc = await mapProductDoc(row);
+  const doc = await mapProductDoc(row, providedCityIds);
   if (!doc) return;
   await safeIndex(getIndexName('products'), productId, doc);
 };
 
-const indexDealById = async (dealId) => {
+const indexDealById = async (dealId, providedCityIds = null) => {
   if (!isOpenSearchEnabled()) return;
   const row = await fetchDealRow(dealId);
   if (!row) {
     await safeDelete(getIndexName('deals'), dealId);
     return;
   }
-  const doc = await mapDealDoc(row);
+  const doc = await mapDealDoc(row, providedCityIds);
   if (!doc) return;
   await safeIndex(getIndexName('deals'), dealId, doc);
 };
@@ -305,7 +305,9 @@ const reindexProductsBySupplierId = async (supplierId) => {
   const result = await db.query('SELECT id FROM products WHERE supplier_id = $1', [
     supplierId,
   ]);
-  await Promise.all(result.rows.map((row) => indexProductById(row.id)));
+  if (result.rows.length === 0) return;
+  const cityIds = await fetchCityIds(supplierId);
+  await Promise.all(result.rows.map((row) => indexProductById(row.id, cityIds)));
 };
 
 const reindexDealsBySupplierId = async (supplierId) => {
@@ -313,7 +315,9 @@ const reindexDealsBySupplierId = async (supplierId) => {
   const result = await db.query('SELECT id FROM deals WHERE supplier_id = $1', [
     supplierId,
   ]);
-  await Promise.all(result.rows.map((row) => indexDealById(row.id)));
+  if (result.rows.length === 0) return;
+  const cityIds = await fetchCityIds(supplierId);
+  await Promise.all(result.rows.map((row) => indexDealById(row.id, cityIds)));
 };
 
 const deleteProductsBySupplierId = async (supplierId) => {

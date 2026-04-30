@@ -19,6 +19,7 @@ interface FeaturedListModalProps {
         title: string;
         description?: string;
         imageUrl?: string;
+        image_url?: string;
     };
 }
 

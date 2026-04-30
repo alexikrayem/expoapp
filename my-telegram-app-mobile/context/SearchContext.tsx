@@ -1,19 +1,12 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useDebounce } from '@/hooks/useDebounce';
-import { searchService } from '@/services/searchService';
-import { useAuth } from './AuthContext';
-import { prefetchImages } from '@/utils/image';
+import React, { createContext, useState, useContext, useCallback, useMemo } from 'react';
+
+export type SearchTab = 'products' | 'deals' | 'suppliers';
 
 interface SearchContextType {
     searchTerm: string;
-    isSearching: boolean;
-    searchResults: {
-        products: { items: any[], totalItems: number };
-        deals: any[];
-        suppliers: any[];
-    };
-    searchError: string | null;
+    activeSearchTab: SearchTab;
     handleSearchTermChange: (term: string) => void;
+    setActiveSearchTab: (tab: SearchTab) => void;
     clearSearch: () => void;
 }
 
@@ -28,70 +21,28 @@ export const useSearch = () => {
 };
 
 export const SearchProvider = ({ children }: { children: React.ReactNode }) => {
-    const { userProfile } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
-    const [isSearching, setIsSearching] = useState(false);
-    const [searchResults, setSearchResults] = useState({
-        products: { items: [], totalItems: 0 },
-        deals: [],
-        suppliers: []
-    });
-    const [searchError, setSearchError] = useState<string | null>(null);
+    const [activeSearchTab, setActiveSearchTab] = useState<SearchTab>('products');
 
-    const debouncedSearchTerm = useDebounce(searchTerm, 500);
-    const cityId = userProfile?.selected_city_id || '1'; // Default to 1 if no city selected
-
-    useEffect(() => {
-        const performSearch = async () => {
-            const trimmedTerm = debouncedSearchTerm.trim();
-
-            if (trimmedTerm.length < 2) {
-                setSearchResults({ products: { items: [], totalItems: 0 }, deals: [], suppliers: [] });
-                return;
-            }
-
-            setIsSearching(true);
-            setSearchError(null);
-
-            try {
-                const data = await searchService.search(trimmedTerm, cityId);
-                setSearchResults(data.results || { products: { items: [], totalItems: 0 }, deals: [], suppliers: [] });
-            } catch (error: any) {
-                console.error("Search error:", error);
-                setSearchError(error.message || 'Failed to perform search');
-            } finally {
-                setIsSearching(false);
-            }
-        };
-
-        performSearch();
-    }, [debouncedSearchTerm, cityId]);
-
-    useEffect(() => {
-        const productUrls = searchResults.products?.items?.map((item: any) => item.image_url || item.imageUrl || item.image) || [];
-        const dealUrls = searchResults.deals?.map((item: any) => item.image_url || item.imageUrl || item.image) || [];
-        const supplierUrls = searchResults.suppliers?.map((item: any) => item.logoUrl || item.logo_url || item.logo) || [];
-        prefetchImages([...productUrls, ...dealUrls, ...supplierUrls], 12);
-    }, [searchResults]);
-
-    const handleSearchTermChange = (newTerm: string) => {
+    const handleSearchTermChange = useCallback((newTerm: string) => {
         setSearchTerm(newTerm);
-    };
+    }, []);
 
-    const clearSearch = () => {
+    const clearSearch = useCallback(() => {
         setSearchTerm('');
-        setSearchResults({ products: { items: [], totalItems: 0 }, deals: [], suppliers: [] });
-    };
+        setActiveSearchTab('products');
+    }, []);
+
+    const value = useMemo(() => ({
+        searchTerm,
+        activeSearchTab,
+        handleSearchTermChange,
+        setActiveSearchTab,
+        clearSearch
+    }), [searchTerm, activeSearchTab, handleSearchTermChange, setActiveSearchTab, clearSearch]);
 
     return (
-        <SearchContext.Provider value={{
-            searchTerm,
-            isSearching,
-            searchResults,
-            searchError,
-            handleSearchTermChange,
-            clearSearch
-        }}>
+        <SearchContext.Provider value={value}>
             {children}
         </SearchContext.Provider>
     );

@@ -1,44 +1,58 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import * as Network from 'expo-network';
+
+const POLL_INTERVAL_MS = 15_000; // 15 seconds (was 5s — reduces battery drain)
 
 export function useNetworkStatus() {
     const [isOnline, setIsOnline] = useState(true);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    useEffect(() => {
-        // Initial check
-        checkNetworkStatus();
-
-        // Unfortunately, expo-network doesn't have a direct event listener for state changes 
-        // that works consistently across all platforms without additional setup (like NetInfo).
-        // However, for a simple check, we can poll or check on focus. 
-        // For a more robust solution, @react-native-community/netinfo is recommended, 
-        // but we'll stick to expo-network as requested if possible.
-        // Actually, let's use a simple polling mechanism for now or just initial check.
-        // Better yet, let's use the standard NetInfo if we want real-time updates, 
-        // but since we are using Expo, let's see if we can just check periodically.
-
-        // NOTE: For real-time updates, @react-native-community/netinfo is the standard.
-        // expo-network is mostly for one-off checks.
-        // But let's implement a simple poller for now to avoid adding another native dependency if not needed.
-
-        const interval = setInterval(checkNetworkStatus, 5000);
-
-        return () => clearInterval(interval);
-    }, []);
-
-    const checkNetworkStatus = async () => {
+    const checkNetworkStatus = useCallback(async () => {
         try {
             const status = await Network.getNetworkStateAsync();
-            // Consider online if connected and internet is reachable
             // On iOS, isInternetReachable can be null initially, so we fallback to isConnected
             const online = status.isConnected && (status.isInternetReachable ?? true);
             setIsOnline(!!online);
-        } catch (error) {
-            console.error('Network check failed:', error);
+        } catch (_error) {
             // Assume online on error to avoid blocking user
             setIsOnline(true);
         }
-    };
+    }, []);
+
+    const startPolling = useCallback(() => {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = setInterval(checkNetworkStatus, POLL_INTERVAL_MS);
+    }, [checkNetworkStatus]);
+
+    const stopPolling = useCallback(() => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+    }, []);
+
+    useEffect(() => {
+        // Initial check + start polling
+        checkNetworkStatus();
+        startPolling();
+
+        // Pause polling when app is backgrounded to save battery
+        const subscription = AppState.addEventListener('change', (nextState: AppStateStatus) => {
+            if (nextState === 'active') {
+                checkNetworkStatus();
+                startPolling();
+            } else {
+                stopPolling();
+            }
+        });
+
+        return () => {
+            stopPolling();
+            subscription.remove();
+        };
+    }, [checkNetworkStatus, startPolling, stopPolling]);
 
     return { isOnline };
 }
+

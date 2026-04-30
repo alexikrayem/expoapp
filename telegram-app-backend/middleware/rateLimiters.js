@@ -4,6 +4,7 @@ const RateLimitRedis = require('rate-limit-redis');
 const { getRedisClient } = require('../config/redis');
 
 const RedisStore = RateLimitRedis.default || RateLimitRedis;
+const ipKeyGenerator = rateLimit.ipKeyGenerator || ((ip) => ip);
 
 const getStore = () => {
   const redis = getRedisClient();
@@ -33,7 +34,7 @@ const orderCreateLimiter = createRateLimiter({
   message: { error: 'Too many order attempts, please slow down.' },
   keyGenerator: (req) => {
     if (req?.user?.userId) return `user:${req.user.userId}`;
-    return req.ip;
+    return ipKeyGenerator(req.ip || req.socket?.remoteAddress || '');
   },
 });
 

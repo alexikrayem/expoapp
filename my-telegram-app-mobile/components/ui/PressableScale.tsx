@@ -8,6 +8,7 @@ interface PressableScaleProps extends PressableProps {
   scaleTo?: number
   duration?: number
   haptic?: "light" | "medium" | "heavy" | "selection" | false
+  children?: React.ReactNode | ((state: { pressed: boolean }) => React.ReactNode)
   className?: string
   pressableClassName?: string
   style?: any
@@ -54,7 +55,7 @@ export default function PressableScale({
       }}
     >
       <Animated.View style={[animatedStyle, style]} className={className}>
-        {children}
+        {typeof children === "function" ? children({ pressed: false }) : children}
       </Animated.View>
     </Pressable>
   )

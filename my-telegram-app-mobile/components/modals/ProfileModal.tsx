@@ -9,12 +9,13 @@ import PressableScale from '@/components/ui/PressableScale';
 interface ProfileModalProps {
     visible: boolean;
     onClose: () => void;
-    telegramUser: any;
+    telegramUser?: any;
     userProfile: any;
-    onSave: (data: any) => Promise<void>;
+    onSave?: (data: any) => Promise<void>;
+    onFormSubmit?: (event: any, data: any) => Promise<void>;
 }
 
-export default function ProfileModal({ visible, onClose, telegramUser, userProfile, onSave }: ProfileModalProps) {
+export default function ProfileModal({ visible, onClose, telegramUser, userProfile, onSave, onFormSubmit }: ProfileModalProps) {
     const isRTL = I18nManager.isRTL;
     const [formData, setFormData] = useState({
         fullName: '',
@@ -29,11 +30,11 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
     useEffect(() => {
         if (visible && userProfile) {
             setFormData({
-                fullName: userProfile.fullName || '',
-                phoneNumber: userProfile.phoneNumber || '',
-                addressLine1: userProfile.addressLine1 || '',
-                addressLine2: userProfile.addressLine2 || '',
-                city: userProfile.city || '',
+                fullName: userProfile.fullName || userProfile.full_name || '',
+                phoneNumber: userProfile.phoneNumber || userProfile.phone_number || '',
+                addressLine1: userProfile.addressLine1 || userProfile.address_line1 || '',
+                addressLine2: userProfile.addressLine2 || userProfile.address_line2 || '',
+                city: userProfile.city || userProfile.selected_city_name || '',
             });
         }
     }, [visible, userProfile]);
@@ -46,7 +47,22 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
         setError(null);
         setIsSaving(true);
         try {
-            await onSave(formData);
+            const payload = {
+                full_name: formData.fullName,
+                phone_number: formData.phoneNumber,
+                address_line1: formData.addressLine1,
+                address_line2: formData.addressLine2,
+                city: formData.city,
+            };
+
+            if (onSave) {
+                await onSave(payload);
+            } else if (onFormSubmit) {
+                await onFormSubmit(null, payload);
+            } else {
+                throw new Error('No save handler provided');
+            }
+
             onClose();
         } catch (err: any) {
             setError(err.message || 'Failed to save profile');

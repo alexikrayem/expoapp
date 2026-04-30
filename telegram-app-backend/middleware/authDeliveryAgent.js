@@ -2,40 +2,68 @@
 const { verifyJwt } = require('../services/jwtService');
 const db = require('../config/db');
 
-const authDeliveryAgent = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
+const HTTP = Object.freeze({
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  INTERNAL_SERVER_ERROR: 500,
+});
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Delivery authorization header missing or malformed.' });
-    }
+const isBearerHeader = (authorization) =>
+  typeof authorization === 'string' && authorization.startsWith('Bearer ');
 
-    const token = authHeader.substring(7);
-    try {
-        const secret = process.env.JWT_DELIVERY_SECRET;
-        if (!secret) {
-            return res.status(500).json({ error: 'JWT delivery secret not configured.' });
-        }
-        const decoded = verifyJwt(token, secret); // Use DELIVERY secret
-        if (decoded.role !== 'delivery_agent') {
-            return res.status(403).json({ error: 'Forbidden: invalid token role.' });
-        }
-
-        const enforceStatus = process.env.ENFORCE_ACCOUNT_STATUS !== 'false';
-        if (enforceStatus) {
-            const result = await db.query(
-                'SELECT is_active FROM delivery_agents WHERE id = $1',
-                [decoded.deliveryAgentId]
-            );
-            if (result.rows.length === 0 || result.rows[0].is_active !== true) {
-                return res.status(403).json({ error: 'Delivery agent account is inactive.' });
-            }
-        }
-
-        req.deliveryAgent = decoded; // Add decoded info (deliveryAgentId, supplierId, name, role)
-        next();
-    } catch (error) {
-        console.error("Delivery Agent JWT verification error:", error.message);
-        return res.status(401).json({ error: 'Invalid or expired delivery token.' });
-    }
+const getBearerToken = (req) => {
+  const authorization = req?.headers?.authorization;
+  if (!isBearerHeader(authorization)) {
+    return null;
+  }
+  return authorization.slice(7).trim();
 };
+
+const shouldEnforceAccountStatus = () => process.env.ENFORCE_ACCOUNT_STATUS !== 'false';
+
+const isDeliveryAccessPayload = (payload) =>
+  payload?.role === 'delivery_agent' && payload?.type === 'access';
+
+const isDeliveryAgentActive = async (deliveryAgentId) => {
+  const result = await db.query(
+    'SELECT is_active FROM delivery_agents WHERE id = $1',
+    [deliveryAgentId]
+  );
+
+  return result.rows.length > 0 && result.rows[0].is_active === true;
+};
+
+const authDeliveryAgent = async (req, res, next) => {
+  const token = getBearerToken(req);
+  if (!token) {
+    return res.status(HTTP.UNAUTHORIZED).json({ error: 'Delivery authorization header missing or malformed.' });
+  }
+
+  const secret = process.env.JWT_DELIVERY_SECRET;
+  if (!secret) {
+    return res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'JWT delivery secret not configured.' });
+  }
+
+  try {
+    const decoded = verifyJwt(token, secret);
+
+    if (!isDeliveryAccessPayload(decoded)) {
+      return res.status(HTTP.FORBIDDEN).json({ error: 'Forbidden: invalid token role or type.' });
+    }
+
+    if (shouldEnforceAccountStatus()) {
+      const isActive = await isDeliveryAgentActive(decoded.deliveryAgentId);
+      if (!isActive) {
+        return res.status(HTTP.FORBIDDEN).json({ error: 'Delivery agent account is inactive.' });
+      }
+    }
+
+    req.deliveryAgent = decoded;
+    return next();
+  } catch (error) {
+    console.error('Delivery Agent JWT verification error:', error.message);
+    return res.status(HTTP.UNAUTHORIZED).json({ error: 'Invalid or expired delivery token.' });
+  }
+};
+
 module.exports = authDeliveryAgent;

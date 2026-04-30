@@ -1,0 +1,6928 @@
+{
+  "directory": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend",
+  "files_analyzed": 129,
+  "average_score": 94.7,
+  "overall_grade": "A",
+  "total_code_smells": 360,
+  "total_solid_violations": 3,
+  "files": [
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/auth.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 330,
+          "code": 267,
+          "blank": 61,
+          "comment": 2
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 6.0
+      },
+      "quality_score": 15,
+      "grade": "F",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'createTestApp' has 70 lines (max: 50)",
+          "location": "createTestApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 3000 should be a named constant",
+          "location": "line 26"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 31"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 36"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 40"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 45"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 48"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 53"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 56"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 63"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 86"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 95"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 100"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 103"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 110"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 115"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 120"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 00963 should be a named constant",
+          "location": "line 128"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 130"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 963912345678 should be a named constant",
+          "location": "line 135"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 141"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 963912345678 should be a named constant",
+          "location": "line 144"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 146"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 149"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 963912345678 should be a named constant",
+          "location": "line 154"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 156"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 963912345678 should be a named constant",
+          "location": "line 160"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 171"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 912 should be a named constant",
+          "location": "line 189"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 191"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 217"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 3000 should be a named constant",
+          "location": "line 232"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 235"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 3000 should be a named constant",
+          "location": "line 254"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 258"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 3600 should be a named constant",
+          "location": "line 275"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 286"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 3000 should be a named constant",
+          "location": "line 300"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 303"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 3000 should be a named constant",
+          "location": "line 319"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 323"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "createTestApp",
+          "parameters": 1,
+          "lines": 70,
+          "complexity": 6
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/products.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 241,
+          "code": 191,
+          "blank": 49,
+          "comment": 1
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 2.0
+      },
+      "quality_score": 45,
+      "grade": "F",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'createTestApp' has 69 lines (max: 50)",
+          "location": "createTestApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 34"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 35"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 46"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 62"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 150 should be a named constant",
+          "location": "line 73"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 75"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 78"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 83"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 95"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 111"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 129"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 136"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 144"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 149"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 155"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 166"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 404 should be a named constant",
+          "location": "line 171"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 999 should be a named constant",
+          "location": "line 174"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 404 should be a named constant",
+          "location": "line 176"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 179"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 182"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 195"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 208"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 214"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 236"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "createTestApp",
+          "parameters": 1,
+          "lines": 69,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/orders.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 188,
+          "code": 141,
+          "blank": 41,
+          "comment": 6
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 4.0
+      },
+      "quality_score": 51,
+      "grade": "F",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'createTestApp' has 73 lines (max: 50)",
+          "location": "createTestApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123456789 should be a named constant",
+          "location": "line 6"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 21"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 409 should be a named constant",
+          "location": "line 27"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 33"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 39"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 201 should be a named constant",
+          "location": "line 44"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 60"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 83"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 84"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 86"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123 should be a named constant",
+          "location": "line 94"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 201 should be a named constant",
+          "location": "line 100"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123 should be a named constant",
+          "location": "line 101"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 409 should be a named constant",
+          "location": "line 114"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 126"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 139"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 147"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 154"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 161"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123456789 should be a named constant",
+          "location": "line 169"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 176"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 185"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "mockAuthMiddleware",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 1
+        },
+        {
+          "name": "createTestApp",
+          "parameters": 1,
+          "lines": 73,
+          "complexity": 7
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/.agents/skills/tech-debt-tracker/assets/sample_codebase/src/frontend.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 395,
+          "code": 285,
+          "blank": 54,
+          "comment": 56
+        },
+        "functions": 7,
+        "classes": 1,
+        "avg_complexity": 9.9
+      },
+      "quality_score": 56,
+      "grade": "F",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'that' has 252 lines (max: 50)",
+          "location": "that"
+        },
+        {
+          "type": "high_complexity",
+          "severity": "high",
+          "message": "Function 'that' has complexity 49 (max: 10)",
+          "location": "that"
+        },
+        {
+          "type": "god_class",
+          "severity": "high",
+          "message": "Class 'UserInterface' has 47 methods (max: 20)",
+          "location": "UserInterface"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 83"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 84"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 237"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 256"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 274"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 12534 should be a named constant",
+          "location": "line 301"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 8765 should be a named constant",
+          "location": "line 302"
+        },
+        {
+          "type": "commented_code",
+          "severity": "low",
+          "message": "Commented-out code should be removed",
+          "location": "line 28"
+        },
+        {
+          "type": "commented_code",
+          "severity": "low",
+          "message": "Commented-out code should be removed",
+          "location": "line 381"
+        },
+        {
+          "type": "commented_code",
+          "severity": "low",
+          "message": "Commented-out code should be removed",
+          "location": "line 382"
+        },
+        {
+          "type": "commented_code",
+          "severity": "low",
+          "message": "Commented-out code should be removed",
+          "location": "line 387"
+        },
+        {
+          "type": "commented_code",
+          "severity": "low",
+          "message": "Commented-out code should be removed",
+          "location": "line 388"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "that",
+          "parameters": 0,
+          "lines": 252,
+          "complexity": 49
+        },
+        {
+          "name": "closeModal",
+          "parameters": 0,
+          "lines": 6,
+          "complexity": 1
+        },
+        {
+          "name": "validateEmail",
+          "parameters": 0,
+          "lines": 6,
+          "complexity": 1
+        },
+        {
+          "name": "validatePassword",
+          "parameters": 0,
+          "lines": 21,
+          "complexity": 5
+        },
+        {
+          "name": "let",
+          "parameters": 0,
+          "lines": 42,
+          "complexity": 8
+        },
+        {
+          "name": "oldRenderFunction",
+          "parameters": 0,
+          "lines": 7,
+          "complexity": 2
+        },
+        {
+          "name": "darkModeToggle",
+          "parameters": 0,
+          "lines": 9,
+          "complexity": 3
+        }
+      ],
+      "class_details": [
+        {
+          "name": "UserInterface",
+          "methods": 47,
+          "lines": 377
+        }
+      ]
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/user.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 179,
+          "code": 142,
+          "blank": 32,
+          "comment": 5
+        },
+        "functions": 3,
+        "classes": 0,
+        "avg_complexity": 3.3
+      },
+      "quality_score": 61,
+      "grade": "D",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'generateTestToken' has 64 lines (max: 50)",
+          "location": "generateTestToken"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 9"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 18"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 36"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 46"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 52"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 12345 should be a named constant",
+          "location": "line 84"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 88"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 90"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 12345 should be a named constant",
+          "location": "line 96"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 963912345678 should be a named constant",
+          "location": "line 98"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 108"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 123"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 136"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 152"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 155"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 161"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 175"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "mockAuthMiddleware",
+          "parameters": 1,
+          "lines": 18,
+          "complexity": 4
+        },
+        {
+          "name": "createTestApp",
+          "parameters": 1,
+          "lines": 47,
+          "complexity": 5
+        },
+        {
+          "name": "generateTestToken",
+          "parameters": 1,
+          "lines": 64,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/middleware/idempotency.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 231,
+          "code": 193,
+          "blank": 38,
+          "comment": 0
+        },
+        "functions": 3,
+        "classes": 0,
+        "avg_complexity": 5.0
+      },
+      "quality_score": 65,
+      "grade": "D",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'buildApp' has 72 lines (max: 50)",
+          "location": "buildApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 52"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123 should be a named constant",
+          "location": "line 76"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 79"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 201 should be a named constant",
+          "location": "line 93"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123 should be a named constant",
+          "location": "line 102"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 201 should be a named constant",
+          "location": "line 105"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 117"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123 should be a named constant",
+          "location": "line 126"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 409 should be a named constant",
+          "location": "line 129"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123 should be a named constant",
+          "location": "line 150"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 409 should be a named constant",
+          "location": "line 153"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 162"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 201 should be a named constant",
+          "location": "line 164"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 217"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 201 should be a named constant",
+          "location": "line 226"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "stableStringify",
+          "parameters": 1,
+          "lines": 12,
+          "complexity": 5
+        },
+        {
+          "name": "hashRequest",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 2
+        },
+        {
+          "name": "buildApp",
+          "parameters": 1,
+          "lines": 72,
+          "complexity": 8
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/admin/adminUtils.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 113,
+          "code": 102,
+          "blank": 11,
+          "comment": 0
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 72,
+      "grade": "C",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 255 should be a named constant",
+          "location": "line 5"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 128 should be a named constant",
+          "location": "line 7"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 8"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 5000 should be a named constant",
+          "location": "line 11"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 255 should be a named constant",
+          "location": "line 19"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 21"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 5000 should be a named constant",
+          "location": "line 24"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 255 should be a named constant",
+          "location": "line 34"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 5000 should be a named constant",
+          "location": "line 35"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 255 should be a named constant",
+          "location": "line 48"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 5000 should be a named constant",
+          "location": "line 49"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 4000 should be a named constant",
+          "location": "line 58"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 255 should be a named constant",
+          "location": "line 63"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 5000 should be a named constant",
+          "location": "line 65"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/orders.notifications.regression.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 142,
+          "code": 125,
+          "blank": 17,
+          "comment": 0
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 6.5
+      },
+      "quality_score": 75,
+      "grade": "C",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'buildApp' has 55 lines (max: 50)",
+          "location": "buildApp"
+        },
+        {
+          "type": "high_complexity",
+          "severity": "medium",
+          "message": "Function 'buildApp' has complexity 11 (max: 10)",
+          "location": "buildApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 101 should be a named constant",
+          "location": "line 42"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 102 should be a named constant",
+          "location": "line 43"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 201 should be a named constant",
+          "location": "line 44"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 555 should be a named constant",
+          "location": "line 72"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 101 should be a named constant",
+          "location": "line 105"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 102 should be a named constant",
+          "location": "line 106"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 201 should be a named constant",
+          "location": "line 107"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 201 should be a named constant",
+          "location": "line 111"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 555 should be a named constant",
+          "location": "line 119"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 555 should be a named constant",
+          "location": "line 132"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "normalizeSql",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 2
+        },
+        {
+          "name": "buildApp",
+          "parameters": 1,
+          "lines": 55,
+          "complexity": 11
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/cart.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 112,
+          "code": 84,
+          "blank": 25,
+          "comment": 3
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 2.5
+      },
+      "quality_score": 75,
+      "grade": "C",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'createTestApp' has 76 lines (max: 50)",
+          "location": "createTestApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123456789 should be a named constant",
+          "location": "line 8"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 26"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 204 should be a named constant",
+          "location": "line 34"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 56"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 66"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 67"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 76"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 90"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 99"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 204 should be a named constant",
+          "location": "line 109"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "mockAuthMiddleware",
+          "parameters": 1,
+          "lines": 8,
+          "complexity": 2
+        },
+        {
+          "name": "createTestApp",
+          "parameters": 1,
+          "lines": 76,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/services/telegramBot.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 186,
+          "code": 146,
+          "blank": 38,
+          "comment": 2
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 4.0
+      },
+      "quality_score": 75,
+      "grade": "C",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'createMockResponse' has 67 lines (max: 50)",
+          "location": "createMockResponse"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123 should be a named constant",
+          "location": "line 28"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 30"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 32"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 999 should be a named constant",
+          "location": "line 62"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 86"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 5000 should be a named constant",
+          "location": "line 90"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 123"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 142"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 160"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 503 should be a named constant",
+          "location": "line 181"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "createMockResponse",
+          "parameters": 1,
+          "lines": 67,
+          "complexity": 4
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/suppliers.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 78,
+          "code": 58,
+          "blank": 19,
+          "comment": 1
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 2.0
+      },
+      "quality_score": 81,
+      "grade": "B",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'createTestApp' has 70 lines (max: 50)",
+          "location": "createTestApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 37"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 48"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 57"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 66"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 404 should be a named constant",
+          "location": "line 70"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 999 should be a named constant",
+          "location": "line 73"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 404 should be a named constant",
+          "location": "line 75"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "createTestApp",
+          "parameters": 1,
+          "lines": 70,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/middleware/authMiddleware.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 78,
+          "code": 59,
+          "blank": 18,
+          "comment": 1
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 1.0
+      },
+      "quality_score": 85,
+      "grade": "B",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'createMockReq' has 72 lines (max: 50)",
+          "location": "createMockReq"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 32"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 44"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 56"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123456 should be a named constant",
+          "location": "line 62"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 123456 should be a named constant",
+          "location": "line 74"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "createMockReq",
+          "parameters": 1,
+          "lines": 72,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/deals.supplier.validation.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 72,
+          "code": 58,
+          "blank": 14,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 5.0
+      },
+      "quality_score": 85,
+      "grade": "B",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'buildApp' has 60 lines (max: 50)",
+          "location": "buildApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 150 should be a named constant",
+          "location": "line 31"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 33"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 45"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 321 should be a named constant",
+          "location": "line 58"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 201 should be a named constant",
+          "location": "line 67"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildApp",
+          "parameters": 1,
+          "lines": 60,
+          "complexity": 5
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/delivery.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 173,
+          "code": 140,
+          "blank": 27,
+          "comment": 6
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 86,
+      "grade": "B",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 15"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 23"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 43"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 98"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 404 should be a named constant",
+          "location": "line 125"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 133"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 168"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/cities.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 97,
+          "code": 81,
+          "blank": 9,
+          "comment": 7
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 86,
+      "grade": "B",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 600 should be a named constant",
+          "location": "line 11"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 13"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 18"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 50"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 57"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 85"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 92"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/middleware/authRoles.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 96,
+          "code": 75,
+          "blank": 21,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 1.0
+      },
+      "quality_score": 87,
+      "grade": "B",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'buildApp' has 67 lines (max: 50)",
+          "location": "buildApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 38"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 55"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 74"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 91"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildApp",
+          "parameters": 1,
+          "lines": 67,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/cart.auth.integration.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 81,
+          "code": 64,
+          "blank": 17,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 1.0
+      },
+      "quality_score": 87,
+      "grade": "B",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'createProtectedApp' has 69 lines (max: 50)",
+          "location": "createProtectedApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 28"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 43"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 58"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 76"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "createProtectedApp",
+          "parameters": 1,
+          "lines": 69,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/utils/request.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 175,
+          "code": 149,
+          "blank": 26,
+          "comment": 0
+        },
+        "functions": 2,
+        "classes": 2,
+        "avg_complexity": 7.0
+      },
+      "quality_score": 88,
+      "grade": "B",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'finalize' has 56 lines (max: 50)",
+          "location": "finalize"
+        },
+        {
+          "type": "high_complexity",
+          "severity": "medium",
+          "message": "Function 'finalize' has complexity 13 (max: 10)",
+          "location": "finalize"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 127"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "finalize",
+          "parameters": 1,
+          "lines": 56,
+          "complexity": 13
+        },
+        {
+          "name": "request",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 1
+        }
+      ],
+      "class_details": [
+        {
+          "name": "MockSocket",
+          "methods": 2,
+          "lines": 8
+        },
+        {
+          "name": "InProcessRequest",
+          "methods": 20,
+          "lines": 164
+        }
+      ]
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/suppliers.write.validation.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 68,
+          "code": 56,
+          "blank": 12,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 1.0
+      },
+      "quality_score": 89,
+      "grade": "B",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'buildApp' has 56 lines (max: 50)",
+          "location": "buildApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 38"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 48"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 63"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildApp",
+          "parameters": 1,
+          "lines": 56,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/featuredItems.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 135,
+          "code": 117,
+          "blank": 13,
+          "comment": 5
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 90,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 300 should be a named constant",
+          "location": "line 11"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 59"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 66"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 300 should be a named constant",
+          "location": "line 76"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 130"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/utils/pricing.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 48,
+          "code": 39,
+          "blank": 9,
+          "comment": 0
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 90,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 6"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 17"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 23"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 28"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 110 should be a named constant",
+          "location": "line 34"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/storage.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 46,
+          "code": 41,
+          "blank": 4,
+          "comment": 1
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 92,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 255 should be a named constant",
+          "location": "line 18"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 255 should be a named constant",
+          "location": "line 24"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 3600 should be a named constant",
+          "location": "line 26"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 40"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/suppliers/supplierUtils.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 130,
+          "code": 112,
+          "blank": 17,
+          "comment": 1
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 92,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 68"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 69"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 108"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 109"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/suppliers.auth.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 55,
+          "code": 42,
+          "blank": 13,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 2.0
+      },
+      "quality_score": 92,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 25"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 404 should be a named constant",
+          "location": "line 30"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 37"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 48"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildApp",
+          "parameters": 1,
+          "lines": 49,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/user.profile.upsert.regression.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 70,
+          "code": 57,
+          "blank": 13,
+          "comment": 0
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 3.0
+      },
+      "quality_score": 93,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'buildApp' has 63 lines (max: 50)",
+          "location": "buildApp"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 60"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "normalizeSql",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 2
+        },
+        {
+          "name": "buildApp",
+          "parameters": 1,
+          "lines": 63,
+          "complexity": 4
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/setup.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 85,
+          "code": 65,
+          "blank": 14,
+          "comment": 6
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 12.0
+      },
+      "quality_score": 94,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "high_complexity",
+          "severity": "medium",
+          "message": "Function 'patchedListen' has complexity 12 (max: 10)",
+          "location": "patchedListen"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 5432 should be a named constant",
+          "location": "line 53"
+        }
+      ],
+      "solid_violations": [
+        {
+          "principle": "OCP",
+          "name": "Open/Closed Principle",
+          "severity": "medium",
+          "message": "Found 5 type checks - consider using polymorphism"
+        }
+      ],
+      "function_details": [
+        {
+          "name": "patchedListen",
+          "parameters": 0,
+          "lines": 29,
+          "complexity": 12
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/telegramBot.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 640,
+          "code": 533,
+          "blank": 106,
+          "comment": 1
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 94,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 429 should be a named constant",
+          "location": "line 75"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 429 should be a named constant",
+          "location": "line 87"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 89"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/search.validation.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 44,
+          "code": 34,
+          "blank": 10,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 1.0
+      },
+      "quality_score": 94,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 29"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 31"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 40"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildApp",
+          "parameters": 1,
+          "lines": 33,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/deals.validation.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 49,
+          "code": 37,
+          "blank": 12,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 2.0
+      },
+      "quality_score": 94,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 26"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 33"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 44"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildApp",
+          "parameters": 1,
+          "lines": 44,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/middleware/authMiddleware.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 42,
+          "code": 27,
+          "blank": 9,
+          "comment": 6
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 10.0
+      },
+      "quality_score": 95,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 10"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 19"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 25"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 28"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 36"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "validateTelegramAuth",
+          "parameters": 1,
+          "lines": 40,
+          "complexity": 10
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/config/db.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 86,
+          "code": 59,
+          "blank": 19,
+          "comment": 8
+        },
+        "functions": 6,
+        "classes": 0,
+        "avg_complexity": 3.0
+      },
+      "quality_score": 95,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 30000 should be a named constant",
+          "location": "line 49"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 5000 should be a named constant",
+          "location": "line 50"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 70"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 71"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 77"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildSslConfig",
+          "parameters": 0,
+          "lines": 14,
+          "complexity": 4
+        },
+        {
+          "name": "handlePoolError",
+          "parameters": 0,
+          "lines": 5,
+          "complexity": 1
+        },
+        {
+          "name": "handlePoolConnect",
+          "parameters": 0,
+          "lines": 7,
+          "complexity": 2
+        },
+        {
+          "name": "handleStartupConnectionTest",
+          "parameters": 0,
+          "lines": 28,
+          "complexity": 6
+        },
+        {
+          "name": "with",
+          "parameters": 0,
+          "lines": 2,
+          "complexity": 2
+        },
+        {
+          "name": "query",
+          "parameters": 0,
+          "lines": 24,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/favorites.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 82,
+          "code": 54,
+          "blank": 17,
+          "comment": 11
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 95,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 37"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 201 should be a named constant",
+          "location": "line 53"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 57"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 204 should be a named constant",
+          "location": "line 72"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 77"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/scripts/migrate-to-supabase.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 58,
+          "code": 43,
+          "blank": 11,
+          "comment": 4
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 7.0
+      },
+      "quality_score": 96,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 6543 should be a named constant",
+          "location": "line 8"
+        },
+        {
+          "type": "commented_code",
+          "severity": "low",
+          "message": "Commented-out code should be removed",
+          "location": "line 43"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "runMigrations",
+          "parameters": 0,
+          "lines": 47,
+          "complexity": 7
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/search.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 37,
+          "code": 29,
+          "blank": 6,
+          "comment": 2
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 96,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 13"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 32"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/src/config/database.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 76,
+          "code": 61,
+          "blank": 12,
+          "comment": 3
+        },
+        "functions": 0,
+        "classes": 1,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 96,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 30000 should be a named constant",
+          "location": "line 17"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 2000 should be a named constant",
+          "location": "line 18"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": [
+        {
+          "name": "Database",
+          "methods": 9,
+          "lines": 72
+        }
+      ]
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/middleware/validateRequest.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 65,
+          "code": 40,
+          "blank": 13,
+          "comment": 12
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 1.5
+      },
+      "quality_score": 96,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "long_function",
+          "severity": "medium",
+          "message": "Function 'mockResponse' has 53 lines (max: 50)",
+          "location": "mockResponse"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 49"
+        },
+        {
+          "type": "commented_code",
+          "severity": "low",
+          "message": "Commented-out code should be removed",
+          "location": "line 45"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "mockRequest",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 1
+        },
+        {
+          "name": "mockResponse",
+          "parameters": 1,
+          "lines": 53,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/middleware/requireCustomer.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 38,
+          "code": 28,
+          "blank": 10,
+          "comment": 0
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 96,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 11"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 23"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/services/logger.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 34,
+          "code": 27,
+          "blank": 7,
+          "comment": 0
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 96,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 963912345678 should be a named constant",
+          "location": "line 21"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 963912345678 should be a named constant",
+          "location": "line 31"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/middleware/rateLimiters.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 46,
+          "code": 37,
+          "blank": 8,
+          "comment": 1
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 3.0
+      },
+      "quality_score": 97,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 26"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 300 should be a named constant",
+          "location": "line 27"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 32"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 33"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "getStore",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 2
+        },
+        {
+          "name": "createRateLimiter",
+          "parameters": 1,
+          "lines": 30,
+          "complexity": 4
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/auditService.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 108,
+          "code": 96,
+          "blank": 11,
+          "comment": 1
+        },
+        "functions": 6,
+        "classes": 0,
+        "avg_complexity": 4.5
+      },
+      "quality_score": 97,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 2000 should be a named constant",
+          "location": "line 7"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 255 should be a named constant",
+          "location": "line 50"
+        }
+      ],
+      "solid_violations": [
+        {
+          "principle": "OCP",
+          "name": "Open/Closed Principle",
+          "severity": "medium",
+          "message": "Found 3 type checks - consider using polymorphism"
+        }
+      ],
+      "function_details": [
+        {
+          "name": "truncate",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 3
+        },
+        {
+          "name": "sanitizeMetadata",
+          "parameters": 1,
+          "lines": 21,
+          "complexity": 10
+        },
+        {
+          "name": "shouldRecordAuditEvent",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 2
+        },
+        {
+          "name": "buildAuditPayload",
+          "parameters": 1,
+          "lines": 13,
+          "complexity": 8
+        },
+        {
+          "name": "insertAuditEvent",
+          "parameters": 1,
+          "lines": 23,
+          "complexity": 1
+        },
+        {
+          "name": "recordAuditEvent",
+          "parameters": 1,
+          "lines": 24,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/tokenService.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 454,
+          "code": 392,
+          "blank": 60,
+          "comment": 2
+        },
+        "functions": 29,
+        "classes": 0,
+        "avg_complexity": 2.9
+      },
+      "quality_score": 97,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 58"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 59"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 240"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 241"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "hashToken",
+          "parameters": 1,
+          "lines": 4,
+          "complexity": 1
+        },
+        {
+          "name": "normalizeRoleKey",
+          "parameters": 1,
+          "lines": 4,
+          "complexity": 2
+        },
+        {
+          "name": "normalizeRoleValue",
+          "parameters": 1,
+          "lines": 4,
+          "complexity": 2
+        },
+        {
+          "name": "getAccessSecret",
+          "parameters": 1,
+          "lines": 4,
+          "complexity": 2
+        },
+        {
+          "name": "getRefreshSecret",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 3
+        },
+        {
+          "name": "extractSubjectId",
+          "parameters": 1,
+          "lines": 8,
+          "complexity": 5
+        },
+        {
+          "name": "buildAccessPayload",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 1
+        },
+        {
+          "name": "issueTokens",
+          "parameters": 1,
+          "lines": 47,
+          "complexity": 8
+        },
+        {
+          "name": "revokeAllForSubject",
+          "parameters": 1,
+          "lines": 13,
+          "complexity": 5
+        },
+        {
+          "name": "revokeRefreshToken",
+          "parameters": 1,
+          "lines": 14,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/middleware/idempotency.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 228,
+          "code": 196,
+          "blank": 30,
+          "comment": 2
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 98,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 255 should be a named constant",
+          "location": "line 69"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/pricingEngine.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 154,
+          "code": 143,
+          "blank": 10,
+          "comment": 1
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 9.0
+      },
+      "quality_score": 98,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 810321 should be a named constant",
+          "location": "line 6"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "calculateDemandAndAdjustPercentage",
+          "parameters": 1,
+          "lines": 44,
+          "complexity": 9
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/suppliers/supplierAgents.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 272,
+          "code": 220,
+          "blank": 41,
+          "comment": 11
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 98,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 51"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/admin/adminFeatured.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 714,
+          "code": 612,
+          "blank": 83,
+          "comment": 19
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 98,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 301"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/admin/adminSuppliers.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 301,
+          "code": 251,
+          "blank": 39,
+          "comment": 11
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 98,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 55"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/delivery.status.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 43,
+          "code": 33,
+          "blank": 10,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 1.0
+      },
+      "quality_score": 98,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 39"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildApp",
+          "parameters": 1,
+          "lines": 37,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/services/relatedProductsService.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 72,
+          "code": 61,
+          "blank": 11,
+          "comment": 0
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 98,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 999 should be a named constant",
+          "location": "line 32"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/middleware/authDeliveryAgent.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 70,
+          "code": 54,
+          "blank": 15,
+          "comment": 1
+        },
+        "functions": 6,
+        "classes": 0,
+        "avg_complexity": 3.2
+      },
+      "quality_score": 99,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 6"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 7"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 8"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "isBearerHeader",
+          "parameters": 1,
+          "lines": 4,
+          "complexity": 2
+        },
+        {
+          "name": "getBearerToken",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 2
+        },
+        {
+          "name": "shouldEnforceAccountStatus",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "isDeliveryAccessPayload",
+          "parameters": 1,
+          "lines": 4,
+          "complexity": 2
+        },
+        {
+          "name": "isDeliveryAgentActive",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 2
+        },
+        {
+          "name": "authDeliveryAgent",
+          "parameters": 1,
+          "lines": 35,
+          "complexity": 10
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/middleware/authSupplier.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 70,
+          "code": 54,
+          "blank": 15,
+          "comment": 1
+        },
+        "functions": 6,
+        "classes": 0,
+        "avg_complexity": 3.2
+      },
+      "quality_score": 99,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 6"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 7"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 8"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "isBearerHeader",
+          "parameters": 1,
+          "lines": 4,
+          "complexity": 2
+        },
+        {
+          "name": "getBearerToken",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 2
+        },
+        {
+          "name": "shouldEnforceAccountStatus",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "isSupplierAccessPayload",
+          "parameters": 1,
+          "lines": 4,
+          "complexity": 2
+        },
+        {
+          "name": "isSupplierActive",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 2
+        },
+        {
+          "name": "authSupplier",
+          "parameters": 1,
+          "lines": 35,
+          "complexity": 10
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/linkingQueue.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 54,
+          "code": 45,
+          "blank": 7,
+          "comment": 2
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 3.5
+      },
+      "quality_score": 99,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 2000 should be a named constant",
+          "location": "line 18"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 19"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 20"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "getLinkingQueue",
+          "parameters": 1,
+          "lines": 18,
+          "complexity": 3
+        },
+        {
+          "name": "enqueueProductLinking",
+          "parameters": 1,
+          "lines": 28,
+          "complexity": 4
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/notificationQueue.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 46,
+          "code": 37,
+          "blank": 7,
+          "comment": 2
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 3.0
+      },
+      "quality_score": 99,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 18"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 19"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 20"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "getNotificationQueue",
+          "parameters": 1,
+          "lines": 18,
+          "complexity": 3
+        },
+        {
+          "name": "enqueueOrderNotification",
+          "parameters": 1,
+          "lines": 20,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/pricingQueue.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 54,
+          "code": 44,
+          "blank": 8,
+          "comment": 2
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 3.5
+      },
+      "quality_score": 99,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 2000 should be a named constant",
+          "location": "line 18"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 19"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 20"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "getPricingQueue",
+          "parameters": 1,
+          "lines": 18,
+          "complexity": 3
+        },
+        {
+          "name": "schedulePricingAdjustment",
+          "parameters": 1,
+          "lines": 28,
+          "complexity": 4
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/createSupplierHash.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 84,
+          "code": 70,
+          "blank": 13,
+          "comment": 1
+        },
+        "functions": 5,
+        "classes": 0,
+        "avg_complexity": 4.2
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "getArgValue",
+          "parameters": 1,
+          "lines": 13,
+          "complexity": 5
+        },
+        {
+          "name": "assertSecureSupplierPassword",
+          "parameters": 1,
+          "lines": 19,
+          "complexity": 6
+        },
+        {
+          "name": "buildUsageMessage",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 2
+        },
+        {
+          "name": "createSupplierHash",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 1
+        },
+        {
+          "name": "run",
+          "parameters": 1,
+          "lines": 31,
+          "complexity": 7
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/server.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 409,
+          "code": 307,
+          "blank": 58,
+          "comment": 44
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 3.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 384"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "shutdown",
+          "parameters": 1,
+          "lines": 22,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/jest.config.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 19,
+          "code": 19,
+          "blank": 0,
+          "comment": 0
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/hashPassword.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 76,
+          "code": 62,
+          "blank": 13,
+          "comment": 1
+        },
+        "functions": 5,
+        "classes": 0,
+        "avg_complexity": 3.8
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "getArgValue",
+          "parameters": 1,
+          "lines": 13,
+          "complexity": 6
+        },
+        {
+          "name": "assertSecurePasswordInput",
+          "parameters": 1,
+          "lines": 19,
+          "complexity": 6
+        },
+        {
+          "name": "createPasswordHash",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 1
+        },
+        {
+          "name": "buildUsageMessage",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 3
+        },
+        {
+          "name": "run",
+          "parameters": 1,
+          "lines": 23,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test_db.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 24,
+          "code": 19,
+          "blank": 4,
+          "comment": 1
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 5.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 5432 should be a named constant",
+          "location": "line 3"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "run",
+          "parameters": 0,
+          "lines": 19,
+          "complexity": 5
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/createAdminHash.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 84,
+          "code": 70,
+          "blank": 13,
+          "comment": 1
+        },
+        "functions": 5,
+        "classes": 0,
+        "avg_complexity": 4.2
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "getArgValue",
+          "parameters": 1,
+          "lines": 13,
+          "complexity": 5
+        },
+        {
+          "name": "assertSecureAdminPassword",
+          "parameters": 1,
+          "lines": 19,
+          "complexity": 6
+        },
+        {
+          "name": "buildUsageMessage",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 2
+        },
+        {
+          "name": "createAdminHash",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 1
+        },
+        {
+          "name": "run",
+          "parameters": 1,
+          "lines": 31,
+          "complexity": 7
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/middleware/authUploader.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 92,
+          "code": 70,
+          "blank": 20,
+          "comment": 2
+        },
+        "functions": 8,
+        "classes": 0,
+        "avg_complexity": 3.1
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 8"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 9"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "parseBearerToken",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 4
+        },
+        {
+          "name": "verifyToken",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 4
+        },
+        {
+          "name": "isAccessPayload",
+          "parameters": 1,
+          "lines": 4,
+          "complexity": 2
+        },
+        {
+          "name": "shouldEnforceAccountStatus",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "isSupplierActive",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 2
+        },
+        {
+          "name": "resolveAdminActor",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 2
+        },
+        {
+          "name": "resolveSupplierActor",
+          "parameters": 1,
+          "lines": 19,
+          "complexity": 4
+        },
+        {
+          "name": "authUploader",
+          "parameters": 1,
+          "lines": 27,
+          "complexity": 6
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/middleware/validateRequest.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 15,
+          "code": 12,
+          "blank": 3,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 2.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 6"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "validateRequest",
+          "parameters": 1,
+          "lines": 13,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/middleware/cache.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 75,
+          "code": 59,
+          "blank": 14,
+          "comment": 2
+        },
+        "functions": 4,
+        "classes": 0,
+        "avg_complexity": 4.2
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 200 should be a named constant",
+          "location": "line 39"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildCacheKey",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 1
+        },
+        {
+          "name": "buildCacheKeySet",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "cacheResponse",
+          "parameters": 1,
+          "lines": 41,
+          "complexity": 10
+        },
+        {
+          "name": "invalidateCache",
+          "parameters": 1,
+          "lines": 22,
+          "complexity": 5
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/middleware/authAdmin.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 70,
+          "code": 58,
+          "blank": 11,
+          "comment": 1
+        },
+        "functions": 4,
+        "classes": 0,
+        "avg_complexity": 4.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "extractBearerToken",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 4
+        },
+        {
+          "name": "verifyAdminAccessToken",
+          "parameters": 1,
+          "lines": 17,
+          "complexity": 4
+        },
+        {
+          "name": "mapVerificationError",
+          "parameters": 1,
+          "lines": 11,
+          "complexity": 3
+        },
+        {
+          "name": "authAdmin",
+          "parameters": 1,
+          "lines": 23,
+          "complexity": 5
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/middleware/requestId.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 24,
+          "code": 16,
+          "blank": 6,
+          "comment": 2
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 4.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 128 should be a named constant",
+          "location": "line 13"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "requestIdMiddleware",
+          "parameters": 1,
+          "lines": 15,
+          "complexity": 4
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/middleware/requireCustomer.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 15,
+          "code": 10,
+          "blank": 3,
+          "comment": 2
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 5.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 401 should be a named constant",
+          "location": "line 6"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 403 should be a named constant",
+          "location": "line 9"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "requireCustomer",
+          "parameters": 1,
+          "lines": 12,
+          "complexity": 5
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/config/queue.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 15,
+          "code": 9,
+          "blank": 4,
+          "comment": 2
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 1.5
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "isQueueEnabled",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "getQueueConnection",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/config/opensearch.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 48,
+          "code": 39,
+          "blank": 8,
+          "comment": 1
+        },
+        "functions": 3,
+        "classes": 0,
+        "avg_complexity": 2.7
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "isOpenSearchEnabled",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "getIndexName",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "getOpenSearchClient",
+          "parameters": 1,
+          "lines": 31,
+          "complexity": 6
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/config/supabase.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 31,
+          "code": 22,
+          "blank": 7,
+          "comment": 2
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 2.5
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "isSupabaseConfigured",
+          "parameters": 1,
+          "lines": 5,
+          "complexity": 2
+        },
+        {
+          "name": "getSupabaseClient",
+          "parameters": 1,
+          "lines": 19,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/config/env.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 191,
+          "code": 164,
+          "blank": 23,
+          "comment": 4
+        },
+        "functions": 11,
+        "classes": 0,
+        "avg_complexity": 3.9
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "isSet",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 2
+        },
+        {
+          "name": "ensureAll",
+          "parameters": 1,
+          "lines": 12,
+          "complexity": 5
+        },
+        {
+          "name": "ensureAny",
+          "parameters": 1,
+          "lines": 28,
+          "complexity": 5
+        },
+        {
+          "name": "hasAnySet",
+          "parameters": 0,
+          "lines": 5,
+          "complexity": 1
+        },
+        {
+          "name": "hasWildcardCorsOrigin",
+          "parameters": 0,
+          "lines": 8,
+          "complexity": 2
+        },
+        {
+          "name": "throwForFailedChecks",
+          "parameters": 0,
+          "lines": 9,
+          "complexity": 3
+        },
+        {
+          "name": "warnForFailedChecks",
+          "parameters": 0,
+          "lines": 9,
+          "complexity": 3
+        },
+        {
+          "name": "getProductionBlockingChecks",
+          "parameters": 0,
+          "lines": 37,
+          "complexity": 5
+        },
+        {
+          "name": "getProductionWarningChecks",
+          "parameters": 0,
+          "lines": 46,
+          "complexity": 8
+        },
+        {
+          "name": "warnIfWeakBcryptRounds",
+          "parameters": 0,
+          "lines": 28,
+          "complexity": 7
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/config/redis.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 47,
+          "code": 34,
+          "blank": 11,
+          "comment": 2
+        },
+        "functions": 3,
+        "classes": 0,
+        "avg_complexity": 1.7
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "getRedisClient",
+          "parameters": 1,
+          "lines": 2,
+          "complexity": 1
+        },
+        {
+          "name": "isRedisEnabled",
+          "parameters": 1,
+          "lines": 2,
+          "complexity": 1
+        },
+        {
+          "name": "closeRedis",
+          "parameters": 1,
+          "lines": 15,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/utils/textNormalize.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 17,
+          "code": 12,
+          "blank": 3,
+          "comment": 2
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 3.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "normalizeText",
+          "parameters": 1,
+          "lines": 14,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/utils/parseBoolean.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 14,
+          "code": 12,
+          "blank": 2,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 8.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [
+        {
+          "principle": "OCP",
+          "name": "Open/Closed Principle",
+          "severity": "medium",
+          "message": "Found 3 type checks - consider using polymorphism"
+        }
+      ],
+      "function_details": [
+        {
+          "name": "parseBoolean",
+          "parameters": 1,
+          "lines": 14,
+          "complexity": 8
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/utils/deliveryStateMachine.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 45,
+          "code": 33,
+          "blank": 8,
+          "comment": 4
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 7.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "commented_code",
+          "severity": "low",
+          "message": "Commented-out code should be removed",
+          "location": "line 31"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "isValidTransition",
+          "parameters": 1,
+          "lines": 19,
+          "complexity": 7
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/utils/phoneNumber.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 31,
+          "code": 23,
+          "blank": 8,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 10.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "normalizePhoneNumber",
+          "parameters": 1,
+          "lines": 31,
+          "complexity": 10
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/utils/dynamicUpdate.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 43,
+          "code": 35,
+          "blank": 8,
+          "comment": 0
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 4.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "hasOwn",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "buildDynamicUpdate",
+          "parameters": 1,
+          "lines": 37,
+          "complexity": 7
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/utils/rateLimitKey.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 8,
+          "code": 4,
+          "blank": 4,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 3.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "getClientKey",
+          "parameters": 1,
+          "lines": 4,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/utils/pricing.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 38,
+          "code": 29,
+          "blank": 7,
+          "comment": 2
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 4.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 20"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "roundMoney",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 2
+        },
+        {
+          "name": "computeEffectivePrice",
+          "parameters": 1,
+          "lines": 16,
+          "complexity": 6
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/scripts/setup_search.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 51,
+          "code": 46,
+          "blank": 5,
+          "comment": 0
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 2.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "executeSearchSetupSteps",
+          "parameters": 0,
+          "lines": 8,
+          "complexity": 2
+        },
+        {
+          "name": "setupSearch",
+          "parameters": 0,
+          "lines": 14,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/scripts/link_products_backfill.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 81,
+          "code": 64,
+          "blank": 14,
+          "comment": 3
+        },
+        "functions": 3,
+        "classes": 0,
+        "avg_complexity": 4.3
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 13"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "mapWithConcurrency",
+          "parameters": 1,
+          "lines": 14,
+          "complexity": 2
+        },
+        {
+          "name": "fetchBatch",
+          "parameters": 1,
+          "lines": 16,
+          "complexity": 4
+        },
+        {
+          "name": "run",
+          "parameters": 1,
+          "lines": 38,
+          "complexity": 7
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/scripts/run_schema_remediation.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 128,
+          "code": 113,
+          "blank": 12,
+          "comment": 3
+        },
+        "functions": 3,
+        "classes": 2,
+        "avg_complexity": 3.7
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 007 should be a named constant",
+          "location": "line 2"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "runMigrations",
+          "parameters": 0,
+          "lines": 16,
+          "complexity": 3
+        },
+        {
+          "name": "runVerifications",
+          "parameters": 0,
+          "lines": 18,
+          "complexity": 6
+        },
+        {
+          "name": "run",
+          "parameters": 0,
+          "lines": 26,
+          "complexity": 2
+        }
+      ],
+      "class_details": [
+        {
+          "name": "AS",
+          "methods": 0,
+          "lines": 21
+        },
+        {
+          "name": "AND",
+          "methods": 8,
+          "lines": 72
+        }
+      ]
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/scripts/init_otp_table.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 24,
+          "code": 21,
+          "blank": 3,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 3.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "createOtpTable",
+          "parameters": 1,
+          "lines": 22,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/scripts/opensearch_setup.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 196,
+          "code": 176,
+          "blank": 19,
+          "comment": 1
+        },
+        "functions": 11,
+        "classes": 0,
+        "avg_complexity": 2.3
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 768 should be a named constant",
+          "location": "line 41"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 128 should be a named constant",
+          "location": "line 49"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildAnalysis",
+          "parameters": 1,
+          "lines": 36,
+          "complexity": 3
+        },
+        {
+          "name": "getEmbeddingConfig",
+          "parameters": 1,
+          "lines": 17,
+          "complexity": 7
+        },
+        {
+          "name": "buildEmbeddingField",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 1
+        },
+        {
+          "name": "buildCommonIndexBody",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 3
+        },
+        {
+          "name": "buildProductProperties",
+          "parameters": 1,
+          "lines": 24,
+          "complexity": 1
+        },
+        {
+          "name": "buildDealProperties",
+          "parameters": 1,
+          "lines": 21,
+          "complexity": 1
+        },
+        {
+          "name": "buildMasterProductProperties",
+          "parameters": 1,
+          "lines": 15,
+          "complexity": 1
+        },
+        {
+          "name": "buildSupplierProperties",
+          "parameters": 1,
+          "lines": 24,
+          "complexity": 1
+        },
+        {
+          "name": "buildIndexBody",
+          "parameters": 1,
+          "lines": 15,
+          "complexity": 2
+        },
+        {
+          "name": "ensureIndex",
+          "parameters": 1,
+          "lines": 12,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/scripts/verify_schema_remediation.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 184,
+          "code": 167,
+          "blank": 16,
+          "comment": 1
+        },
+        "functions": 9,
+        "classes": 2,
+        "avg_complexity": 2.8
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "verifyRlsStatus",
+          "parameters": 0,
+          "lines": 16,
+          "complexity": 3
+        },
+        {
+          "name": "verifyPolicyCount",
+          "parameters": 0,
+          "lines": 9,
+          "complexity": 1
+        },
+        {
+          "name": "verifyMissingFkIndexes",
+          "parameters": 0,
+          "lines": 20,
+          "complexity": 6
+        },
+        {
+          "name": "verifyTriggers",
+          "parameters": 0,
+          "lines": 23,
+          "complexity": 1
+        },
+        {
+          "name": "verifyTimestampColumns",
+          "parameters": 0,
+          "lines": 21,
+          "complexity": 5
+        },
+        {
+          "name": "verifyNotNullStatusColumns",
+          "parameters": 0,
+          "lines": 14,
+          "complexity": 3
+        },
+        {
+          "name": "verifyOrderItemsCheckConstraints",
+          "parameters": 0,
+          "lines": 20,
+          "complexity": 2
+        },
+        {
+          "name": "verifyFunctionSecuritySearchPath",
+          "parameters": 0,
+          "lines": 15,
+          "complexity": 2
+        },
+        {
+          "name": "verify",
+          "parameters": 0,
+          "lines": 30,
+          "complexity": 2
+        }
+      ],
+      "class_details": [
+        {
+          "name": "AS",
+          "methods": 7,
+          "lines": 76
+        },
+        {
+          "name": "AND",
+          "methods": 2,
+          "lines": 60
+        }
+      ]
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/scripts/opensearch_reindex.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 268,
+          "code": 238,
+          "blank": 29,
+          "comment": 1
+        },
+        "functions": 14,
+        "classes": 0,
+        "avg_complexity": 2.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 8"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "withFallbackCityIds",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 2
+        },
+        {
+          "name": "mapProductRow",
+          "parameters": 1,
+          "lines": 23,
+          "complexity": 1
+        },
+        {
+          "name": "mapDealRow",
+          "parameters": 1,
+          "lines": 20,
+          "complexity": 1
+        },
+        {
+          "name": "mapSupplierRow",
+          "parameters": 1,
+          "lines": 16,
+          "complexity": 2
+        },
+        {
+          "name": "mapMasterProductRow",
+          "parameters": 1,
+          "lines": 14,
+          "complexity": 1
+        },
+        {
+          "name": "mapWithConcurrency",
+          "parameters": 1,
+          "lines": 16,
+          "complexity": 2
+        },
+        {
+          "name": "attachEmbeddings",
+          "parameters": 1,
+          "lines": 13,
+          "complexity": 3
+        },
+        {
+          "name": "fetchProducts",
+          "parameters": 1,
+          "lines": 13,
+          "complexity": 1
+        },
+        {
+          "name": "fetchDeals",
+          "parameters": 1,
+          "lines": 12,
+          "complexity": 1
+        },
+        {
+          "name": "fetchSuppliers",
+          "parameters": 1,
+          "lines": 12,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/workers/pricingWorker.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 41,
+          "code": 31,
+          "blank": 8,
+          "comment": 2
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 3.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "start",
+          "parameters": 1,
+          "lines": 23,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/workers/createWorker.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 44,
+          "code": 35,
+          "blank": 9,
+          "comment": 0
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 2.5
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "createManagedWorker",
+          "parameters": 1,
+          "lines": 17,
+          "complexity": 3
+        },
+        {
+          "name": "shutdown",
+          "parameters": 1,
+          "lines": 19,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/workers/productLinkingWorker.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 45,
+          "code": 35,
+          "blank": 8,
+          "comment": 2
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 7.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "start",
+          "parameters": 1,
+          "lines": 27,
+          "complexity": 7
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/workers/notificationWorker.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 66,
+          "code": 53,
+          "blank": 11,
+          "comment": 2
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 4.5
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 5000 should be a named constant",
+          "location": "line 44"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "start",
+          "parameters": 1,
+          "lines": 26,
+          "complexity": 5
+        },
+        {
+          "name": "pollOutbox",
+          "parameters": 1,
+          "lines": 22,
+          "complexity": 4
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/orders.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 519,
+          "code": 427,
+          "blank": 69,
+          "comment": 23
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/products.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 319,
+          "code": 271,
+          "blank": 37,
+          "comment": 11
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/suppliers.helpers.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 36,
+          "code": 32,
+          "blank": 4,
+          "comment": 0
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 4.5
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "triggerProductLinking",
+          "parameters": 1,
+          "lines": 22,
+          "complexity": 5
+        },
+        {
+          "name": "isPublicSupplierRequest",
+          "parameters": 1,
+          "lines": 11,
+          "complexity": 4
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/cart.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 159,
+          "code": 126,
+          "blank": 27,
+          "comment": 6
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/user.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 231,
+          "code": 212,
+          "blank": 19,
+          "comment": 0
+        },
+        "functions": 6,
+        "classes": 0,
+        "avg_complexity": 1.7
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "firstDefined",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 3
+        },
+        {
+          "name": "normalizeProfilePayload",
+          "parameters": 1,
+          "lines": 25,
+          "complexity": 1
+        },
+        {
+          "name": "hasRequiredProfileFields",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 2
+        },
+        {
+          "name": "buildUpsertValues",
+          "parameters": 1,
+          "lines": 27,
+          "complexity": 1
+        },
+        {
+          "name": "upsertUserProfile",
+          "parameters": 1,
+          "lines": 8,
+          "complexity": 1
+        },
+        {
+          "name": "fetchUserProfileByUserId",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/auth.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 11,
+          "code": 8,
+          "blank": 3,
+          "comment": 0
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/deals.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 370,
+          "code": 316,
+          "blank": 45,
+          "comment": 9
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/suppliers.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 36,
+          "code": 26,
+          "blank": 7,
+          "comment": 3
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/admin.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 13,
+          "code": 8,
+          "blank": 4,
+          "comment": 1
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/deals.helpers.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 18,
+          "code": 14,
+          "blank": 4,
+          "comment": 0
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 2.5
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "hasAtLeastOneField",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "ensureProductBelongsToSupplier",
+          "parameters": 1,
+          "lines": 14,
+          "complexity": 4
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/admin.helpers.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 22,
+          "code": 16,
+          "blank": 6,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 3.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "revokeSupplierSessions",
+          "parameters": 1,
+          "lines": 19,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/orderNotificationOutbox.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 200,
+          "code": 177,
+          "blank": 23,
+          "comment": 0
+        },
+        "functions": 9,
+        "classes": 0,
+        "avg_complexity": 3.6
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 65"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildRetryDelayMinutes",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 1
+        },
+        {
+          "name": "enqueuePendingOrderNotifications",
+          "parameters": 1,
+          "lines": 48,
+          "complexity": 9
+        },
+        {
+          "name": "getPendingNotifications",
+          "parameters": 1,
+          "lines": 36,
+          "complexity": 8
+        },
+        {
+          "name": "markNotificationSent",
+          "parameters": 1,
+          "lines": 15,
+          "complexity": 1
+        },
+        {
+          "name": "markNotificationRetry",
+          "parameters": 1,
+          "lines": 19,
+          "complexity": 3
+        },
+        {
+          "name": "deliverNotification",
+          "parameters": 1,
+          "lines": 8,
+          "complexity": 2
+        },
+        {
+          "name": "processPendingNotification",
+          "parameters": 1,
+          "lines": 24,
+          "complexity": 4
+        },
+        {
+          "name": "dispatchPendingNotifications",
+          "parameters": 1,
+          "lines": 30,
+          "complexity": 3
+        },
+        {
+          "name": "dispatchPendingNotificationsForOrder",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/logger.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 152,
+          "code": 125,
+          "blank": 24,
+          "comment": 3
+        },
+        "functions": 11,
+        "classes": 0,
+        "avg_complexity": 2.8
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 100 should be a named constant",
+          "location": "line 132"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 1000 should be a named constant",
+          "location": "line 135"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "maskValue",
+          "parameters": 1,
+          "lines": 8,
+          "complexity": 4
+        },
+        {
+          "name": "shouldRedactKey",
+          "parameters": 1,
+          "lines": 2,
+          "complexity": 1
+        },
+        {
+          "name": "shouldMaskKey",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "sanitize",
+          "parameters": 1,
+          "lines": 24,
+          "complexity": 8
+        },
+        {
+          "name": "formatLog",
+          "parameters": 1,
+          "lines": 22,
+          "complexity": 3
+        },
+        {
+          "name": "logInfo",
+          "parameters": 1,
+          "lines": 5,
+          "complexity": 1
+        },
+        {
+          "name": "logWarn",
+          "parameters": 1,
+          "lines": 5,
+          "complexity": 1
+        },
+        {
+          "name": "logError",
+          "parameters": 1,
+          "lines": 14,
+          "complexity": 3
+        },
+        {
+          "name": "logDebug",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 2
+        },
+        {
+          "name": "logRequest",
+          "parameters": 1,
+          "lines": 21,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/passwordPolicy.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 35,
+          "code": 27,
+          "blank": 7,
+          "comment": 1
+        },
+        "functions": 5,
+        "classes": 0,
+        "avg_complexity": 2.6
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "hasUpper",
+          "parameters": 1,
+          "lines": 2,
+          "complexity": 1
+        },
+        {
+          "name": "hasLower",
+          "parameters": 1,
+          "lines": 2,
+          "complexity": 1
+        },
+        {
+          "name": "hasNumber",
+          "parameters": 1,
+          "lines": 2,
+          "complexity": 1
+        },
+        {
+          "name": "hasSymbol",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "validatePassword",
+          "parameters": 1,
+          "lines": 26,
+          "complexity": 9
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/searchService.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 450,
+          "code": 402,
+          "blank": 47,
+          "comment": 1
+        },
+        "functions": 20,
+        "classes": 0,
+        "avg_complexity": 3.1
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "normalizeQuery",
+          "parameters": 1,
+          "lines": 11,
+          "complexity": 2
+        },
+        {
+          "name": "buildOpenSearchQuery",
+          "parameters": 1,
+          "lines": 47,
+          "complexity": 2
+        },
+        {
+          "name": "buildSemanticKnnQuery",
+          "parameters": 1,
+          "lines": 16,
+          "complexity": 2
+        },
+        {
+          "name": "toId",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "mergeRrf",
+          "parameters": 1,
+          "lines": 19,
+          "complexity": 4
+        },
+        {
+          "name": "buildDealAvailabilityFilter",
+          "parameters": 1,
+          "lines": 27,
+          "complexity": 1
+        },
+        {
+          "name": "searchOpenSearchIndex",
+          "parameters": 1,
+          "lines": 28,
+          "complexity": 7
+        },
+        {
+          "name": "searchOpenSearchSemanticIndex",
+          "parameters": 1,
+          "lines": 21,
+          "complexity": 6
+        },
+        {
+          "name": "emptyCatalogResults",
+          "parameters": 1,
+          "lines": 5,
+          "complexity": 1
+        },
+        {
+          "name": "buildLexicalFilters",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/jwtService.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 40,
+          "code": 32,
+          "blank": 7,
+          "comment": 1
+        },
+        "functions": 4,
+        "classes": 0,
+        "avg_complexity": 2.2
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildVerifyOptions",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 4
+        },
+        {
+          "name": "buildSignOptions",
+          "parameters": 1,
+          "lines": 8,
+          "complexity": 3
+        },
+        {
+          "name": "verifyJwt",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "signJwt",
+          "parameters": 1,
+          "lines": 13,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/relatedProductsService.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 270,
+          "code": 234,
+          "blank": 34,
+          "comment": 2
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/embeddingService.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 102,
+          "code": 84,
+          "blank": 17,
+          "comment": 1
+        },
+        "functions": 6,
+        "classes": 0,
+        "avg_complexity": 3.7
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 8000 should be a named constant",
+          "location": "line 8"
+        },
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 500 should be a named constant",
+          "location": "line 9"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "isEmbeddingsEnabled",
+          "parameters": 1,
+          "lines": 5,
+          "complexity": 1
+        },
+        {
+          "name": "normalizeText",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 2
+        },
+        {
+          "name": "getFromCache",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 2
+        },
+        {
+          "name": "setCache",
+          "parameters": 1,
+          "lines": 12,
+          "complexity": 3
+        },
+        {
+          "name": "fetchEmbedding",
+          "parameters": 1,
+          "lines": 42,
+          "complexity": 9
+        },
+        {
+          "name": "getEmbedding",
+          "parameters": 1,
+          "lines": 22,
+          "complexity": 5
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/queueMonitor.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 53,
+          "code": 41,
+          "blank": 10,
+          "comment": 2
+        },
+        "functions": 2,
+        "classes": 0,
+        "avg_complexity": 3.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "getQueueCounts",
+          "parameters": 1,
+          "lines": 5,
+          "complexity": 1
+        },
+        {
+          "name": "getQueueStats",
+          "parameters": 1,
+          "lines": 41,
+          "complexity": 5
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/storageService.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 76,
+          "code": 59,
+          "blank": 15,
+          "comment": 2
+        },
+        "functions": 6,
+        "classes": 0,
+        "avg_complexity": 2.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 900 should be a named constant",
+          "location": "line 10"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "sanitizeSegment",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "sanitizeFilename",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "buildObjectPath",
+          "parameters": 1,
+          "lines": 12,
+          "complexity": 1
+        },
+        {
+          "name": "ensureSupabase",
+          "parameters": 1,
+          "lines": 12,
+          "complexity": 3
+        },
+        {
+          "name": "createSignedUpload",
+          "parameters": 1,
+          "lines": 30,
+          "complexity": 5
+        },
+        {
+          "name": "getPublicUrl",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/productLinkingService.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 337,
+          "code": 291,
+          "blank": 44,
+          "comment": 2
+        },
+        "functions": 20,
+        "classes": 0,
+        "avg_complexity": 2.9
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildLinkingText",
+          "parameters": 1,
+          "lines": 12,
+          "complexity": 1
+        },
+        {
+          "name": "fetchProduct",
+          "parameters": 1,
+          "lines": 22,
+          "complexity": 1
+        },
+        {
+          "name": "buildOpenSearchFilter",
+          "parameters": 1,
+          "lines": 11,
+          "complexity": 2
+        },
+        {
+          "name": "buildOpenSearchQuery",
+          "parameters": 1,
+          "lines": 19,
+          "complexity": 2
+        },
+        {
+          "name": "getTopSearchHit",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 4
+        },
+        {
+          "name": "parseSearchHit",
+          "parameters": 1,
+          "lines": 11,
+          "complexity": 5
+        },
+        {
+          "name": "findBestMasterProductOpenSearch",
+          "parameters": 1,
+          "lines": 22,
+          "complexity": 5
+        },
+        {
+          "name": "findBestMasterProductTrgm",
+          "parameters": 1,
+          "lines": 18,
+          "complexity": 3
+        },
+        {
+          "name": "findBestMasterProduct",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 2
+        },
+        {
+          "name": "createMasterProduct",
+          "parameters": 1,
+          "lines": 40,
+          "complexity": 7
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/services/searchIndexer.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 361,
+          "code": 338,
+          "blank": 22,
+          "comment": 1
+        },
+        "functions": 20,
+        "classes": 0,
+        "avg_complexity": 2.5
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 404 should be a named constant",
+          "location": "line 37"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "shouldRefresh",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        },
+        {
+          "name": "safeIndex",
+          "parameters": 1,
+          "lines": 16,
+          "complexity": 3
+        },
+        {
+          "name": "safeDelete",
+          "parameters": 1,
+          "lines": 16,
+          "complexity": 3
+        },
+        {
+          "name": "fetchCityIds",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 1
+        },
+        {
+          "name": "fetchProductRow",
+          "parameters": 1,
+          "lines": 16,
+          "complexity": 1
+        },
+        {
+          "name": "fetchDealRow",
+          "parameters": 1,
+          "lines": 16,
+          "complexity": 1
+        },
+        {
+          "name": "fetchSupplierRow",
+          "parameters": 1,
+          "lines": 26,
+          "complexity": 1
+        },
+        {
+          "name": "fetchMasterProductRow",
+          "parameters": 1,
+          "lines": 23,
+          "complexity": 1
+        },
+        {
+          "name": "mapProductDoc",
+          "parameters": 1,
+          "lines": 38,
+          "complexity": 3
+        },
+        {
+          "name": "mapDealDoc",
+          "parameters": 1,
+          "lines": 34,
+          "complexity": 3
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/src/middleware/requestLogger.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 38,
+          "code": 28,
+          "blank": 6,
+          "comment": 4
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 7.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 27"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "requestLogger",
+          "parameters": 1,
+          "lines": 37,
+          "complexity": 7
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/src/utils/validators.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 72,
+          "code": 63,
+          "blank": 8,
+          "comment": 1
+        },
+        "functions": 7,
+        "classes": 0,
+        "avg_complexity": 2.7
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 255 should be a named constant",
+          "location": "line 43"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "validateRequired",
+          "parameters": 1,
+          "lines": 8,
+          "complexity": 4
+        },
+        {
+          "name": "validateEmail",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 2
+        },
+        {
+          "name": "validatePhone",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 2
+        },
+        {
+          "name": "validatePositiveNumber",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 3
+        },
+        {
+          "name": "validateInteger",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 2
+        },
+        {
+          "name": "validateStringLength",
+          "parameters": 1,
+          "lines": 14,
+          "complexity": 4
+        },
+        {
+          "name": "validateUrl",
+          "parameters": 1,
+          "lines": 17,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/src/utils/errorHandler.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 138,
+          "code": 119,
+          "blank": 17,
+          "comment": 2
+        },
+        "functions": 4,
+        "classes": 5,
+        "avg_complexity": 3.5
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "mapKnownError",
+          "parameters": 1,
+          "lines": 11,
+          "complexity": 5
+        },
+        {
+          "name": "resolveResponseError",
+          "parameters": 1,
+          "lines": 13,
+          "complexity": 2
+        },
+        {
+          "name": "sanitizeErrorMessage",
+          "parameters": 1,
+          "lines": 31,
+          "complexity": 5
+        },
+        {
+          "name": "asyncHandler",
+          "parameters": 1,
+          "lines": 14,
+          "complexity": 2
+        }
+      ],
+      "class_details": [
+        {
+          "name": "AppError",
+          "methods": 1,
+          "lines": 12
+        },
+        {
+          "name": "ValidationError",
+          "methods": 1,
+          "lines": 8
+        },
+        {
+          "name": "NotFoundError",
+          "methods": 1,
+          "lines": 7
+        },
+        {
+          "name": "UnauthorizedError",
+          "methods": 1,
+          "lines": 7
+        },
+        {
+          "name": "ForbiddenError",
+          "methods": 7,
+          "lines": 72
+        }
+      ]
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/suppliers/supplierProducts.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 396,
+          "code": 341,
+          "blank": 49,
+          "comment": 6
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/suppliers/supplierPublic.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 140,
+          "code": 119,
+          "blank": 16,
+          "comment": 5
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/suppliers/supplierProfile.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 173,
+          "code": 145,
+          "blank": 24,
+          "comment": 4
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/suppliers/supplierStats.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 151,
+          "code": 132,
+          "blank": 16,
+          "comment": 3
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/auth/authUtils.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 282,
+          "code": 239,
+          "blank": 42,
+          "comment": 1
+        },
+        "functions": 21,
+        "classes": 0,
+        "avg_complexity": 2.9
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildRateLimitStore",
+          "parameters": 1,
+          "lines": 49,
+          "complexity": 6
+        },
+        {
+          "name": "hashIdentifier",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 2
+        },
+        {
+          "name": "resolveOtpHashSecret",
+          "parameters": 1,
+          "lines": 7,
+          "complexity": 4
+        },
+        {
+          "name": "hashOtpCode",
+          "parameters": 1,
+          "lines": 8,
+          "complexity": 2
+        },
+        {
+          "name": "safeStringEqual",
+          "parameters": 1,
+          "lines": 9,
+          "complexity": 4
+        },
+        {
+          "name": "isLegacyOtpCode",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 2
+        },
+        {
+          "name": "buildCookieOptions",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 1
+        },
+        {
+          "name": "clearCookieOptions",
+          "parameters": 1,
+          "lines": 6,
+          "complexity": 1
+        },
+        {
+          "name": "buildCsrfCookieOptions",
+          "parameters": 1,
+          "lines": 10,
+          "complexity": 1
+        },
+        {
+          "name": "issueCsrfToken",
+          "parameters": 1,
+          "lines": 3,
+          "complexity": 1
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/auth/adminAuth.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 94,
+          "code": 81,
+          "blank": 11,
+          "comment": 2
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/auth/customerAuth.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 297,
+          "code": 229,
+          "blank": 45,
+          "comment": 23
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/auth/supplierAuth.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 109,
+          "code": 92,
+          "blank": 11,
+          "comment": 6
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/auth/deliveryAuth.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 107,
+          "code": 91,
+          "blank": 11,
+          "comment": 5
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/auth/commonAuth.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 111,
+          "code": 99,
+          "blank": 10,
+          "comment": 2
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/routes/admin/adminOps.routes.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 81,
+          "code": 69,
+          "blank": 9,
+          "comment": 3
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/routes/orders.idempotency.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 34,
+          "code": 27,
+          "blank": 7,
+          "comment": 0
+        },
+        "functions": 1,
+        "classes": 0,
+        "avg_complexity": 2.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [
+        {
+          "type": "magic_number",
+          "severity": "low",
+          "message": "Magic number 400 should be a named constant",
+          "location": "line 30"
+        }
+      ],
+      "solid_violations": [],
+      "function_details": [
+        {
+          "name": "buildApp",
+          "parameters": 1,
+          "lines": 29,
+          "complexity": 2
+        }
+      ],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/services/pricingEngine.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 40,
+          "code": 34,
+          "blank": 6,
+          "comment": 0
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/services/passwordHashScripts.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 62,
+          "code": 49,
+          "blank": 13,
+          "comment": 0
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/services/createSupplierHash.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 50,
+          "code": 37,
+          "blank": 13,
+          "comment": 0
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    },
+    {
+      "file": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/test/services/productLinkingService.test.js",
+      "language": "javascript",
+      "metrics": {
+        "lines": {
+          "total": 130,
+          "code": 113,
+          "blank": 17,
+          "comment": 0
+        },
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0.0
+      },
+      "quality_score": 100,
+      "grade": "A",
+      "smells": [],
+      "solid_violations": [],
+      "function_details": [],
+      "class_details": []
+    }
+  ]
+}

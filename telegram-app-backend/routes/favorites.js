@@ -2,9 +2,22 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const logger = require('../services/logger');
 const requireCustomer = require('../middleware/requireCustomer');
+const { body, param } = require('express-validator');
+const validateRequest = require('../middleware/validateRequest');
 
 router.use(requireCustomer);
+
+const validateAddFavorite = [
+    body('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
+    validateRequest
+];
+
+const validateRemoveFavorite = [
+    param('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
+    validateRequest
+];
 
 // GET all favorite product IDs for the authenticated user
 router.get('/', async (req, res) => {
@@ -20,21 +33,17 @@ router.get('/', async (req, res) => {
         res.json({ favorite_ids });
         
     } catch (error) {
-        console.error('Error fetching favorites:', error);
+        logger.error('Error fetching favorites', error);
         res.status(500).json({ error: 'Failed to fetch favorites' });
     }
 });
 
 // POST to add a new favorite
-router.post('/', async (req, res) => {
+router.post('/', validateAddFavorite, async (req, res) => {
     try {
         // SECURE: Get the user ID from the middleware.
         const { userId } = req.user;
         const { productId } = req.body;
-        
-        if (!productId) {
-            return res.status(400).json({ error: 'Product ID is required' });
-        }
         
         // This single "UPSERT" query is safer and more efficient.
         // It attempts to insert a new favorite. If it already exists (due to the primary key constraint), it does nothing.
@@ -44,13 +53,13 @@ router.post('/', async (req, res) => {
         res.status(201).json({ message: 'Added to favorites successfully' });
         
     } catch (error) {
-        console.error('Error adding to favorites:', error);
+        logger.error('Error adding to favorites', error);
         res.status(500).json({ error: 'Failed to add to favorites' });
     }
 });
 
 // DELETE to remove a favorite
-router.delete('/:productId', async (req, res) => {
+router.delete('/:productId', validateRemoveFavorite, async (req, res) => {
     try {
         // SECURE: Get the user ID from the middleware.
         const { userId } = req.user;
@@ -64,7 +73,7 @@ router.delete('/:productId', async (req, res) => {
         
     } catch (error)
     {
-        console.error('Error removing from favorites:', error);
+        logger.error('Error removing from favorites', error);
         res.status(500).json({ error: 'Failed to remove from favorites' });
     }
 });

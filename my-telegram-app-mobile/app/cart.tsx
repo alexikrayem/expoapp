@@ -18,23 +18,6 @@ export default function CartScreen() {
     const { formatPrice } = useCurrency();
     const router = useRouter();
 
-    if (cartItems.length === 0) {
-        return (
-            <SafeAreaView className="flex-1 bg-gray-50">
-                <AnimatedScreen className="justify-center items-center p-4">
-                    <ShoppingBag size={64} color="#9CA3AF" />
-                    <Text className="text-xl font-bold text-gray-800 mt-4">سلة التسوق فارغة</Text>
-                    <Text className="text-gray-500 mt-2 text-center">أضف بعض المنتجات لتبدأ التسوق</Text>
-                    <Button
-                        title="تصفح المنتجات"
-                        onPress={() => router.back()}
-                        className="mt-8"
-                    />
-                </AnimatedScreen>
-            </SafeAreaView>
-        );
-    }
-
     const renderItem = useCallback(({ item }: { item: any }) => (
         <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm flex-row items-center border border-border">
             <Image
@@ -84,6 +67,23 @@ export default function CartScreen() {
         </View>
     ), [actions, formatPrice]);
 
+    if (cartItems.length === 0) {
+        return (
+            <SafeAreaView className="flex-1 bg-gray-50">
+                <AnimatedScreen className="justify-center items-center p-4">
+                    <ShoppingBag size={64} color="#9CA3AF" />
+                    <Text className="text-xl font-bold text-gray-800 mt-4">سلة التسوق فارغة</Text>
+                    <Text className="text-gray-500 mt-2 text-center">أضف بعض المنتجات لتبدأ التسوق</Text>
+                    <Button
+                        title="تصفح المنتجات"
+                        onPress={() => router.back()}
+                        className="mt-8"
+                    />
+                </AnimatedScreen>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView className="flex-1 bg-surface">
             <AnimatedScreen>
@@ -92,7 +92,6 @@ export default function CartScreen() {
                         data={cartItems}
                         keyExtractor={(item: any) => item.product_id}
                         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-                        // @ts-ignore
                         estimatedItemSize={120}
                         removeClippedSubviews
                         initialNumToRender={6}

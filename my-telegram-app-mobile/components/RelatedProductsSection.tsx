@@ -22,11 +22,7 @@ export const RelatedProductsSection = ({ currentProductId, category }: RelatedPr
     const { openModal } = useModal();
     const { actions: { addToCart } } = useCart();
 
-    // Mock user for favorites
-    const telegramUser = { id: 12345 };
-    const { isFavorite, toggleFavorite } = useFavorites(telegramUser);
-
-    if (isLoading || !relatedProducts || relatedProducts.length === 0) return null;
+    const { isFavorite, toggleFavorite } = useFavorites();
 
     const renderItem = useCallback(
         ({ item }: { item: Product }) => (
@@ -44,6 +40,8 @@ export const RelatedProductsSection = ({ currentProductId, category }: RelatedPr
     );
 
     const keyExtractor = useCallback((item: Product) => item.id, []);
+
+    if (isLoading || !relatedProducts || relatedProducts.length === 0) return null;
 
     return (
         <View className="mt-4 mb-4">

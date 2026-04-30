@@ -4,17 +4,21 @@ import { authService } from '../services/authService';
 import { emitter } from '../utils/emitter';
 import { useEffect } from 'react';
 
-export const useOrders = (telegramUser: any) => {
+/**
+ * Fetches the authenticated user's orders.
+ * @param userId — The current user's ID. Pass `null`/`undefined` to disable the query.
+ */
+export const useOrders = (userId: string | number | null | undefined) => {
     const queryClient = useQueryClient();
 
     const { data: orders, isLoading: isLoadingOrders, error: ordersError, refetch } = useQuery({
-        queryKey: ['orders', telegramUser?.id],
+        queryKey: ['orders', userId],
         queryFn: async () => {
             const isAuth = await authService.isAuthenticated();
             if (!isAuth) return [];
             return orderService.getUserOrders();
         },
-        enabled: !!telegramUser,
+        enabled: !!userId,
         staleTime: 1000 * 60 * 5, // 5 minutes
     });
 

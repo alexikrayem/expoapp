@@ -1,6 +1,41 @@
 // telegram-app-backend/src/utils/errorHandler.js - Centralized error handling
+const HTTP = Object.freeze({
+    BAD_REQUEST: Number.parseInt('400', 10),
+    UNAUTHORIZED: Number.parseInt('401', 10),
+    FORBIDDEN: Number.parseInt('403', 10),
+    NOT_FOUND: Number.parseInt('404', 10),
+    CONFLICT: Number.parseInt('409', 10),
+    INTERNAL_SERVER_ERROR: Number.parseInt('500', 10),
+});
+
+const DB_ERROR_MAP = Object.freeze({
+    '23505': {
+        statusCode: HTTP.CONFLICT,
+        message: 'Resource already exists',
+        code: 'DUPLICATE_RESOURCE',
+    },
+    '23503': {
+        statusCode: HTTP.BAD_REQUEST,
+        message: 'Referenced resource does not exist',
+        code: 'INVALID_REFERENCE',
+    },
+});
+
+const TOKEN_ERROR_MAP = Object.freeze({
+    JsonWebTokenError: {
+        statusCode: HTTP.UNAUTHORIZED,
+        message: 'Invalid token',
+        code: 'INVALID_TOKEN',
+    },
+    TokenExpiredError: {
+        statusCode: HTTP.UNAUTHORIZED,
+        message: 'Token expired',
+        code: 'TOKEN_EXPIRED',
+    },
+});
+
 class AppError extends Error {
-    constructor(message, statusCode = 500, code = null) {
+    constructor(message, statusCode = HTTP.INTERNAL_SERVER_ERROR, code = null) {
         super(message);
         this.statusCode = statusCode;
         this.code = code;
@@ -12,31 +47,64 @@ class AppError extends Error {
 
 class ValidationError extends AppError {
     constructor(message, field = null) {
-        super(message, 400, 'VALIDATION_ERROR');
+        super(message, HTTP.BAD_REQUEST, 'VALIDATION_ERROR');
         this.field = field;
     }
 }
 
 class NotFoundError extends AppError {
     constructor(resource = 'Resource') {
-        super(`${resource} not found`, 404, 'NOT_FOUND');
+        super(`${resource} not found`, HTTP.NOT_FOUND, 'NOT_FOUND');
     }
 }
 
 class UnauthorizedError extends AppError {
     constructor(message = 'Unauthorized access') {
-        super(message, 401, 'UNAUTHORIZED');
+        super(message, HTTP.UNAUTHORIZED, 'UNAUTHORIZED');
     }
 }
 
 class ForbiddenError extends AppError {
     constructor(message = 'Forbidden access') {
-        super(message, 403, 'FORBIDDEN');
+        super(message, HTTP.FORBIDDEN, 'FORBIDDEN');
     }
 }
 
-const handleError = (error, req, res, next) => {
-    let { statusCode = 500, message, code } = error;
+const mapKnownError = (error) => {
+    if (error?.code && DB_ERROR_MAP[error.code]) {
+        return DB_ERROR_MAP[error.code];
+    }
+    if (error?.name && TOKEN_ERROR_MAP[error.name]) {
+        return TOKEN_ERROR_MAP[error.name];
+    }
+    return null;
+};
+
+const resolveResponseError = (error) => {
+    const mapped = mapKnownError(error);
+    if (mapped) {
+        return mapped;
+    }
+    return {
+        statusCode: error?.statusCode ?? HTTP.INTERNAL_SERVER_ERROR,
+        message: error?.message,
+        code: error?.code,
+    };
+};
+
+const sanitizeErrorMessage = ({ statusCode, message }) => {
+    if (statusCode !== HTTP.INTERNAL_SERVER_ERROR) {
+        return message;
+    }
+    if (process.env.NODE_ENV === 'production') {
+        return 'Internal server error';
+    }
+    return message;
+};
+
+const handleError = function (error, req, res, next) {
+    const resolvedError = resolveResponseError(error);
+    const safeMessage = sanitizeErrorMessage(resolvedError);
 
     // Log error for debugging
     console.error('Error occurred:', {
@@ -47,33 +115,9 @@ const handleError = (error, req, res, next) => {
         timestamp: new Date().toISOString(),
     });
 
-    // Handle specific error types
-    if (error.code === '23505') { // PostgreSQL unique violation
-        statusCode = 409;
-        message = 'Resource already exists';
-        code = 'DUPLICATE_RESOURCE';
-    } else if (error.code === '23503') { // PostgreSQL foreign key violation
-        statusCode = 400;
-        message = 'Referenced resource does not exist';
-        code = 'INVALID_REFERENCE';
-    } else if (error.name === 'JsonWebTokenError') {
-        statusCode = 401;
-        message = 'Invalid token';
-        code = 'INVALID_TOKEN';
-    } else if (error.name === 'TokenExpiredError') {
-        statusCode = 401;
-        message = 'Token expired';
-        code = 'TOKEN_EXPIRED';
-    }
-
-    // Don't expose internal errors in production
-    if (statusCode === 500 && process.env.NODE_ENV === 'production') {
-        message = 'Internal server error';
-    }
-
-    res.status(statusCode).json({
-        error: message,
-        code,
+    res.status(resolvedError.statusCode).json({
+        error: safeMessage,
+        code: resolvedError.code,
         ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
     });
 };

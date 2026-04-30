@@ -4,7 +4,7 @@ import { View, Image, Modal, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '@/utils/storage';
 import Animated, { FadeInDown, FadeInUp, useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import PressableScale from '@/components/ui/PressableScale';
@@ -56,7 +56,7 @@ export default function WelcomeOnboardingModal({ visible, onFinish }: any) {
 
     const finish = async () => {
         try {
-            await AsyncStorage.setItem(STORAGE_KEY, 'true');
+            await storage.setItem(STORAGE_KEY, 'true');
             setShowModal(false);
             if (onFinish) onFinish();
         } catch (error) {

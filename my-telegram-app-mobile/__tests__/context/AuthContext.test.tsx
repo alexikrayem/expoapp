@@ -4,8 +4,7 @@ import { render, waitFor } from "@testing-library/react-native"
 
 import { AuthProvider, useAuth } from "../../context/AuthContext"
 import { userService } from "../../services/userService"
-import { getAccessToken, clearTokens } from "../../api/apiClient"
-import { ensureValidToken } from "../../utils/tokenManager"
+import { getAccessToken, clearTokens, ensureValidToken } from "../../utils/tokenManager"
 
 jest.mock("../../services/userService", () => ({
   userService: {
@@ -13,12 +12,9 @@ jest.mock("../../services/userService", () => ({
   },
 }))
 
-jest.mock("../../api/apiClient", () => ({
+jest.mock("../../utils/tokenManager", () => ({
   getAccessToken: jest.fn(),
   clearTokens: jest.fn(),
-}))
-
-jest.mock("../../utils/tokenManager", () => ({
   ensureValidToken: jest.fn(),
 }))
 

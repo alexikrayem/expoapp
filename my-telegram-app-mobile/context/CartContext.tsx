@@ -2,8 +2,39 @@ import React, { createContext, useState, useContext, useEffect, useCallback, use
 import { useMiniCart } from './MiniCartContext';
 import { useToast } from './ToastContext';
 import { storage } from '../utils/storage';
+import { Product } from '@/types';
 
-const CartContext = createContext<any>(null);
+/**
+ * Represents an item in the user's cart.
+ *
+ * **Security note:** `effective_selling_price` is stored for *display purposes only*.
+ * The backend MUST re-validate prices from its own product catalog when creating
+ * orders — never trust client-supplied prices.
+ */
+interface CartItem {
+    product_id: string;
+    name: string;
+    image_url?: string;
+    supplier_name?: string;
+    effective_selling_price: string;
+    quantity: number;
+}
+
+interface CartContextType {
+    cartItems: CartItem[];
+    isLoadingCart: boolean;
+    getCartTotal: () => number;
+    getCartItemCount: () => number;
+    actions: {
+        addToCart: (product: Product) => void;
+        increaseQuantity: (productId: string) => void;
+        decreaseQuantity: (productId: string) => void;
+        removeItem: (productId: string) => void;
+        clearCart: () => void;
+    };
+}
+
+const CartContext = createContext<CartContextType | null>(null);
 export const useCart = () => {
     const context = useContext(CartContext);
     if (!context) {
@@ -17,7 +48,7 @@ const CART_STORAGE_KEY = 'my_app_cart';
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     const { showMiniCartBar } = useMiniCart();
     const { showToast } = useToast();
-    const [cartItems, setCartItems] = useState<any[]>([]);
+    const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {

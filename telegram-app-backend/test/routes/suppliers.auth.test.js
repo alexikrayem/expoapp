@@ -7,6 +7,7 @@ const cityRoutes = require('../../routes/cities');
 const buildApp = () => {
   const app = express();
   app.use('/api/suppliers', supplierRoutes);
+  app.use('/api/supplier', supplierRoutes);
   app.use('/api/cities', cityRoutes);
   return app;
 };
@@ -19,9 +20,14 @@ describe('Supplier route access and PII minimization', () => {
     app = buildApp();
   });
 
-  it('blocks non-public supplier endpoints without auth', async () => {
-    const res = await request(app).get('/api/suppliers/profile');
+  it('blocks private supplier endpoints without auth on the private mount', async () => {
+    const res = await request(app).get('/api/supplier/profile');
     expect(res.status).toBe(401);
+  });
+
+  it('hides private supplier endpoints on the public mount', async () => {
+    const res = await request(app).get('/api/suppliers/profile');
+    expect(res.status).toBe(404);
   });
 
   it('does not include sensitive columns in suppliers list query', async () => {

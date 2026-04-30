@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const logger = require('../services/logger');
 const { cacheResponse } = require('../middleware/cache');
 const { param } = require('express-validator');
 const validateRequest = require('../middleware/validateRequest');
@@ -9,11 +10,11 @@ const validateRequest = require('../middleware/validateRequest');
 // Get all cities
 router.get('/', cacheResponse(600, 'cities:list'), async (req, res) => {
     try {
-        const query = 'SELECT * FROM cities WHERE is_active = true ORDER BY name ASC';
+        const query = 'SELECT id, name, created_at, updated_at FROM cities WHERE is_active = true ORDER BY name ASC LIMIT 1000';
         const result = await db.query(query);
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching cities:', error);
+        logger.error('Error fetching cities', error);
         res.status(500).json({ error: 'Failed to fetch cities' });
     }
 });
@@ -25,7 +26,7 @@ router.get('/:cityId/suppliers', [
 ], async (req, res) => {
     try {
         const { cityId } = req.params;
-        
+
         // FIX: The query now joins with `supplier_cities` to filter by city.
         // It also removes the incorrect `p.is_active` check.
         const query = `
@@ -46,12 +47,13 @@ router.get('/:cityId/suppliers', [
             WHERE sc.city_id = $1 AND s.is_active = true
             GROUP BY s.id
             ORDER BY s.name ASC
+            LIMIT 1000
         `;
-        
+
         const result = await db.query(query, [cityId]);
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching suppliers:', error);
+        logger.error('Error fetching suppliers', error);
         res.status(500).json({ error: 'Failed to fetch suppliers' });
     }
 });
@@ -63,11 +65,13 @@ router.get('/:cityId/deals', [
 ], async (req, res) => {
     try {
         const { cityId } = req.params;
-        
+
         // FIX: The query now joins with `supplier_cities` to filter by city.
         const query = `
             SELECT 
-                d.*,
+                d.id, d.title, d.description, d.discount_percentage, 
+                d.start_date, d.end_date, d.product_id, d.supplier_id, 
+                d.is_active, d.created_at, d.updated_at, d.image_url,
                 s.name as supplier_name,
                 p.name as product_name
             FROM deals d
@@ -78,12 +82,13 @@ router.get('/:cityId/deals', [
             AND (d.start_date IS NULL OR d.start_date <= NOW())
             AND (d.end_date IS NULL OR d.end_date >= NOW())
             ORDER BY d.created_at DESC
+            LIMIT 1000
         `;
-        
+
         const result = await db.query(query, [cityId]);
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching deals:', error);
+        logger.error('Error fetching deals', error);
         res.status(500).json({ error: 'Failed to fetch deals' });
     }
 });

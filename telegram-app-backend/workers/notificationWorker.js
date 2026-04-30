@@ -4,10 +4,11 @@
 require('dotenv').config();
 require('../config/env');
 
-const { Worker } = require('bullmq');
 const logger = require('../services/logger');
 const telegramBotService = require('../services/telegramBot');
 const { isQueueEnabled, getQueueConnection } = require('../config/queue');
+const { createManagedWorker } = require('./createWorker');
+const { dispatchPendingNotifications } = require('../services/orderNotificationOutbox');
 
 const connection = getQueueConnection();
 
@@ -25,39 +26,37 @@ const start = async () => {
     logger.error('Telegram bot initialization failed in worker', error);
   }
 
-  const worker = new Worker(
-    'notifications',
-    async (job) => {
+  createManagedWorker({
+    queueName: 'notifications',
+    connection,
+    logPrefix: 'Notification worker',
+    processor: async (job) => {
       if (job.name === 'order-notification') {
         await telegramBotService.sendOrderNotificationToDeliveryAgent(job.data);
         return;
       }
-      logger.warn(`Unknown job type: ${job.name}`);
+
+      logger.warn('Unknown notification job type', { jobName: job.name, jobId: job.id });
+      throw new Error(`Unknown notification job type: ${job.name}`);
     },
-    { connection }
-  );
-
-  worker.on('completed', (job) => {
-    logger.info('Notification job completed', { jobId: job.id });
   });
 
-  worker.on('failed', (job, error) => {
-    logger.error('Notification job failed', error, { jobId: job?.id });
-  });
-
-  const shutdown = async (signal) => {
-    logger.info(`Worker shutdown: ${signal}`);
+  const outboxPollIntervalMs = Number(process.env.NOTIFICATION_OUTBOX_POLL_MS || 5000);
+  const pollOutbox = async () => {
     try {
-      await worker.close();
+      const result = await dispatchPendingNotifications({ limit: 25 });
+      if (result.processed > 0) {
+        logger.info('Pending notification outbox processed', result);
+      }
     } catch (error) {
-      logger.error('Worker shutdown error', error);
-    } finally {
-      process.exit(0);
+      logger.error('Pending notification outbox polling failed', error);
     }
   };
 
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
+  await pollOutbox();
+  setInterval(() => {
+    void pollOutbox();
+  }, outboxPollIntervalMs);
 };
 
 start().catch((error) => {

@@ -35,11 +35,11 @@ export default function CheckoutScreen() {
         if (!userProfile) return;
 
         const addressData = {
-            fullName: userProfile.full_name,
-            phoneNumber: userProfile.phone_number,
-            addressLine1: userProfile.address_line1,
-            addressLine2: userProfile.address_line2,
-            city: userProfile.city || userProfile.selected_city_name,
+            fullName: userProfile.full_name || '',
+            phoneNumber: userProfile.phone_number || '',
+            addressLine1: userProfile.address_line1 || '',
+            addressLine2: userProfile.address_line2 || '',
+            city: userProfile.city || (userProfile as any).selected_city_name || '',
         };
 
         await placeOrder(addressData, refreshProfile);
@@ -97,7 +97,7 @@ export default function CheckoutScreen() {
         );
     }
 
-    const hasAddress = userProfile?.address_line1 && userProfile?.city;
+    const hasAddress = !!(userProfile?.address_line1 && userProfile?.city);
 
     return (
         <SafeAreaView className="flex-1 bg-surface">

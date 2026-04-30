@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { cacheResponse } = require('../middleware/cache');
 const { searchCatalog } = require('../services/searchService');
+const logger = require('../services/logger');
 const { searchLimiter } = require('../middleware/rateLimiters');
 const { query } = require('express-validator');
 const validateRequest = require('../middleware/validateRequest');
@@ -27,7 +28,7 @@ router.get('/', [
         res.json(search);
 
     } catch (error) {
-        console.error('Error performing search:', error);
+        logger.error('Error performing search', error);
         res.status(500).json({ error: 'Failed to perform search' });
     }
 });

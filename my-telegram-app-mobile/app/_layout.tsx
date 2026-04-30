@@ -1,5 +1,3 @@
-"use client"
-
 import "react-native-reanimated"
 import "../global.css"
 import FontAwesome from "@expo/vector-icons/FontAwesome"
@@ -10,12 +8,11 @@ import { Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold } from "@expo-go
 import { Stack, useRouter, useSegments } from "expo-router"
 import * as SplashScreen from "expo-splash-screen"
 import { useEffect, useState } from "react"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 import { QueryClient, QueryClientProvider, MutationCache, QueryCache } from "@tanstack/react-query"
 
 import { useColorScheme } from "@/components/useColorScheme"
 import { AuthProvider, useAuth } from "@/context/AuthContext"
-import { CacheProvider } from "@/context/CacheContext"
+import { storage } from "@/utils/storage"
 import { CurrencyProvider } from "@/context/CurrencyContext"
 import { ModalProvider } from "@/context/ModalContext"
 import { CartProvider } from "@/context/CartContext"
@@ -83,8 +80,8 @@ export default function RootLayout() {
     Tajawal_400Regular,
     Tajawal_500Medium,
     Tajawal_700Bold,
-    TajawalCustom: require("../assets/fonts/Tajawal-Regular.ttf"),
-    Montserrat_Bold: require("../assets/fonts/Montserrat-Arabic SemiBold 600.otf"),
+    // Alias TajawalCustom to Google Fonts source (avoids duplicate .ttf loading)
+    TajawalCustom: Tajawal_400Regular,
     MontserratArabic_Bold: require("../assets/fonts/Montserrat-Arabic SemiBold 600.otf"),
     ...FontAwesome.font,
   })
@@ -128,21 +125,19 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ToastProvider>
-            <CacheProvider>
-              <CurrencyProvider>
-                <MiniCartProvider>
-                  <CartProvider>
-                    <SearchProvider>
-                      <ModalProvider>
-                        <CheckoutProvider>
-                          <RootLayoutNav />
-                        </CheckoutProvider>
-                      </ModalProvider>
-                    </SearchProvider>
-                  </CartProvider>
-                </MiniCartProvider>
-              </CurrencyProvider>
-            </CacheProvider>
+            <CurrencyProvider>
+              <MiniCartProvider>
+                <CartProvider>
+                  <SearchProvider>
+                    <ModalProvider>
+                      <CheckoutProvider>
+                        <RootLayoutNav />
+                      </CheckoutProvider>
+                    </ModalProvider>
+                  </SearchProvider>
+                </CartProvider>
+              </MiniCartProvider>
+            </CurrencyProvider>
           </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>
@@ -172,7 +167,9 @@ function RootLayoutNav() {
     }
   }, [showToast])
 
-  // Auth Guard Logic
+  // Auth Guard Logic — only reacts to auth state changes, not navigation events.
+  // segments is read inside the effect body but intentionally excluded from deps
+  // to prevent re-firing on every screen transition.
   useEffect(() => {
     if (!isMounted || isLoading) return
 
@@ -184,7 +181,8 @@ function RootLayoutNav() {
     } else if (isAuthenticated && inAuthFlow) {
       router.replace("/(tabs)")
     }
-  }, [isAuthenticated, segments, isLoading, isMounted, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isLoading, isMounted])
 
   const [showEnhancedOnboarding, setShowEnhancedOnboarding] = useState(false)
 
@@ -192,7 +190,7 @@ function RootLayoutNav() {
     if (isAuthenticated && !isLoading) {
       const checkEnhancedOnboarding = async () => {
         try {
-          const hasSeenEnhanced = await AsyncStorage.getItem("hasSeenEnhancedOnboarding_v1")
+          const hasSeenEnhanced = await storage.getItem("hasSeenEnhancedOnboarding_v1")
           if (!hasSeenEnhanced) {
             setShowEnhancedOnboarding(true)
           }
@@ -206,13 +204,13 @@ function RootLayoutNav() {
 
   const handleEnhancedOnboardingFinish = async () => {
     setShowEnhancedOnboarding(false)
-    await AsyncStorage.setItem("hasSeenEnhancedOnboarding_v1", "true")
+    await storage.setItem("hasSeenEnhancedOnboarding_v1", "true")
     showToast("تم تحديث الملف الشخصي بنجاح", "success")
   }
 
   const handleEnhancedOnboardingSkip = async () => {
     setShowEnhancedOnboarding(false)
-    await AsyncStorage.setItem("hasSeenEnhancedOnboarding_v1", "true")
+    await storage.setItem("hasSeenEnhancedOnboarding_v1", "true")
   }
 
   if (isLoading) {
@@ -235,7 +233,7 @@ function RootLayoutNav() {
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <OfflineOverlay />
       <Stack screenOptions={stackScreenOptions}>
-        {isAuthenticated ? <Stack.Screen name="(tabs)" options={{ headerShown: false }} /> : null}
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: "modal", animation: "fade" }} />
         <Stack.Screen
           name="cart"

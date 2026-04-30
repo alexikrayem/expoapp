@@ -16,7 +16,7 @@ CREATE TABLE "cart_items" (
     "id" SERIAL NOT NULL,
     "user_id" BIGINT NOT NULL,
     "product_id" INTEGER NOT NULL,
-    "quantity" INTEGER NOT NULL DEFAULT 1,
+    "quantity" INTEGER NOT NULL DEFAULT 1 CHECK ("quantity" > 0),
     "added_at" TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "cart_items_pkey" PRIMARY KEY ("user_id","product_id")
@@ -37,7 +37,7 @@ CREATE TABLE "deals" (
     "id" SERIAL NOT NULL,
     "title" VARCHAR(255) NOT NULL,
     "description" TEXT,
-    "discount_percentage" DECIMAL(5,2),
+    "discount_percentage" DECIMAL(5,2) CHECK ("discount_percentage" >= 0 AND "discount_percentage" <= 100),
     "start_date" DATE,
     "end_date" DATE,
     "product_id" INTEGER,
@@ -126,7 +126,7 @@ CREATE TABLE "master_products" (
     "current_demand_score" DECIMAL DEFAULT 0,
     "created_at" TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
-    "current_price_adjustment_percentage" DECIMAL(7,4) NOT NULL DEFAULT 0.0,
+    "current_price_adjustment_percentage" DECIMAL(7,4) NOT NULL DEFAULT 0.0 CHECK ("current_price_adjustment_percentage" >= -0.10 AND "current_price_adjustment_percentage" <= 0.10),
     "last_adjustment_update" TIMESTAMPTZ(6),
     "initial_seed_price" DECIMAL(12,2),
 
@@ -138,8 +138,8 @@ CREATE TABLE "order_items" (
     "id" SERIAL NOT NULL,
     "order_id" INTEGER NOT NULL,
     "product_id" INTEGER NOT NULL,
-    "quantity" INTEGER NOT NULL,
-    "price_at_time_of_order" DECIMAL(10,2) NOT NULL,
+    "quantity" INTEGER NOT NULL CHECK ("quantity" > 0),
+    "price_at_time_of_order" DECIMAL(10,2) NOT NULL CHECK ("price_at_time_of_order" >= 0),
     "supplier_item_status" VARCHAR(50) DEFAULT 'pending',
     "assigned_delivery_agent_id" INTEGER,
     "delivery_item_status" VARCHAR(50) DEFAULT 'pending_assignment',
@@ -154,7 +154,7 @@ CREATE TABLE "order_items" (
 CREATE TABLE "orders" (
     "id" SERIAL NOT NULL,
     "user_id" BIGINT NOT NULL,
-    "total_amount" DECIMAL(12,2) NOT NULL,
+    "total_amount" DECIMAL(12,2) NOT NULL CHECK ("total_amount" >= 0),
     "status" VARCHAR(50) DEFAULT 'pending',
     "order_date" TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
     "delivery_status" VARCHAR(50) DEFAULT 'awaiting_fulfillment',
@@ -179,12 +179,12 @@ CREATE TABLE "products" (
     "supplier_id" INTEGER NOT NULL,
     "name" VARCHAR(255) NOT NULL,
     "description" TEXT,
-    "price" DECIMAL(10,2) NOT NULL,
-    "discount_price" DECIMAL(10,2),
+    "price" DECIMAL(10,2) NOT NULL CHECK ("price" >= 0),
+    "discount_price" DECIMAL(10,2) CHECK ("discount_price" >= 0),
     "category" VARCHAR(100),
     "image_url" TEXT,
     "is_on_sale" BOOLEAN DEFAULT false,
-    "stock_level" INTEGER DEFAULT 0,
+    "stock_level" INTEGER DEFAULT 0 CHECK ("stock_level" >= 0),
     "created_at" TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
     "tsv" tsvector,
     "updated_at" TIMESTAMPTZ(6),
@@ -305,8 +305,6 @@ CREATE INDEX "deals_title_trgm_idx" ON "deals" USING GIN ("title" gin_trgm_ops);
 -- CreateIndex
 CREATE INDEX "deals_tsv_idx" ON "deals" USING GIN ("tsv");
 
--- CreateIndex
-CREATE INDEX "idx_deals_description_trgm" ON "deals" USING GIN ("description" gin_trgm_ops);
 
 -- CreateIndex
 CREATE INDEX "idx_deals_is_active" ON "deals"("is_active");
@@ -314,8 +312,6 @@ CREATE INDEX "idx_deals_is_active" ON "deals"("is_active");
 -- CreateIndex
 CREATE INDEX "idx_deals_supplier_created_at" ON "deals"("supplier_id", "created_at" DESC);
 
--- CreateIndex
-CREATE INDEX "idx_deals_title_trgm" ON "deals" USING GIN ("title" gin_trgm_ops);
 
 -- CreateIndex
 CREATE UNIQUE INDEX "delivery_agents_phone_number_key" ON "delivery_agents"("phone_number");
@@ -387,6 +383,9 @@ CREATE INDEX "idx_order_items_order_id" ON "order_items"("order_id");
 CREATE INDEX "idx_order_items_product_id" ON "order_items"("product_id");
 
 -- CreateIndex
+CREATE INDEX "idx_order_items_order_product" ON "order_items"("order_id", "product_id");
+
+-- CreateIndex
 CREATE INDEX "idx_order_items_supplier_status" ON "order_items"("supplier_item_status");
 
 -- CreateIndex
@@ -407,8 +406,6 @@ CREATE INDEX "idx_otp_verifications_phone" ON "otp_verifications"("phone_number"
 -- CreateIndex
 CREATE INDEX "idx_products_category" ON "products"("category");
 
--- CreateIndex
-CREATE INDEX "idx_products_description_trgm" ON "products" USING GIN ("description" gin_trgm_ops);
 
 -- CreateIndex
 CREATE INDEX "idx_products_linking_status" ON "products"("linking_status");
@@ -416,8 +413,6 @@ CREATE INDEX "idx_products_linking_status" ON "products"("linking_status");
 -- CreateIndex
 CREATE INDEX "idx_products_master_product_id" ON "products"("master_product_id");
 
--- CreateIndex
-CREATE INDEX "idx_products_name_trgm" ON "products" USING GIN ("name" gin_trgm_ops);
 
 -- CreateIndex
 CREATE INDEX "idx_products_standardized_name" ON "products"("standardized_name_input");
@@ -425,8 +420,6 @@ CREATE INDEX "idx_products_standardized_name" ON "products"("standardized_name_i
 -- CreateIndex
 CREATE INDEX "idx_products_standardized_name_trgm" ON "products" USING GIN ("standardized_name_input" gin_trgm_ops);
 
--- CreateIndex
-CREATE INDEX "idx_products_standardized_trgm" ON "products" USING GIN ("standardized_name_input" gin_trgm_ops);
 
 -- CreateIndex
 CREATE INDEX "idx_products_supplier_created_at" ON "products"("supplier_id", "created_at" DESC);
@@ -467,14 +460,10 @@ CREATE INDEX "idx_supplier_cities_supplier_city" ON "supplier_cities"("supplier_
 -- CreateIndex
 CREATE UNIQUE INDEX "idx_suppliers_email" ON "suppliers"("email");
 
--- CreateIndex
-CREATE INDEX "idx_suppliers_category_trgm" ON "suppliers" USING GIN ("category" gin_trgm_ops);
 
 -- CreateIndex
 CREATE INDEX "idx_suppliers_is_active" ON "suppliers"("is_active");
 
--- CreateIndex
-CREATE INDEX "idx_suppliers_name_trgm" ON "suppliers" USING GIN ("name" gin_trgm_ops);
 
 -- CreateIndex
 CREATE INDEX "suppliers_category_trgm_idx" ON "suppliers" USING GIN ("category" gin_trgm_ops);
@@ -493,6 +482,9 @@ CREATE INDEX "idx_user_favorites_user_id" ON "user_favorites"("user_id");
 
 -- CreateIndex
 CREATE INDEX "idx_user_profiles_profile_completed" ON "user_profiles"("profile_completed");
+
+-- AddForeignKey
+ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user_profiles"("user_id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -541,4 +533,67 @@ ALTER TABLE "user_favorites" ADD CONSTRAINT "fk_product_fav" FOREIGN KEY ("produ
 
 -- AddForeignKey
 ALTER TABLE "user_favorites" ADD CONSTRAINT "fk_user_profile_fav" FOREIGN KEY ("user_id") REFERENCES "user_profiles"("user_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- CreateTable
+CREATE TABLE "audit_events" (
+    "id" BIGSERIAL NOT NULL,
+    "event_type" VARCHAR(100) NOT NULL,
+    "actor_role" VARCHAR(50),
+    "actor_id" BIGINT,
+    "target_type" VARCHAR(50),
+    "target_id" BIGINT,
+    "ip" INET,
+    "user_agent" VARCHAR(255),
+    "request_id" VARCHAR(64),
+    "metadata" JSONB,
+    "created_at" TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "audit_events_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE INDEX "idx_audit_events_type_created" ON "audit_events"("event_type", "created_at" DESC);
+
+-- CreateTable
+CREATE TABLE "pending_notifications" (
+    "id" SERIAL NOT NULL,
+    "order_id" INTEGER NOT NULL,
+    "type" VARCHAR(100) NOT NULL,
+    "status" VARCHAR(50) DEFAULT 'pending',
+    "payload" JSONB,
+    "available_at" TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "pending_notifications_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE INDEX "idx_pending_notifications_status_available" ON "pending_notifications"("status", "available_at");
+CREATE INDEX "idx_pending_notifications_order_status" ON "pending_notifications"("order_id", "status");
+
+-- AddForeignKey
+ALTER TABLE "pending_notifications" ADD CONSTRAINT "pending_notifications_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- CreateTable
+CREATE TABLE "idempotency_keys" (
+    "id" SERIAL NOT NULL,
+    "user_id" BIGINT NOT NULL,
+    "scope" VARCHAR(100) NOT NULL,
+    "idempotency_key" VARCHAR(255) NOT NULL,
+    "request_hash" VARCHAR(64) NOT NULL,
+    "status" VARCHAR(50) NOT NULL DEFAULT 'in_progress',
+    "response_status" INTEGER,
+    "response_body" JSONB,
+    "expires_at" TIMESTAMPTZ(6) NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completed_at" TIMESTAMPTZ(6),
+
+    CONSTRAINT "idempotency_keys_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "idx_idempotency_user_scope_key" ON "idempotency_keys"("user_id", "scope", "idempotency_key");
+CREATE INDEX "idx_idempotency_expires_at" ON "idempotency_keys"("expires_at");
 

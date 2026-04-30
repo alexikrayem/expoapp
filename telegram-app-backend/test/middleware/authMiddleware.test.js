@@ -59,7 +59,7 @@ describe('JWT Auth Middleware', () => {
 
   it('should accept valid JWT token', () => {
     const validToken = jwt.sign(
-      { userId: 123456, telegramId: 123456, role: 'customer' },
+      { userId: 123456, telegramId: 123456, role: 'customer', type: 'access' },
       process.env.JWT_SECRET
     );
 

@@ -20,9 +20,7 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
     const [error, setError] = useState<string | null>(null);
     const [categoryFilter, setCategoryFilter] = useState('all');
 
-    // Mock telegramUser for favorites
-    const telegramUser = { id: 12345 };
-    const { isFavorite, toggleFavorite } = useFavorites(telegramUser);
+    const { isFavorite, toggleFavorite } = useFavorites();
     const { actions: { addToCart } } = useCart();
 
     useEffect(() => {

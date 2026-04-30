@@ -45,21 +45,17 @@ const fetchProduct = async (productId) => {
   return result.rows[0];
 };
 
-const findBestMasterProductOpenSearch = async ({ embedding, category }) => {
-  if (!isOpenSearchEnabled() || !embedding) return null;
-  const client = getOpenSearchClient();
-  if (!client) return null;
+const buildOpenSearchFilter = (category) => {
+  if (!category) return undefined;
 
-  const filterClauses = [];
-  if (category) {
-    filterClauses.push({ term: { 'category.keyword': category } });
-  }
+  return {
+    bool: {
+      filter: [{ term: { 'category.keyword': category } }],
+    },
+  };
+};
 
-  const filter =
-    filterClauses.length > 0
-      ? { bool: { filter: filterClauses } }
-      : undefined;
-
+const buildOpenSearchQuery = ({ embedding, category }) => {
   const query = {
     knn: {
       embedding: {
@@ -68,9 +64,35 @@ const findBestMasterProductOpenSearch = async ({ embedding, category }) => {
       },
     },
   };
+
+  const filter = buildOpenSearchFilter(category);
   if (filter) {
     query.knn.embedding.filter = filter;
   }
+
+  return query;
+};
+
+const getTopSearchHit = (response) => {
+  const hits = response.body?.hits?.hits || response.hits?.hits || [];
+  return hits[0] || null;
+};
+
+const parseSearchHit = (hit) => {
+  if (!hit) return null;
+
+  const id = Number(hit._source?.id || hit._id);
+  const score = Number(hit._score);
+  if (!Number.isFinite(id) || !Number.isFinite(score)) return null;
+
+  return { id, score, method: 'opensearch' };
+};
+
+const findBestMasterProductOpenSearch = async ({ embedding, category }) => {
+  if (!isOpenSearchEnabled() || !embedding) return null;
+  const client = getOpenSearchClient();
+  if (!client) return null;
+  const query = buildOpenSearchQuery({ embedding, category });
 
   try {
     const response = await client.search({
@@ -80,14 +102,7 @@ const findBestMasterProductOpenSearch = async ({ embedding, category }) => {
       query,
     });
 
-    const hits = response.body?.hits?.hits || response.hits?.hits || [];
-    const hit = hits[0];
-    if (!hit) return null;
-
-    const id = Number(hit._source?.id || hit._id);
-    const score = Number(hit._score);
-    if (!Number.isFinite(id) || !Number.isFinite(score)) return null;
-    return { id, score, method: 'opensearch' };
+    return parseSearchHit(getTopSearchHit(response));
   } catch (error) {
     logger.warn('Master product OpenSearch lookup failed', { error: error.message });
     return null;
@@ -159,80 +174,68 @@ const createMasterProduct = async ({ product, normalizedName }) => {
   return result.rows[0];
 };
 
-const linkProduct = async (productId, options = {}) => {
-  const { reason = 'unknown', forceRelink = false } = options;
+const shouldSkipLinking = ({ product, forceRelink }) =>
+  !forceRelink && product.master_product_id && product.linking_status !== 'pending';
 
-  const product = await fetchProduct(productId);
-  if (!product) {
-    return { status: 'not_found' };
+const getNormalizedProductName = (product) =>
+  normalizeText(product.standardized_name_input || product.name || '');
+
+const markProductNeedsReview = async (productId) => {
+  await db.query('UPDATE products SET linking_status = $1 WHERE id = $2', [
+    'needs_review',
+    productId,
+  ]);
+};
+
+const resolveEmbedding = async (product) => {
+  if (!isEmbeddingsEnabled()) return null;
+  return getEmbedding(buildLinkingText(product));
+};
+
+const getLinkCandidate = (bestMatch) => {
+  if (!bestMatch || !Number.isFinite(bestMatch.score)) {
+    return { masterProductId: null, score: null, method: bestMatch?.method || 'none' };
   }
 
-  if (!forceRelink && product.master_product_id && product.linking_status !== 'pending') {
-    return { status: 'skipped', masterProductId: product.master_product_id };
+  const threshold = bestMatch.method === 'opensearch' ? OS_MIN_SCORE : TRGM_MIN_SCORE;
+  if (bestMatch.score >= threshold) {
+    return {
+      masterProductId: bestMatch.id,
+      score: bestMatch.score,
+      method: bestMatch.method,
+    };
   }
 
-  const normalizedName = normalizeText(
-    product.standardized_name_input || product.name || ''
-  );
+  return { masterProductId: null, score: bestMatch.score, method: bestMatch.method };
+};
 
-  if (!normalizedName) {
-    await db.query('UPDATE products SET linking_status = $1 WHERE id = $2', [
-      'needs_review',
-      productId,
-    ]);
-    return { status: 'needs_review' };
-  }
-
-  const embeddingText = buildLinkingText(product);
-  const embedding = isEmbeddingsEnabled() ? await getEmbedding(embeddingText) : null;
-
-  const best = await findBestMasterProduct({
-    product,
-    normalizedName,
-    embedding,
-  });
-
-  let masterProductId = null;
-  let decision = 'created';
-  let score = best?.score ?? null;
-  let method = best?.method || 'none';
-
-  if (best && Number.isFinite(best.score)) {
-    const threshold = best.method === 'opensearch' ? OS_MIN_SCORE : TRGM_MIN_SCORE;
-    if (best.score >= threshold) {
-      masterProductId = best.id;
-      decision = 'linked';
-    }
-  }
-
+const persistLinkingDecision = async ({ productId, masterProductId, decision }) => {
   if (!masterProductId) {
-    const created = await createMasterProduct({ product, normalizedName });
-    masterProductId = created?.id || null;
-    decision = 'created';
-    method = 'create';
+    await markProductNeedsReview(productId);
+    return;
   }
 
-  if (masterProductId) {
-    await db.query(
-      `
-        UPDATE products
-        SET master_product_id = $1,
-            linking_status = $2,
-            updated_at = NOW()
-        WHERE id = $3
-      `,
-      [masterProductId, decision, productId]
-    );
-    await indexMasterProductById(masterProductId);
-  } else {
-    await db.query('UPDATE products SET linking_status = $1 WHERE id = $2', [
-      'needs_review',
-      productId,
-    ]);
-  }
+  await db.query(
+    `
+      UPDATE products
+      SET master_product_id = $1,
+          linking_status = $2,
+          updated_at = NOW()
+      WHERE id = $3
+    `,
+    [masterProductId, decision, productId]
+  );
+  await indexMasterProductById(masterProductId);
+};
 
-  await indexProductById(productId);
-
+const recordLinkingAuditEvent = async ({
+  productId,
+  decision,
+  method,
+  score,
+  masterProductId,
+  reason,
+}) => {
   await recordAuditEvent({
     req: null,
     action: 'product_auto_link',
@@ -247,12 +250,82 @@ const linkProduct = async (productId, options = {}) => {
       reason,
     },
   });
+};
+
+const resolveLinkDecision = async ({ product, normalizedName, bestMatch }) => {
+  const candidate = getLinkCandidate(bestMatch);
+  if (candidate.masterProductId) {
+    return {
+      masterProductId: candidate.masterProductId,
+      decision: 'linked',
+      score: candidate.score,
+      method: candidate.method,
+    };
+  }
+
+  const created = await createMasterProduct({ product, normalizedName });
+  return {
+    masterProductId: created?.id || null,
+    decision: 'created',
+    score: candidate.score,
+    method: 'create',
+  };
+};
+
+const linkFoundProduct = async ({ productId, product, normalizedName, reason }) => {
+  const embedding = await resolveEmbedding(product);
+  const best = await findBestMasterProduct({ product, normalizedName, embedding });
+  const decision = await resolveLinkDecision({ product, normalizedName, bestMatch: best });
+
+  await persistLinkingDecision({
+    productId,
+    masterProductId: decision.masterProductId,
+    decision: decision.decision,
+  });
+  await indexProductById(productId);
+  await recordLinkingAuditEvent({
+    productId,
+    decision: decision.decision,
+    method: decision.method,
+    score: decision.score,
+    masterProductId: decision.masterProductId,
+    reason,
+  });
+
+  return decision;
+};
+
+const linkProduct = async (productId, options = {}) => {
+  const { reason = 'unknown', forceRelink = false } = options;
+
+  const product = await fetchProduct(productId);
+  if (!product) {
+    return { status: 'not_found' };
+  }
+
+  if (shouldSkipLinking({ product, forceRelink })) {
+    return { status: 'skipped', masterProductId: product.master_product_id };
+  }
+
+  const normalizedName = getNormalizedProductName(product);
+
+  if (!normalizedName) {
+    await markProductNeedsReview(productId);
+    return { status: 'needs_review' };
+  }
+
+  const decision = await linkFoundProduct({
+    productId,
+    product,
+    normalizedName,
+    reason,
+  });
 
   return {
-    status: decision,
-    masterProductId,
-    score,
-    method,
+    status: decision.decision,
+    masterProductId: decision.masterProductId,
+    score: decision.score,
+    method: decision.method,
   };
 };
 

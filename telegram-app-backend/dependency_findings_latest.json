@@ -1,0 +1,16 @@
+{
+  "manifest": "/Users/iskandermac/Desktop/expogithub/expoapp/telegram-app-backend/package.json",
+  "ecosystem": "npm",
+  "total_dependencies": 22,
+  "dev_dependencies": 3,
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "risky_patterns_count": 0
+  },
+  "vulnerability_findings": [],
+  "risky_patterns": [],
+  "generated_at": "2026-04-18T18:53:06.119044"
+}

@@ -2,7 +2,7 @@ export interface Product {
     id: string;
     name: string;
     description?: string;
-    price: number;
+    price?: number;
     effective_selling_price: number;
     image_url?: string;
     supplier_name?: string;
@@ -17,15 +17,30 @@ export interface Product {
 }
 
 export interface UserProfile {
-    id: number;
+    id?: string | number;
+    userId?: string | number;
     username?: string;
     first_name?: string;
     last_name?: string;
+    full_name?: string;
     photo_url?: string;
     language_code?: string;
     role?: string;
     phone_number?: string;
+    address_line1?: string;
+    address_line2?: string;
+    city?: string;
+    clinic_name?: string;
+    clinic_phone?: string;
+    clinic_address_line1?: string;
+    clinic_address_line2?: string;
+    clinic_city?: string;
     selected_city_id?: string;
+    selected_city_name?: string;
+    professional_role?: string;
+    years_of_experience?: string;
+    education_background?: string;
+    professional_license_number?: string;
 }
 
 export interface Supplier {

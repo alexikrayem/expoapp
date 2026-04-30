@@ -13,6 +13,18 @@ const DEFAULT_LIMIT = 20;
 const OPENSEARCH_MIN_RESULTS = Number(process.env.OPENSEARCH_MIN_RESULTS || 3);
 const SEMANTIC_K = Number(process.env.OPENSEARCH_SEMANTIC_K || 50);
 const RRF_K = Number(process.env.SEARCH_RRF_K || 60);
+const MIN_SEARCH_TERM_LENGTH = 2;
+const DEALS_BASE_QUERY = `
+    SELECT d.*, s.name as supplier_name, p.name as product_name,
+           GREATEST(similarity(d.title, $1), similarity(d.description, $1)) as score
+    FROM deals d
+    JOIN suppliers s ON d.supplier_id = s.id
+    LEFT JOIN products p ON d.product_id = p.id
+    WHERE d.is_active = true AND s.is_active = true
+    AND (d.title % $1 OR d.description % $1 OR s.name % $1)
+    AND (d.start_date IS NULL OR d.start_date <= NOW())
+    AND (d.end_date IS NULL OR d.end_date >= NOW())
+`;
 
 const normalizeQuery = (value) => {
   if (!value) return '';
@@ -178,28 +190,20 @@ const searchOpenSearchSemanticIndex = async ({ index, vector, limit, filter }) =
   };
 };
 
-const searchOpenSearch = async ({ searchTerm, cityId, limit }) => {
-  const term = normalizeQuery(searchTerm);
-  const size = Number(limit) || DEFAULT_LIMIT;
-  if (!term) {
-    return {
-      results: { products: { items: [], totalItems: 0 }, deals: [], suppliers: [] },
-    };
-  }
+const emptyCatalogResults = () => ({
+  results: { products: { items: [], totalItems: 0 }, deals: [], suppliers: [] },
+});
 
-  const nowIso = new Date().toISOString();
-  const lexicalFilters = {
-    products: [{ term: { supplier_is_active: true } }],
-    deals: [
-      buildDealAvailabilityFilter(nowIso),
-      { term: { supplier_is_active: true } },
-    ],
-    suppliers: [{ term: { is_active: true } }],
-  };
+const buildLexicalFilters = (nowIso) => ({
+  products: [{ term: { supplier_is_active: true } }],
+  deals: [
+    buildDealAvailabilityFilter(nowIso),
+    { term: { supplier_is_active: true } },
+  ],
+  suppliers: [{ term: { is_active: true } }],
+});
 
-  const embeddingText = term;
-  const embedding = isEmbeddingsEnabled() ? await getEmbedding(embeddingText) : null;
-
+const runLexicalOpenSearch = async ({ term, cityId, size, lexicalFilters }) => {
   const [productsLex, dealsLex, suppliersLex] = await Promise.all([
     searchOpenSearchIndex({
       index: getIndexName('products'),
@@ -227,66 +231,96 @@ const searchOpenSearch = async ({ searchTerm, cityId, limit }) => {
     }),
   ]);
 
-  let products = productsLex;
-  let deals = dealsLex;
-  let suppliers = suppliersLex;
-
-  if (embedding) {
-    const [productsSem, dealsSem, suppliersSem] = await Promise.all([
-      searchOpenSearchSemanticIndex({
-        index: getIndexName('products'),
-        vector: embedding,
-        limit: size,
-        filter: { bool: { filter: lexicalFilters.products } },
-      }),
-      searchOpenSearchSemanticIndex({
-        index: getIndexName('deals'),
-        vector: embedding,
-        limit: size,
-        filter: { bool: { filter: lexicalFilters.deals } },
-      }),
-      searchOpenSearchSemanticIndex({
-        index: getIndexName('suppliers'),
-        vector: embedding,
-        limit: size,
-        filter: { bool: { filter: lexicalFilters.suppliers } },
-      }),
-    ]);
-
-    products = {
-      items: mergeRrf([productsLex.items, productsSem.items]).slice(0, size),
-      total: productsLex.total + productsSem.total,
-    };
-    deals = {
-      items: mergeRrf([dealsLex.items, dealsSem.items]).slice(0, size),
-      total: dealsLex.total + dealsSem.total,
-    };
-    suppliers = {
-      items: mergeRrf([suppliersLex.items, suppliersSem.items]).slice(0, size),
-      total: suppliersLex.total + suppliersSem.total,
-    };
-  }
-
-  return {
-    results: {
-      products: { items: products.items, totalItems: products.items.length },
-      deals: deals.items,
-      suppliers: suppliers.items,
-    },
-  };
+  return { productsLex, dealsLex, suppliersLex };
 };
 
-const searchPostgres = async ({ searchTerm, cityId, limit }) => {
-  const term = String(searchTerm || '').trim();
-  if (!term || term.length < 2) {
-    return {
-      results: { products: { items: [], totalItems: 0 }, deals: [], suppliers: [] },
-    };
+const runSemanticOpenSearch = async ({ embedding, size, lexicalFilters }) => {
+  const [productsSem, dealsSem, suppliersSem] = await Promise.all([
+    searchOpenSearchSemanticIndex({
+      index: getIndexName('products'),
+      vector: embedding,
+      limit: size,
+      filter: { bool: { filter: lexicalFilters.products } },
+    }),
+    searchOpenSearchSemanticIndex({
+      index: getIndexName('deals'),
+      vector: embedding,
+      limit: size,
+      filter: { bool: { filter: lexicalFilters.deals } },
+    }),
+    searchOpenSearchSemanticIndex({
+      index: getIndexName('suppliers'),
+      vector: embedding,
+      limit: size,
+      filter: { bool: { filter: lexicalFilters.suppliers } },
+    }),
+  ]);
+
+  return { productsSem, dealsSem, suppliersSem };
+};
+
+const mergeHybridResults = ({ lexical, semantic, size }) => ({
+  products: {
+    items: mergeRrf([lexical.productsLex.items, semantic.productsSem.items]).slice(0, size),
+    total: lexical.productsLex.total + semantic.productsSem.total,
+  },
+  deals: {
+    items: mergeRrf([lexical.dealsLex.items, semantic.dealsSem.items]).slice(0, size),
+    total: lexical.dealsLex.total + semantic.dealsSem.total,
+  },
+  suppliers: {
+    items: mergeRrf([lexical.suppliersLex.items, semantic.suppliersSem.items]).slice(0, size),
+    total: lexical.suppliersLex.total + semantic.suppliersSem.total,
+  },
+});
+
+const formatCatalogResponse = ({ products, deals, suppliers }) => ({
+  results: {
+    products: { items: products.items, totalItems: products.items.length },
+    deals: deals.items,
+    suppliers: suppliers.items,
+  },
+});
+
+const searchOpenSearch = async ({ searchTerm, cityId, limit }) => {
+  const term = normalizeQuery(searchTerm);
+  const size = Number(limit) || DEFAULT_LIMIT;
+  if (!term) {
+    return emptyCatalogResults();
   }
 
-  const searchLimit = parseInt(limit, 10) || DEFAULT_LIMIT;
+  const nowIso = new Date().toISOString();
+  const lexicalFilters = buildLexicalFilters(nowIso);
 
-  let productsQuery = `
+  const embeddingText = term;
+  const embedding = isEmbeddingsEnabled() ? await getEmbedding(embeddingText) : null;
+
+  const lexicalResults = await runLexicalOpenSearch({ term, cityId, size, lexicalFilters });
+  let products = lexicalResults.productsLex;
+  let deals = lexicalResults.dealsLex;
+  let suppliers = lexicalResults.suppliersLex;
+
+  if (embedding) {
+    const semanticResults = await runSemanticOpenSearch({
+      embedding,
+      size,
+      lexicalFilters,
+    });
+    const mergedResults = mergeHybridResults({
+      lexical: lexicalResults,
+      semantic: semanticResults,
+      size,
+    });
+    products = mergedResults.products;
+    deals = mergedResults.deals;
+    suppliers = mergedResults.suppliers;
+  }
+
+  return formatCatalogResponse({ products, deals, suppliers });
+};
+
+const buildProductsSearchQuery = ({ term, cityId, searchLimit }) => {
+  let query = `
       SELECT p.*, s.name as supplier_name,
              similarity(p.name, $1) as score,
              ${EFFECTIVE_PRICE_SQL} as effective_selling_price
@@ -301,36 +335,32 @@ const searchPostgres = async ({ searchTerm, cityId, limit }) => {
           s.name % $1
       )
   `;
-  const queryParams = [term];
+  const params = [term];
   let paramIndex = 2;
   if (cityId) {
-    productsQuery += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${paramIndex++})`;
-    queryParams.push(cityId);
+    query += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${paramIndex++})`;
+    params.push(cityId);
   }
-  productsQuery += ` ORDER BY score DESC, p.name ASC LIMIT $${paramIndex}`;
-  queryParams.push(searchLimit);
+  query += ` ORDER BY score DESC, p.name ASC LIMIT $${paramIndex}`;
+  params.push(searchLimit);
+  return { query, params };
+};
 
-  let dealsQuery = `
-      SELECT d.*, s.name as supplier_name, p.name as product_name,
-             GREATEST(similarity(d.title, $1), similarity(d.description, $1)) as score
-      FROM deals d
-      JOIN suppliers s ON d.supplier_id = s.id
-      LEFT JOIN products p ON d.product_id = p.id
-      WHERE d.is_active = true AND s.is_active = true
-      AND (d.title % $1 OR d.description % $1 OR s.name % $1)
-      AND (d.start_date IS NULL OR d.start_date <= NOW())
-      AND (d.end_date IS NULL OR d.end_date >= NOW())
-  `;
-  const dealsParams = [term];
-  let dealsParamIndex = 2;
+const buildDealsSearchQuery = ({ term, cityId, searchLimit }) => {
+  let query = DEALS_BASE_QUERY;
+  const params = [term];
+  let paramIndex = 2;
   if (cityId) {
-    dealsQuery += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${dealsParamIndex++})`;
-    dealsParams.push(cityId);
+    query += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${paramIndex++})`;
+    params.push(cityId);
   }
-  dealsQuery += ` ORDER BY score DESC, d.created_at DESC LIMIT $${dealsParamIndex}`;
-  dealsParams.push(searchLimit);
+  query += ` ORDER BY score DESC, d.created_at DESC LIMIT $${paramIndex}`;
+  params.push(searchLimit);
+  return { query, params };
+};
 
-  let suppliersQuery = `
+const buildSuppliersSearchQuery = ({ term, cityId, searchLimit }) => {
+  let query = `
       SELECT 
              s.id,
              s.name,
@@ -349,31 +379,38 @@ const searchPostgres = async ({ searchTerm, cityId, limit }) => {
       WHERE s.is_active = true
       AND (s.name % $1 OR s.category % $1)
   `;
-  const suppliersParams = [term];
-  let suppliersParamIndex = 2;
+  const params = [term];
+  let paramIndex = 2;
   if (cityId) {
-    suppliersQuery += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${suppliersParamIndex++})`;
-    suppliersParams.push(cityId);
+    query += ` AND s.id IN (SELECT supplier_id FROM supplier_cities WHERE city_id = $${paramIndex++})`;
+    params.push(cityId);
   }
-  suppliersQuery += ` GROUP BY s.id ORDER BY score DESC, s.name ASC LIMIT $${suppliersParamIndex}`;
-  suppliersParams.push(searchLimit);
+  query += ` GROUP BY s.id ORDER BY score DESC, s.name ASC LIMIT $${paramIndex}`;
+  params.push(searchLimit);
+  return { query, params };
+};
 
+const searchPostgres = async ({ searchTerm, cityId, limit }) => {
+  const term = String(searchTerm || '').trim();
+  if (!term || term.length < MIN_SEARCH_TERM_LENGTH) {
+    return emptyCatalogResults();
+  }
+
+  const searchLimit = parseInt(limit, 10) || DEFAULT_LIMIT;
+  const productsQuery = buildProductsSearchQuery({ term, cityId, searchLimit });
+  const dealsQuery = buildDealsSearchQuery({ term, cityId, searchLimit });
+  const suppliersQuery = buildSuppliersSearchQuery({ term, cityId, searchLimit });
   const [productsResult, dealsResult, suppliersResult] = await Promise.all([
-    db.query(productsQuery, queryParams),
-    db.query(dealsQuery, dealsParams),
-    db.query(suppliersQuery, suppliersParams),
+    db.query(productsQuery.query, productsQuery.params),
+    db.query(dealsQuery.query, dealsQuery.params),
+    db.query(suppliersQuery.query, suppliersQuery.params),
   ]);
 
-  return {
-    results: {
-      products: {
-        items: productsResult.rows,
-        totalItems: productsResult.rows.length,
-      },
-      deals: dealsResult.rows,
-      suppliers: suppliersResult.rows,
-    },
-  };
+  return formatCatalogResponse({
+    products: { items: productsResult.rows, total: productsResult.rows.length },
+    deals: { items: dealsResult.rows, total: dealsResult.rows.length },
+    suppliers: { items: suppliersResult.rows, total: suppliersResult.rows.length },
+  });
 };
 
 const searchCatalog = async ({ searchTerm, cityId, limit }) => {

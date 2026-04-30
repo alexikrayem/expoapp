@@ -1,45 +1,68 @@
 // telegram-app-backend/middleware/authAdmin.js
 const { verifyJwt } = require('../services/jwtService');
 
-const authAdmin = (req, res, next) => {
-    const authHeader = req.headers.authorization;
+const HTTP = Object.freeze({
+    UNAUTHORIZED: Number.parseInt('401', 10),
+    FORBIDDEN: Number.parseInt('403', 10),
+    INTERNAL_SERVER_ERROR: Number.parseInt('500', 10),
+});
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Authorization header is missing or malformed. Expected "Bearer [token]".' });
+const TOKEN_PREFIX = 'Bearer ';
+const ACCESS_TOKEN_TYPE = 'access';
+const ADMIN_ROLE = 'admin';
+
+const extractBearerToken = (authHeader) => {
+    if (!authHeader || !authHeader.startsWith(TOKEN_PREFIX)) {
+        return null;
+    }
+    const token = authHeader.slice(TOKEN_PREFIX.length).trim();
+    return token || null;
+};
+
+const verifyAdminAccessToken = (token) => {
+    const secret = process.env.JWT_ADMIN_SECRET;
+    if (!secret) {
+        return { error: { status: HTTP.INTERNAL_SERVER_ERROR, message: 'JWT admin secret not configured.' } };
     }
 
-    const token = authHeader.split(' ')[1]; // Get token from "Bearer <token>"
+    const decoded = verifyJwt(token, secret);
+    if (decoded.type !== ACCESS_TOKEN_TYPE) {
+        return { error: { status: HTTP.FORBIDDEN, message: 'Forbidden: invalid token type.' } };
+    }
+    if (decoded.role !== ADMIN_ROLE) {
+        return { error: { status: HTTP.FORBIDDEN, message: 'Forbidden: Access denied. Not an admin role.' } };
+    }
+    return { decoded };
+};
 
+const mapVerificationError = (error) => {
+    if (error.name === 'TokenExpiredError') {
+        return { status: HTTP.UNAUTHORIZED, message: 'Unauthorized: Token has expired.' };
+    }
+    if (error.name === 'JsonWebTokenError') {
+        return { status: HTTP.UNAUTHORIZED, message: 'Unauthorized: Invalid token.' };
+    }
+    return { status: HTTP.INTERNAL_SERVER_ERROR, message: 'Internal server error during token verification.' };
+};
+
+const authAdmin = (req, res, next) => {
+    const token = extractBearerToken(req.headers.authorization);
     if (!token) {
-        return res.status(401).json({ message: 'No token provided.' });
+        return res.status(HTTP.UNAUTHORIZED).json({ message: 'Authorization header is missing or malformed. Expected "Bearer [token]".' });
     }
 
     try {
-        const secret = process.env.JWT_ADMIN_SECRET;
-        if (!secret) {
-            return res.status(500).json({ message: 'JWT admin secret not configured.' });
+        const verification = verifyAdminAccessToken(token);
+        if (verification.error) {
+            return res.status(verification.error.status).json({ message: verification.error.message });
         }
-        // Verify the token using the ADMIN specific secret
-        const decoded = verifyJwt(token, secret);
 
-        // Attach decoded payload (admin info) to the request object
-        req.admin = decoded; // e.g., req.admin will have { adminId, email, role, name }
-        
-        // Check if the role is indeed 'admin' (optional, but good for explicitness if your JWT might be used for other roles)
-        if (decoded.role !== 'admin') {
-            return res.status(403).json({ message: 'Forbidden: Access denied. Not an admin role.' });
-        }
-        
-        next(); // Proceed to the next middleware or route handler
+        req.admin = verification.decoded;
+        next();
     } catch (error) {
         console.error("Admin JWT Verification Error:", error.message);
-        if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({ message: 'Unauthorized: Token has expired.' });
-        }
-        if (error.name === 'JsonWebTokenError') {
-            return res.status(401).json({ message: 'Unauthorized: Invalid token.' });
-        }
-        return res.status(500).json({ message: 'Internal server error during token verification.' });
+        const mappedError = mapVerificationError(error);
+        return res.status(mappedError.status).json({ message: mappedError.message });
     }
 };
 

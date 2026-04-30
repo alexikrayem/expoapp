@@ -5,10 +5,31 @@ const router = express.Router();
 const db = require('../config/db');
 const telegramBotService = require('../services/telegramBot');
 const { enqueueOrderNotification } = require('../services/notificationQueue');
+const logger = require('../services/logger');
+const {
+    enqueuePendingOrderNotifications,
+    dispatchPendingNotificationsForOrder
+} = require('../services/orderNotificationOutbox');
 const { idempotency } = require('../middleware/idempotency');
 const { orderCreateLimiter } = require('../middleware/rateLimiters');
 const requireCustomer = require('../middleware/requireCustomer');
 const { EFFECTIVE_PRICE_SQL } = require('../utils/pricing');
+
+const HTTP = Object.freeze({
+    CREATED: Number.parseInt('201', 10),
+    BAD_REQUEST: Number.parseInt('400', 10),
+    NOT_FOUND: Number.parseInt('404', 10),
+    CONFLICT: Number.parseInt('409', 10),
+    INTERNAL_SERVER_ERROR: Number.parseInt('500', 10)
+});
+
+const VALIDATION_LIMITS = Object.freeze({
+    MAX_PRODUCT_ID: Number.parseInt('999999', 10),
+    MAX_QUANTITY: Number.parseInt('999', 10),
+    MAX_ITEM_PRICE: Number.parseInt('999999', 10),
+    MAX_TOTAL_AMOUNT: Number.parseInt('9999999', 10),
+    MAX_ORDER_ID: Number.parseInt('9999999', 10)
+});
 
 const idempotencyCreateOrder = idempotency({ scope: 'orders:create', requireKey: true });
 const idempotencyCreateFromCart = idempotency({ scope: 'orders:create-from-cart', requireKey: true });
@@ -18,14 +39,14 @@ router.use(requireCustomer);
 // Validation middleware for order operations
 const validateCreateOrder = [
     body('items').isArray({ min: 1, max: 50 }).withMessage('Items must be a non-empty array with max 50 items'),
-    body('items.*.product_id').isInt({ min: 1, max: 999999 }).withMessage('Each product ID must be a positive integer'),
-    body('items.*.quantity').isInt({ min: 1, max: 999 }).withMessage('Each quantity must be between 1 and 999'),
-    body('items.*.price_at_time_of_order').optional().isFloat({ min: 0, max: 999999 }).withMessage('Price at time of order must be a positive number'),
-    body('total_amount').optional().isFloat({ min: 0, max: 9999999 }).withMessage('Total amount must be a positive number')
+    body('items.*.product_id').isInt({ min: 1, max: VALIDATION_LIMITS.MAX_PRODUCT_ID }).withMessage('Each product ID must be a positive integer'),
+    body('items.*.quantity').isInt({ min: 1, max: VALIDATION_LIMITS.MAX_QUANTITY }).withMessage(`Each quantity must be between 1 and ${VALIDATION_LIMITS.MAX_QUANTITY}`),
+    body('items.*.price_at_time_of_order').optional().isFloat({ min: 0, max: VALIDATION_LIMITS.MAX_ITEM_PRICE }).withMessage('Price at time of order must be a positive number'),
+    body('total_amount').optional().isFloat({ min: 0, max: VALIDATION_LIMITS.MAX_TOTAL_AMOUNT }).withMessage('Total amount must be a positive number')
 ];
 
 const validateOrderStatusUpdate = [
-    param('orderId').isInt({ min: 1, max: 9999999 }).withMessage('Order ID must be a positive integer'),
+    param('orderId').isInt({ min: 1, max: VALIDATION_LIMITS.MAX_ORDER_ID }).withMessage('Order ID must be a positive integer'),
     body('status').isIn(['cancelled']).withMessage('Only "cancelled" status is allowed for updates')
 ];
 
@@ -34,14 +55,14 @@ router.post('/from-cart', orderCreateLimiter, idempotencyCreateFromCart, validat
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+            return res.status(HTTP.BAD_REQUEST).json({ error: 'Validation failed', details: errors.array() });
         }
         
         const { userId } = req.user;
         const { items } = req.body;
         
         if (!items || !Array.isArray(items) || items.length === 0) {
-            return res.status(400).json({ error: 'Cart items are required' });
+            return res.status(HTTP.BAD_REQUEST).json({ error: 'Cart items are required' });
         }
 
         const client = await db.pool.connect();
@@ -71,7 +92,7 @@ router.post('/from-cart', orderCreateLimiter, idempotencyCreateFromCart, validat
                 const foundIds = new Set(productsResult.rows.map((row) => row.id));
                 const missingIds = uniqueProductIds.filter((id) => !foundIds.has(id));
                 await client.query('ROLLBACK');
-                return res.status(400).json({ error: `Product(s) not found: ${missingIds.join(', ')}` });
+                return res.status(HTTP.BAD_REQUEST).json({ error: `Product(s) not found: ${missingIds.join(', ')}` });
             }
 
             const productMap = new Map(productsResult.rows.map((row) => [row.id, row]));
@@ -79,22 +100,23 @@ router.post('/from-cart', orderCreateLimiter, idempotencyCreateFromCart, validat
                 const product = productMap.get(productId);
                 if (!product) {
                     await client.query('ROLLBACK');
-                    return res.status(400).json({ error: `Product with ID ${productId} not found` });
+                    return res.status(HTTP.BAD_REQUEST).json({ error: `Product with ID ${productId} not found` });
                 }
                 if (product.stock_level < totalQuantity) {
                     await client.query('ROLLBACK');
-                    return res.status(409).json({ error: `Insufficient stock for product: ${product.name}` });
+                    return res.status(HTTP.CONFLICT).json({ error: `Insufficient stock for product: ${product.name}` });
                 }
             }
             
             // Step 2: Get user's profile for validation
             const userResult = await client.query(
-                'SELECT address_line1 FROM user_profiles WHERE user_id = $1',
+                'SELECT full_name, phone_number, address_line1, address_line2, city FROM user_profiles WHERE user_id = $1',
                 [userId]
             );
-            if (userResult.rows.length === 0 || !userResult.rows[0].address_line1) {
+            const customer = userResult.rows[0];
+            if (!customer || !customer.address_line1) {
                 await client.query('ROLLBACK');
-                return res.status(400).json({ error: 'User profile or address is incomplete.' });
+                return res.status(HTTP.BAD_REQUEST).json({ error: 'User profile or address is incomplete.' });
             }
 
             // Step 3: Compute prices server-side (ignore client totals/prices)
@@ -106,18 +128,18 @@ router.post('/from-cart', orderCreateLimiter, idempotencyCreateFromCart, validat
                 productNameById.set(row.id, row.name);
             }
 
-            const itemProductIds = items.map((item) => item.product_id);
-            const itemQuantities = items.map((item) => item.quantity);
-            const itemPrices = items.map((item) => effectivePriceByProduct.get(item.product_id));
+            const itemProductIds = Array.from(requestedQuantityByProduct.keys());
+            const itemQuantities = itemProductIds.map((id) => requestedQuantityByProduct.get(id));
+            const itemPrices = itemProductIds.map((id) => effectivePriceByProduct.get(id));
 
             if (itemPrices.some((price) => !Number.isFinite(price))) {
                 await client.query('ROLLBACK');
-                return res.status(400).json({ error: 'Unable to compute product pricing.' });
+                return res.status(HTTP.BAD_REQUEST).json({ error: 'Unable to compute product pricing.' });
             }
 
-            const totalAmountRaw = items.reduce((sum, item, index) => {
+            const totalAmountRaw = itemProductIds.reduce((sum, id, index) => {
                 const price = itemPrices[index] || 0;
-                return sum + price * item.quantity;
+                return sum + price * itemQuantities[index];
             }, 0);
             const totalAmount = Number(totalAmountRaw.toFixed(2));
 
@@ -149,72 +171,85 @@ router.post('/from-cart', orderCreateLimiter, idempotencyCreateFromCart, validat
             `;
             await client.query(updateStockQuery, [stockProductIds, stockQuantities]);
 
+            const supplierNotifications = new Map();
+
+            itemProductIds.forEach((productId, index) => {
+                const product = productMap.get(productId);
+                if (!product) return;
+
+                const supplierId = Number(product.supplier_id);
+                if (!Number.isInteger(supplierId) || supplierId <= 0) return;
+
+                const unitPrice = Number(itemPrices[index]) || 0;
+                const qty = itemQuantities[index] || 0;
+                const current = supplierNotifications.get(supplierId) || { items: [], totalAmount: 0 };
+
+                current.items.push({
+                    product_name: productNameById.get(productId) || 'Unknown Product',
+                    quantity: qty,
+                    price_at_time_of_order: unitPrice
+                });
+                current.totalAmount += unitPrice * qty;
+                supplierNotifications.set(supplierId, current);
+            });
+
+            const pendingNotifications = [];
+            for (const [supplierId, notification] of supplierNotifications.entries()) {
+                const supplierTotal = Number(notification.totalAmount.toFixed(2));
+                pendingNotifications.push({
+                    orderId,
+                    supplierId,
+                    total_amount: supplierTotal,
+                    order_total_amount: totalAmount,
+                    items: notification.items,
+                    customerInfo: {
+                        name: customer?.full_name || 'غير محدد',
+                        phone: customer?.phone_number || 'غير محدد',
+                        address1: customer?.address_line1 || 'غير محدد',
+                        address2: customer?.address_line2,
+                        city: customer?.city || 'غير محدد'
+                    },
+                    orderDate: new Date().toISOString()
+                });
+            }
+
+            let useDirectFallbackDispatch = false;
+            if (pendingNotifications.length > 0) {
+                const insertedCount = await enqueuePendingOrderNotifications(client, pendingNotifications);
+                useDirectFallbackDispatch = insertedCount === 0;
+            }
+
             await client.query('COMMIT');
-            
-            // Send notification to delivery agent
+
             try {
-                // Get supplier info for the first item (assuming all items are from same supplier for now)
-                const supplierQuery = `
-                    SELECT DISTINCT s.id, s.name
-                    FROM suppliers s
-                    JOIN products p ON s.id = p.supplier_id
-                    WHERE p.id = ANY($1::int[])
-                `;
-                const productIds = items.map(item => item.product_id);
-                const supplierResult = await client.query(supplierQuery, [productIds]);
-                
-                if (supplierResult.rows.length > 0) {
-                    const supplier = supplierResult.rows[0];
-                    
-                    // Get customer info
-                    const customerQuery = `
-                        SELECT full_name, phone_number, address_line1, address_line2, city
-                        FROM user_profiles
-                        WHERE user_id = $1
-                    `;
-                    const customerResult = await client.query(customerQuery, [userId]);
-                    const customer = customerResult.rows[0];
-                    
-                    const orderNotificationData = {
-                        orderId,
-                        supplierId: supplier.id,
-                        total_amount: totalAmount,
-                        items: items.map((item, index) => ({
-                            product_name: productNameById.get(item.product_id) || 'Unknown Product',
-                            quantity: item.quantity,
-                            price_at_time_of_order: itemPrices[index]
-                        })),
-                        customerInfo: {
-                            name: customer?.full_name || 'غير محدد',
-                            phone: customer?.phone_number || 'غير محدد',
-                            address1: customer?.address_line1 || 'غير محدد',
-                            address2: customer?.address_line2,
-                            city: customer?.city || 'غير محدد'
-                        },
-                        orderDate: new Date().toISOString()
-                    };
-                    
-                    const queued = await enqueueOrderNotification(orderNotificationData);
-                    if (!queued) {
-                        await telegramBotService.sendOrderNotificationToDeliveryAgent(orderNotificationData);
+                if (useDirectFallbackDispatch) {
+                    for (const notificationPayload of pendingNotifications) {
+                        const queued = await enqueueOrderNotification(notificationPayload);
+                        if (!queued) {
+                            await telegramBotService.sendOrderNotificationToDeliveryAgent(notificationPayload);
+                        }
                     }
+                } else {
+                    await dispatchPendingNotificationsForOrder(orderId);
                 }
             } catch (notificationError) {
-                console.error('Failed to send order notification:', notificationError);
-                // Don't fail the order creation if notification fails
+                logger.error('Failed to dispatch pending order notification', notificationError, {
+                    orderId,
+                    fallbackDispatch: useDirectFallbackDispatch
+                });
             }
             
-            res.status(201).json({ orderId, message: 'Order created successfully' });
+            res.status(HTTP.CREATED).json({ orderId, message: 'Order created successfully' });
 
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error creating order from cart:', error);
-            res.status(500).json({ error: 'Failed to create order due to a server error.' });
+            logger.error('Error creating order from cart', error);
+            res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to create order due to a server error.' });
         } finally {
             client.release();
         }
     } catch (error) {
-        res.status(500).json({ error: 'Internal server error during order creation' });
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Internal server error during order creation' });
     }
 });
 
@@ -228,49 +263,48 @@ router.post('/', orderCreateLimiter, idempotencyCreateOrder, async (req, res) =>
             await client.query('BEGIN');
 
             // Step 1: Get user's cart items from the correct table 'cart_items'
-            // FIX: Removed the non-existent 'p.is_active' check
+            // FIX: Ensure supplier is active
             const cartQuery = `
                 SELECT 
                     c.product_id, c.quantity, p.name as product_name, p.supplier_id, p.stock_level,
                     ${EFFECTIVE_PRICE_SQL} as effective_price
                 FROM cart_items c -- FIX: Corrected table name
                 JOIN products p ON c.product_id = p.id
+                JOIN suppliers s ON p.supplier_id = s.id
                 LEFT JOIN master_products mp ON p.master_product_id = mp.id
-                WHERE c.user_id = $1 AND p.stock_level > 0 FOR UPDATE
+                WHERE c.user_id = $1 AND p.stock_level > 0 AND s.is_active = true FOR UPDATE
             `;
             const cartResult = await client.query(cartQuery, [userId]);
             
             if (cartResult.rows.length === 0) {
                 await client.query('ROLLBACK');
-                return res.status(400).json({ error: 'Cart is empty. Cannot create order.' });
+                return res.status(HTTP.BAD_REQUEST).json({ error: 'Cart is empty. Cannot create order.' });
             }
 
             // Step 2: Verify stock levels
             for (const item of cartResult.rows) {
                 if (item.quantity > item.stock_level) {
                     await client.query('ROLLBACK');
-                    return res.status(409).json({ error: `Insufficient stock for product: ${item.product_name}.` });
+                    return res.status(HTTP.CONFLICT).json({ error: `Insufficient stock for product: ${item.product_name}.` });
                 }
             }
             
-            // Step 3: Get user's profile for details (we will now store these in order_items or a separate order_shipping table if needed)
+            // Step 3: Get user's profile for details
             const userResult = await client.query(
-                'SELECT address_line1 FROM user_profiles WHERE user_id = $1',
+                'SELECT full_name, phone_number, address_line1, address_line2, city FROM user_profiles WHERE user_id = $1',
                 [userId]
             );
-            if (userResult.rows.length === 0 || !userResult.rows[0].address_line1) {
+            const customer = userResult.rows[0];
+            if (!customer || !customer.address_line1) {
                 await client.query('ROLLBACK');
-                return res.status(400).json({ error: 'User profile or address is incomplete.' });
+                return res.status(HTTP.BAD_REQUEST).json({ error: 'User profile or address is incomplete.' });
             }
-            // NOTE: The user's address is NOT stored in the `orders` table according to your schema.
-            // This is acceptable, but for historical accuracy, you might later want an `order_shipping_details` table.
 
             // Step 4: Calculate total amount
             const totalAmountRaw = cartResult.rows.reduce((sum, item) => sum + (Number(item.effective_price) * item.quantity), 0);
             const totalAmount = Number(totalAmountRaw.toFixed(2));
 
             // Step 5: Create the main order record with the CORRECT columns
-            // FIX: The INSERT statement now matches your actual 'orders' table schema.
             const orderQuery = `
                 INSERT INTO orders (user_id, total_amount, order_date, status, delivery_status)
                 VALUES ($1, $2, NOW(), 'pending', 'pending_pickup')
@@ -284,37 +318,103 @@ router.post('/', orderCreateLimiter, idempotencyCreateOrder, async (req, res) =>
             const itemQuantities = cartResult.rows.map((item) => item.quantity);
             const itemPrices = cartResult.rows.map((item) => Number(item.effective_price));
 
-            const orderItemsQuery = `
-                INSERT INTO order_items (order_id, product_id, quantity, price_at_time_of_order)
-                SELECT $1, unnest($2::int[]), unnest($3::int[]), unnest($4::numeric[])
-            `;
-            await client.query(orderItemsQuery, [orderId, itemProductIds, itemQuantities, itemPrices]);
+            if (itemProductIds.length > 0) {
+                const orderItemsQuery = `
+                    INSERT INTO order_items (order_id, product_id, quantity, price_at_time_of_order)
+                    SELECT $1, unnest($2::int[]), unnest($3::int[]), unnest($4::numeric[])
+                `;
+                await client.query(orderItemsQuery, [orderId, itemProductIds, itemQuantities, itemPrices]);
 
-            const updateStockQuery = `
-                UPDATE products p
-                SET stock_level = p.stock_level - u.qty
-                FROM (
-                    SELECT unnest($1::int[]) AS id, unnest($2::int[]) AS qty
-                ) AS u
-                WHERE p.id = u.id
-            `;
-            await client.query(updateStockQuery, [itemProductIds, itemQuantities]);
+                const updateStockQuery = `
+                    UPDATE products p
+                    SET stock_level = p.stock_level - u.qty
+                    FROM (
+                        SELECT unnest($1::int[]) AS id, unnest($2::int[]) AS qty
+                    ) AS u
+                    WHERE p.id = u.id
+                `;
+                await client.query(updateStockQuery, [itemProductIds, itemQuantities]);
+            }
 
             // Step 7: Clear the user's cart from the correct table
-            await client.query('DELETE FROM cart_items WHERE user_id = $1', [userId]); // FIX: Corrected table name
+            await client.query('DELETE FROM cart_items WHERE user_id = $1', [userId]);
+
+            const supplierNotifications = new Map();
+
+            cartResult.rows.forEach((item) => {
+                const supplierId = Number(item.supplier_id);
+                if (!Number.isInteger(supplierId) || supplierId <= 0) return;
+
+                const unitPrice = Number(item.effective_price) || 0;
+                const current = supplierNotifications.get(supplierId) || { items: [], totalAmount: 0 };
+
+                current.items.push({
+                    product_name: item.product_name || 'Unknown Product',
+                    quantity: item.quantity,
+                    price_at_time_of_order: unitPrice
+                });
+                current.totalAmount += unitPrice * item.quantity;
+                supplierNotifications.set(supplierId, current);
+            });
+
+            const pendingNotifications = [];
+            for (const [supplierId, notification] of supplierNotifications.entries()) {
+                const supplierTotal = Number(notification.totalAmount.toFixed(2));
+                pendingNotifications.push({
+                    orderId,
+                    supplierId,
+                    total_amount: supplierTotal,
+                    order_total_amount: totalAmount,
+                    items: notification.items,
+                    customerInfo: {
+                        name: customer?.full_name || 'غير محدد',
+                        phone: customer?.phone_number || 'غير محدد',
+                        address1: customer?.address_line1 || 'غير محدد',
+                        address2: customer?.address_line2,
+                        city: customer?.city || 'غير محدد'
+                    },
+                    orderDate: new Date().toISOString()
+                });
+            }
+
+            let useDirectFallbackDispatch = false;
+            if (pendingNotifications.length > 0) {
+                const insertedCount = await enqueuePendingOrderNotifications(client, pendingNotifications);
+                useDirectFallbackDispatch = insertedCount === 0;
+            }
 
             await client.query('COMMIT');
-            res.status(201).json({ orderId, message: 'Order created successfully' });
+
+            try {
+                if (useDirectFallbackDispatch) {
+                    for (const notificationPayload of pendingNotifications) {
+                        const queued = await enqueueOrderNotification(notificationPayload);
+                        if (!queued) {
+                            await telegramBotService.sendOrderNotificationToDeliveryAgent(notificationPayload);
+                        }
+                    }
+                } else {
+                    await dispatchPendingNotificationsForOrder(orderId);
+                }
+            } catch (notificationError) {
+                logger.error('Failed to dispatch pending order notification (cart order)', notificationError, {
+                    orderId,
+                    fallbackDispatch: useDirectFallbackDispatch
+                });
+            }
+
+            res.status(HTTP.CREATED).json({ orderId, message: 'Order created successfully' });
 
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error creating order:', error);
-            res.status(500).json({ error: 'Failed to create order due to a server error.' });
+            logger.error('Error creating order', error);
+            res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to create order due to a server error.' });
         } finally {
             client.release();
         }
     } catch (error) {
-        res.status(500).json({ error: 'Internal server error during order creation' });
+        logger.error('Internal error creating order from cart', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Internal server error during order creation' });
     }
 });
 
@@ -338,8 +438,8 @@ router.get('/', async (req, res) => {
         const result = await db.query(ordersQuery, [userId]);
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching orders:', error);
-        res.status(500).json({ error: 'Failed to fetch orders' });
+        logger.error('Error fetching orders', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch orders' });
     }
 });
 
@@ -348,7 +448,7 @@ router.put('/:orderId/status', validateOrderStatusUpdate, async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+            return res.status(HTTP.BAD_REQUEST).json({ error: 'Validation failed', details: errors.array() });
         }
         
         const { userId } = req.user;
@@ -357,7 +457,7 @@ router.put('/:orderId/status', validateOrderStatusUpdate, async (req, res) => {
 
         // Basic validation
         if (!status || !['cancelled'].includes(status)) { // Only allow cancelling for now
-            return res.status(400).json({ error: 'Invalid or unsupported status update.' });
+            return res.status(HTTP.BAD_REQUEST).json({ error: 'Invalid or unsupported status update.' });
         }
 
         const client = await db.pool.connect();
@@ -373,10 +473,10 @@ router.put('/:orderId/status', validateOrderStatusUpdate, async (req, res) => {
 
             if (verifyResult.rows.length === 0) {
                 await client.query('ROLLBACK');
-                return res.status(404).json({ error: 'Order not found or it cannot be cancelled.' });
+                return res.status(HTTP.NOT_FOUND).json({ error: 'Order not found or it cannot be cancelled.' });
             }
 
-            // If cancelling, restore the stock for the items in the order
+            // On cancellation, restore stock for all items in the order
             if (status === 'cancelled') {
                 const itemsQuery = 'SELECT product_id, quantity FROM order_items WHERE order_id = $1';
                 const itemsResult = await client.query(itemsQuery, [orderId]);
@@ -404,13 +504,14 @@ router.put('/:orderId/status', validateOrderStatusUpdate, async (req, res) => {
 
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error('Error updating order status:', error);
-            res.status(500).json({ error: 'Failed to update order status.' });
+            logger.error('Error updating order status', error);
+            res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to update order status.' });
         } finally {
             client.release();
         }
     } catch (error) {
-        res.status(500).json({ error: 'Internal server error during order status update' });
+        logger.error('Internal server error during order status update', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Internal server error during order status update' });
     }
 });
 

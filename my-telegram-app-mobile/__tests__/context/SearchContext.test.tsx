@@ -1,79 +1,49 @@
 import React from "react"
 import { Text, TouchableOpacity, View } from "react-native"
-import { render, fireEvent, waitFor } from "@testing-library/react-native"
+import { render, fireEvent } from "@testing-library/react-native"
 
 import { SearchProvider, useSearch } from "../../context/SearchContext"
-import { searchService } from "../../services/searchService"
-
-jest.mock("../../hooks/useDebounce", () => ({
-  useDebounce: (value: any) => value,
-}))
-
-jest.mock("../../context/AuthContext", () => ({
-  useAuth: () => ({
-    userProfile: { selected_city_id: "2" },
-  }),
-}))
-
-jest.mock("../../services/searchService", () => ({
-  searchService: {
-    search: jest.fn(),
-  },
-}))
 
 const SearchConsumer = () => {
-  const { searchTerm, isSearching, searchResults, handleSearchTermChange } = useSearch()
+  const { searchTerm, activeSearchTab, handleSearchTermChange, setActiveSearchTab, clearSearch } = useSearch()
   return (
     <View>
       <Text testID="term">{searchTerm}</Text>
-      <Text testID="isSearching">{String(isSearching)}</Text>
-      <Text testID="count">{String(searchResults.products.totalItems)}</Text>
-      <TouchableOpacity testID="short" onPress={() => handleSearchTermChange("a")} />
-      <TouchableOpacity testID="long" onPress={() => handleSearchTermChange("shoes")} />
+      <Text testID="tab">{activeSearchTab}</Text>
+      <TouchableOpacity testID="set-term" onPress={() => handleSearchTermChange("shoes")} />
+      <TouchableOpacity testID="set-tab" onPress={() => setActiveSearchTab("suppliers")} />
+      <TouchableOpacity testID="clear" onPress={clearSearch} />
     </View>
   )
 }
 
 describe("SearchContext", () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
-  it("does not search for short terms", async () => {
+  it("stores global search session values", () => {
     const { getByTestId } = render(
       <SearchProvider>
         <SearchConsumer />
       </SearchProvider>,
     )
 
-    fireEvent.press(getByTestId("short"))
+    fireEvent.press(getByTestId("set-term"))
+    fireEvent.press(getByTestId("set-tab"))
 
-    await waitFor(() => {
-      expect(searchService.search).not.toHaveBeenCalled()
-    })
-
-    expect(getByTestId("count").props.children).toBe("0")
+    expect(getByTestId("term").props.children).toBe("shoes")
+    expect(getByTestId("tab").props.children).toBe("suppliers")
   })
 
-  it("searches when term is long enough", async () => {
-    ;(searchService.search as jest.Mock).mockResolvedValue({
-      results: { products: { items: [{}], totalItems: 1 }, deals: [], suppliers: [] },
-    })
-
+  it("clearSearch resets session to defaults", () => {
     const { getByTestId } = render(
       <SearchProvider>
         <SearchConsumer />
       </SearchProvider>,
     )
 
-    fireEvent.press(getByTestId("long"))
+    fireEvent.press(getByTestId("set-term"))
+    fireEvent.press(getByTestId("set-tab"))
+    fireEvent.press(getByTestId("clear"))
 
-    await waitFor(() => {
-      expect(searchService.search).toHaveBeenCalledWith("shoes", "2")
-    })
-
-    await waitFor(() => {
-      expect(getByTestId("count").props.children).toBe("1")
-    })
+    expect(getByTestId("term").props.children).toBe("")
+    expect(getByTestId("tab").props.children).toBe("products")
   })
 })

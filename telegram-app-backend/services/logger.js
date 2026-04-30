@@ -73,74 +73,79 @@ const formatLog = (level, message, context = {}) => {
     }
 
     // In development, use readable format
-    const contextStr = Object.keys(context).length > 0
-        ? ` | ${JSON.stringify(context)}`
+    const contextStr = Object.keys(safeContext).length > 0
+        ? ` | ${JSON.stringify(safeContext)}`
         : '';
     return `[${logEntry.timestamp}] [${logEntry.level}] ${message}${contextStr}`;
 };
 
-const logger = {
-    info: (message, context = {}) => {
-        console.log(formatLog('info', message, context));
-    },
+const logInfo = (message, context = {}) => {
+    console.log(formatLog('info', message, context));
+};
 
-    warn: (message, context = {}) => {
-        console.warn(formatLog('warn', message, context));
-    },
+const logWarn = (message, context = {}) => {
+    console.warn(formatLog('warn', message, context));
+};
 
-    error: (message, error = null, context = {}) => {
-        const errorContext = { ...context };
+const logError = (message, error = null, context = {}) => {
+    const errorContext = { ...context };
 
-        if (error) {
-            errorContext.error = error.message;
-            if (!IS_PRODUCTION) {
-                errorContext.stack = error.stack?.split('\n').slice(0, 5);
-            }
-        }
-
-        console.error(formatLog('error', message, errorContext));
-    },
-
-    debug: (message, context = {}) => {
+    if (error) {
+        errorContext.error = error.message;
         if (!IS_PRODUCTION) {
-            console.debug(formatLog('debug', message, context));
-        }
-    },
-
-    // Log HTTP requests
-    request: (req, duration = null, statusCode = null) => {
-        const context = {
-            method: req.method,
-            path: req.path,
-            requestId: req.requestId,
-            ip: req.ip,
-            userAgent: req.get('user-agent')?.substring(0, 50)
-        };
-
-        if (duration !== null) {
-            context.durationMs = duration;
-        }
-
-        if (statusCode !== null) {
-            context.statusCode = statusCode;
-        }
-
-        console.log(formatLog('info', 'HTTP Request', context));
-    },
-
-    // Log database queries
-    query: (query, durationMs, params = null) => {
-        const context = {
-            durationMs,
-            query: query.substring(0, 100) // Truncate long queries
-        };
-
-        if (durationMs > 1000) {
-            logger.warn('Slow query detected', context);
-        } else if (!IS_PRODUCTION) {
-            logger.debug('DB Query', context);
+            errorContext.stack = error.stack?.split('\n').slice(0, 5);
         }
     }
+
+    console.error(formatLog('error', message, errorContext));
+};
+
+const logDebug = (message, context = {}) => {
+    if (!IS_PRODUCTION) {
+        console.debug(formatLog('debug', message, context));
+    }
+};
+
+const logRequest = (req, duration = null, statusCode = null) => {
+    const context = {
+        method: req.method,
+        path: req.path,
+        requestId: req.requestId,
+        ip: req.ip,
+        userAgent: req.get('user-agent')?.substring(0, 50)
+    };
+
+    if (duration !== null) {
+        context.durationMs = duration;
+    }
+
+    if (statusCode !== null) {
+        context.statusCode = statusCode;
+    }
+
+    console.log(formatLog('info', 'HTTP Request', context));
+};
+
+const logQuery = (query, durationMs, params = null) => {
+    const context = {
+        durationMs,
+        query: query.substring(0, 100) // Truncate long queries
+    };
+
+    if (durationMs > 1000) {
+        logWarn('Slow query detected', context);
+    } else if (!IS_PRODUCTION) {
+        logDebug('DB Query', context);
+    }
+};
+
+const logger = {
+    info: logInfo,
+    warn: logWarn,
+    error: logError,
+    debug: logDebug,
+    request: logRequest,
+    query: logQuery
 };
 
 module.exports = logger;

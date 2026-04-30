@@ -24,7 +24,7 @@ describe('Auth middleware account status enforcement', () => {
   describe('authSupplier', () => {
     it('blocks inactive supplier accounts', async () => {
       const token = signJwt(
-        { supplierId: 11, role: 'supplier' },
+        { supplierId: 11, role: 'supplier', type: 'access' },
         process.env.JWT_SUPPLIER_SECRET
       );
 
@@ -41,7 +41,7 @@ describe('Auth middleware account status enforcement', () => {
 
     it('allows active supplier accounts', async () => {
       const token = signJwt(
-        { supplierId: 12, role: 'supplier' },
+        { supplierId: 12, role: 'supplier', type: 'access' },
         process.env.JWT_SUPPLIER_SECRET
       );
 
@@ -60,7 +60,7 @@ describe('Auth middleware account status enforcement', () => {
   describe('authDeliveryAgent', () => {
     it('blocks inactive delivery agents', async () => {
       const token = signJwt(
-        { deliveryAgentId: 21, role: 'delivery_agent' },
+        { deliveryAgentId: 21, role: 'delivery_agent', type: 'access' },
         process.env.JWT_DELIVERY_SECRET
       );
 
@@ -77,7 +77,7 @@ describe('Auth middleware account status enforcement', () => {
 
     it('allows active delivery agents', async () => {
       const token = signJwt(
-        { deliveryAgentId: 22, role: 'delivery_agent' },
+        { deliveryAgentId: 22, role: 'delivery_agent', type: 'access' },
         process.env.JWT_DELIVERY_SECRET
       );
 

@@ -9,7 +9,10 @@ const crypto = require('crypto');
 
 const requestIdMiddleware = (req, res, next) => {
     // Generate unique request ID or use one from header (for distributed tracing)
-    const requestId = req.get('X-Request-ID') || crypto.randomUUID();
+    const clientId = req.get('X-Request-ID');
+    const requestId = (clientId && /^[a-zA-Z0-9-]{1,128}$/.test(clientId))
+      ? clientId
+      : crypto.randomUUID();
 
     req.requestId = requestId;
     res.set('X-Request-ID', requestId);

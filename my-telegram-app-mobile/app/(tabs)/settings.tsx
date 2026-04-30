@@ -9,6 +9,7 @@ import { User, Briefcase, FileText, Shield, Share2, ChevronLeft, MessageSquare, 
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import CitySelectionModal from '@/components/modals/CitySelectionModal';
 import { useRouter } from 'expo-router';
+import { userService } from '@/services/userService';
 
 const SettingItem = React.memo(({ icon: Icon, title, subtitle, onPress, color }: any) => (
   <Pressable
@@ -37,9 +38,10 @@ export default function SettingsScreen() {
 
   const handleEditProfile = () => {
     openModal("profile", {
+      telegramUser: userProfile,
       userProfile,
-      onFormSubmit: async (e: any, updatedData: any) => {
-        console.log("Profile updated via modal, refreshing context...");
+      onSave: async (updatedData: any) => {
+        await userService.updateProfile(updatedData);
         await refreshProfile();
         Alert.alert("تم بنجاح", "تم تحديث الملف الشخصي بنجاح");
       },
@@ -69,7 +71,7 @@ export default function SettingsScreen() {
                 icon={MapPin}
                 color="#3b82f6"
                 title="المدينة"
-                subtitle={userProfile?.selected_city_name || 'دبي'}
+                subtitle={(userProfile as any)?.selected_city_name || 'دبي'}
                 onPress={() => setIsCityModalVisible(true)}
               />
             </View>

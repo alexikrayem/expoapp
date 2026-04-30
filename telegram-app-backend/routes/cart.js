@@ -3,20 +3,38 @@ const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 const router = express.Router();
 const db = require('../config/db');
+const logger = require('../services/logger');
 const requireCustomer = require('../middleware/requireCustomer');
 const { EFFECTIVE_PRICE_SQL } = require('../utils/pricing');
 
 router.use(requireCustomer);
 
+const HTTP = Object.freeze({
+    OK: Number.parseInt('200', 10),
+    NO_CONTENT: Number.parseInt('204', 10),
+    BAD_REQUEST: Number.parseInt('400', 10),
+    NOT_FOUND: Number.parseInt('404', 10),
+    INTERNAL_SERVER_ERROR: Number.parseInt('500', 10)
+});
+
+const CART_LIMITS = Object.freeze({
+    MAX_QUANTITY: Number.parseInt('999', 10)
+});
+
 // Validation middleware for cart operations
 const validateAddToCart = [
     body('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
-    body('quantity').optional().isInt({ min: 1, max: 999 }).withMessage('Quantity must be between 1 and 999')
+    body('quantity')
+        .optional()
+        .isInt({ min: 1, max: CART_LIMITS.MAX_QUANTITY })
+        .withMessage(`Quantity must be between 1 and ${CART_LIMITS.MAX_QUANTITY}`)
 ];
 
 const validateUpdateCart = [
     param('productId').isInt({ min: 1 }).withMessage('Product ID must be a positive integer'),
-    body('quantity').isInt({ min: 0, max: 999 }).withMessage('Quantity must be between 0 and 999')
+    body('quantity')
+        .isInt({ min: 0, max: CART_LIMITS.MAX_QUANTITY })
+        .withMessage(`Quantity must be between 0 and ${CART_LIMITS.MAX_QUANTITY}`)
 ];
 
 const validateCartParams = [
@@ -45,8 +63,8 @@ router.get('/', async (req, res) => {
         res.json(result.rows);
 
     } catch (error) {
-        console.error('Error fetching cart:', error);
-        res.status(500).json({ error: 'Failed to fetch cart' });
+        logger.error('Error fetching cart', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch cart' });
     }
 });
 
@@ -55,14 +73,14 @@ router.post('/items', validateAddToCart, async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+            return res.status(HTTP.BAD_REQUEST).json({ error: 'Validation failed', details: errors.array() });
         }
         
         const { userId } = req.user;
         const { productId, quantity = 1 } = req.body;
 
         if (!productId) {
-            return res.status(400).json({ error: 'Product ID is required' });
+            return res.status(HTTP.BAD_REQUEST).json({ error: 'Product ID is required' });
         }
         
         const query = `
@@ -75,11 +93,11 @@ router.post('/items', validateAddToCart, async (req, res) => {
         `;
 
         const result = await db.query(query, [userId, productId, quantity]);
-        res.status(200).json(result.rows[0]);
+        res.status(HTTP.OK).json(result.rows[0]);
 
     } catch (error) {
-        console.error('Error adding to cart:', error);
-        res.status(500).json({ error: 'Failed to add item to cart' });
+        logger.error('Error adding to cart', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to add item to cart' });
     }
 });
 
@@ -88,7 +106,7 @@ router.put('/items/:productId', validateUpdateCart, async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+            return res.status(HTTP.BAD_REQUEST).json({ error: 'Validation failed', details: errors.array() });
         }
         
         const { userId } = req.user;
@@ -96,24 +114,24 @@ router.put('/items/:productId', validateUpdateCart, async (req, res) => {
         const { quantity } = req.body;
 
         if (typeof quantity !== 'number' || quantity < 0) {
-            return res.status(400).json({ error: 'A valid, non-negative quantity is required' });
+            return res.status(HTTP.BAD_REQUEST).json({ error: 'A valid, non-negative quantity is required' });
         }
 
         if (quantity === 0) {
             await db.query('DELETE FROM cart_items WHERE user_id = $1 AND product_id = $2', [userId, productId]); // FIX: Corrected table name
-            res.status(204).send();
+            res.status(HTTP.NO_CONTENT).send();
         } else {
             const query = 'UPDATE cart_items SET quantity = $1 WHERE user_id = $2 AND product_id = $3 RETURNING *'; // FIX: Corrected table name
             const result = await db.query(query, [quantity, userId, productId]);
             
             if (result.rowCount === 0) {
-                return res.status(404).json({ message: "Cart item not found to update." });
+                return res.status(HTTP.NOT_FOUND).json({ message: "Cart item not found to update." });
             }
-            res.status(200).json(result.rows[0]);
+            res.status(HTTP.OK).json(result.rows[0]);
         }
     } catch (error) {
-        console.error('Error updating cart:', error);
-        res.status(500).json({ error: 'Failed to update cart' });
+        logger.error('Error updating cart', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to update cart' });
     }
 });
 
@@ -122,18 +140,18 @@ router.delete('/items/:productId', validateCartParams, async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+            return res.status(HTTP.BAD_REQUEST).json({ error: 'Validation failed', details: errors.array() });
         }
         
         const { userId } = req.user;
         const { productId } = req.params;
         
         await db.query('DELETE FROM cart_items WHERE user_id = $1 AND product_id = $2', [userId, productId]); // FIX: Corrected table name
-        res.status(204).send();
+        res.status(HTTP.NO_CONTENT).send();
 
     } catch (error) {
-        console.error('Error removing from cart:', error);
-        res.status(500).json({ error: 'Failed to remove item from cart' });
+        logger.error('Error removing from cart', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to remove item from cart' });
     }
 });
 

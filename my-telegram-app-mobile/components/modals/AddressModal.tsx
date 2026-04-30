@@ -13,9 +13,19 @@ interface AddressModalProps {
     initialData?: any;
     onSaveAndProceed: (data: any) => Promise<void>;
     availableCities?: string[];
+    error?: string | null;
+    isSaving?: boolean;
 }
 
-export default function AddressModal({ visible, onClose, initialData = {}, onSaveAndProceed, availableCities = [] }: AddressModalProps) {
+export default function AddressModal({
+    visible,
+    onClose,
+    initialData = {},
+    onSaveAndProceed,
+    availableCities = [],
+    error: externalError = null,
+    isSaving: externalIsSaving = false
+}: AddressModalProps) {
     const isRTL = I18nManager.isRTL;
     const [formData, setFormData] = useState({
         fullName: '',
@@ -25,14 +35,22 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
         city: '',
     });
     const [validationErrors, setValidationErrors] = useState<any>({});
-    const [isSaving, setIsSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [localError, setLocalError] = useState<string | null>(externalError);
+
+    const isSaving = isSubmitting || externalIsSaving;
 
     useEffect(() => {
         if (visible && initialData) {
             setFormData(prev => ({ ...prev, ...initialData }));
         }
     }, [visible, initialData]);
+
+    useEffect(() => {
+        if (visible) {
+            setLocalError(externalError);
+        }
+    }, [visible, externalError]);
 
     const handleChange = (name: string, value: string) => {
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -59,15 +77,15 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
     const handleSubmit = async () => {
         if (!validateForm()) return;
 
-        setError(null);
-        setIsSaving(true);
+        setLocalError(null);
+        setIsSubmitting(true);
         try {
             await onSaveAndProceed(formData);
             // onClose is usually handled by the parent after successful save or by the next step
         } catch (err: any) {
-            setError(err.message || 'Failed to save address');
+            setLocalError(err.message || 'Failed to save address');
         } finally {
-            setIsSaving(false);
+            setIsSubmitting(false);
         }
     };
 
@@ -103,10 +121,10 @@ export default function AddressModal({ visible, onClose, initialData = {}, onSav
                         keyboardDismissMode="on-drag"
                         keyboardShouldPersistTaps="handled"
                     >
-                        {error && (
+                        {localError && (
                             <View className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex-row items-center">
                                 <AlertCircle size={20} color="#ef4444" className="mr-2" />
-                                <Text className="text-sm text-red-700 font-bold ml-2 flex-1 text-right">{error}</Text>
+                                <Text className="text-sm text-red-700 font-bold ml-2 flex-1 text-right">{localError}</Text>
                             </View>
                         )}
 

@@ -15,6 +15,7 @@ describe('pricingEngine', () => {
   it('passes configured parameters to the adjustment query', async () => {
     global.mockDb.query
       .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ acquired: true }] }) // advisory lock
       .mockResolvedValueOnce({ rows: [] }) // UPDATE
       .mockResolvedValueOnce({}); // COMMIT
 

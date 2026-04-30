@@ -160,7 +160,7 @@ const OrderItem = React.memo(({ order, onCancel }: { order: any, onCancel: (id: 
 
 export default function OrdersScreen() {
   const { userProfile } = useAuth();
-  const { orders, isLoadingOrders, refetchOrders } = useOrders(userProfile);
+  const { orders, isLoadingOrders, refetchOrders } = useOrders(userProfile?.id);
   const [activeFilter, setActiveFilter] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -169,11 +169,6 @@ export default function OrdersScreen() {
     if (activeFilter === 'all') return orders;
     return orders.filter((order: any) => order.status === activeFilter);
   }, [orders, activeFilter]);
-
-  const renderOrderItem = useCallback(
-    ({ item }: { item: any }) => <OrderItem order={item} onCancel={handleCancelOrder} />,
-    [handleCancelOrder]
-  );
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -202,6 +197,11 @@ export default function OrdersScreen() {
       ]
     );
   }, [refetchOrders]);
+
+  const renderOrderItem = useCallback(
+    ({ item }: { item: any }) => <OrderItem order={item} onCancel={handleCancelOrder} />,
+    [handleCancelOrder]
+  );
 
   const filters = [
     { key: 'all', label: 'الكل' },

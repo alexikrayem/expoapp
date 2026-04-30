@@ -29,7 +29,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(({
   rightIcon,
   ...props
 }, ref) => {
-  const resolvedFont = resolveFontStyle(style)
+  const resolvedFont = resolveFontStyle(style as any)
   const inputStyle = resolvedFont ? [styles.input, style, resolvedFont] : [styles.input, style]
   const isRTL = I18nManager.isRTL
   const labelAlignClass = labelClassName ?? (isRTL ? "text-right" : "text-left")

@@ -34,8 +34,8 @@ const product = {
   name: "Test",
   image_url: "http://example.com/1.png",
   supplier_name: "Supplier",
-  effective_selling_price: "5",
-}
+  effective_selling_price: 5,
+} as any
 
 const CartConsumer = () => {
   const { cartItems, getCartItemCount, getCartTotal, actions, isLoadingCart } = useCart()

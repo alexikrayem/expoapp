@@ -11,6 +11,9 @@ interface SupplierCardProps {
 }
 
 const SupplierCard = React.memo(({ supplier, onShowDetails }: SupplierCardProps) => {
+    const supplierImage = supplier.logoUrl || supplier.logo_url || supplier.logo || supplier.image_url || supplier.imageUrl;
+    const supplierLocation = supplier.city || supplier.location;
+
     return (
         <Pressable
             onPress={() => onShowDetails(supplier.id)}
@@ -18,9 +21,9 @@ const SupplierCard = React.memo(({ supplier, onShowDetails }: SupplierCardProps)
             style={({ pressed }) => [{ opacity: pressed ? 0.96 : 1 }]}
             className="bg-white rounded-xl shadow-sm mb-4 p-4 flex-row items-center border border-gray-100"
         >
-            {(supplier.logoUrl || supplier.logo_url || supplier.logo)?.startsWith('http') ? (
+            {supplierImage?.startsWith('http') ? (
                 <Image
-                    source={{ uri: supplier.logoUrl || supplier.logo_url || supplier.logo }}
+                    source={{ uri: supplierImage }}
                     style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#f3f4f6' }}
                     contentFit="cover"
                     transition={200}
@@ -44,7 +47,7 @@ const SupplierCard = React.memo(({ supplier, onShowDetails }: SupplierCardProps)
                 <Text className="text-gray-500 text-sm mb-2" numberOfLines={1}>{supplier.category}</Text>
                 <View className="flex-row items-center">
                     <MapPin size={12} color="#9CA3AF" className="mr-1" />
-                    <Text className="text-gray-400 text-xs">{supplier.city}</Text>
+                    <Text className="text-gray-400 text-xs">{supplierLocation}</Text>
                 </View>
             </View>
         </Pressable>

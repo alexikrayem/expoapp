@@ -1,74 +1,102 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '../services/userService';
-import { authService } from '../services/authService';
 import { useToast } from '@/context/ToastContext';
 
-export const useFavorites = (telegramUser: any) => {
+const normalizeProductId = (productId: string | number) => String(productId);
+
+/**
+ * useFavorites Hook
+ * 
+ * Manages the user's favorite products using React Query for server state management.
+ * Provides functions to check if a product is favorited and toggle its favorite status.
+ */
+export const useFavorites = () => {
     const { showToast } = useToast();
-    const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
-    const fetchFavoriteIds = useCallback(async () => {
-        console.log("useFavorites: Checking auth...");
-        const isAuth = await authService.isAuthenticated();
-        console.log("useFavorites: isAuth =", isAuth);
-
-        if (!isAuth) {
-            setFavoriteIds(new Set());
-            setIsLoading(false);
-            return;
-        }
-        setIsLoading(true);
-        setError(null);
-        try {
-            console.log("useFavorites: Fetching favorites from API...");
+    // Query to fetch favorite IDs
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['favorites'],
+        queryFn: async () => {
             const result = await userService.getFavorites();
-            console.log("useFavorites: API Result =", result);
-            setFavoriteIds(new Set(result.favorite_ids || []));
-        } catch (err: any) {
-            console.error("Failed to fetch favorites:", err);
-            setError("Could not load your favorites.");
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+            return new Set<string>((result?.favorite_ids || []).map((id: string | number) => String(id)));
+        },
+    });
 
-    useEffect(() => {
-        fetchFavoriteIds();
-    }, [fetchFavoriteIds]);
+    // Mutation to add a product to favorites
+    const addMutation = useMutation({
+        mutationFn: (productId: string | number) => userService.addFavorite(normalizeProductId(productId)),
+        onMutate: async (productId) => {
+            const normalizedId = normalizeProductId(productId as string | number);
+            await queryClient.cancelQueries({ queryKey: ['favorites'] });
+            const previousFavorites = queryClient.getQueryData<Set<string>>(['favorites']);
+            queryClient.setQueryData(['favorites'], (old: Set<string> | undefined) => {
+                const next = new Set(old || []);
+                next.add(normalizedId);
+                return next;
+            });
+            return { previousFavorites };
+        },
+        onSuccess: () => {
+            showToast('تم إضافة المنتج إلى المفضلة', 'success');
+        },
+        onError: (err: any, productId, context) => {
+            queryClient.setQueryData(['favorites'], context?.previousFavorites);
+            showToast(`خطأ: ${err.message || 'فشل في إضافة المنتج إلى المفضلة'}`, 'error');
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['favorites'] });
+        },
+    });
 
-    const toggleFavorite = useCallback(async (productId: string) => {
-        const isCurrentlyFavorite = favoriteIds.has(productId);
+    // Mutation to remove a product from favorites
+    const removeMutation = useMutation({
+        mutationFn: (productId: string | number) => userService.removeFavorite(normalizeProductId(productId)),
+        onMutate: async (productId) => {
+            const normalizedId = normalizeProductId(productId as string | number);
+            await queryClient.cancelQueries({ queryKey: ['favorites'] });
+            const previousFavorites = queryClient.getQueryData<Set<string>>(['favorites']);
+            queryClient.setQueryData(['favorites'], (old: Set<string> | undefined) => {
+                const next = new Set(old || []);
+                next.delete(normalizedId);
+                return next;
+            });
+            return { previousFavorites };
+        },
+        onSuccess: () => {
+            showToast('تم إزالة المنتج من المفضلة', 'info');
+        },
+        onError: (err: any, productId, context) => {
+            queryClient.setQueryData(['favorites'], context?.previousFavorites);
+            showToast(`خطأ: ${err.message || 'فشل في إزالة المنتج من المفضلة'}`, 'error');
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['favorites'] });
+        },
+    });
 
-        const newFavoriteIds = new Set(favoriteIds);
-        if (isCurrentlyFavorite) {
-            newFavoriteIds.delete(productId);
+    const favoriteIds = useMemo(() => data ?? new Set<string>(), [data]);
+
+    const isFavorite = useCallback(
+        (productId: string | number) => favoriteIds.has(normalizeProductId(productId)),
+        [favoriteIds]
+    );
+
+    const toggleFavorite = useCallback(async (productId: string | number) => {
+        const normalizedId = normalizeProductId(productId);
+        if (favoriteIds.has(normalizedId)) {
+            await removeMutation.mutateAsync(normalizedId);
         } else {
-            newFavoriteIds.add(productId);
+            await addMutation.mutateAsync(normalizedId);
         }
-        setFavoriteIds(newFavoriteIds);
-
-        try {
-            if (isCurrentlyFavorite) {
-                await userService.removeFavorite(productId);
-                showToast('تم إزالة المنتج من المفضلة', 'info');
-            } else {
-                await userService.addFavorite(productId);
-                showToast('تم إضافة المنتج إلى المفضلة', 'success');
-            }
-        } catch (error: any) {
-            console.error("Error toggling favorite:", error);
-            setFavoriteIds(favoriteIds);
-            showToast(`خطأ: ${error.message}`, 'error');
-        }
-    }, [favoriteIds, showToast]);
+    }, [favoriteIds, addMutation, removeMutation]);
 
     return {
         favoriteIds,
         isLoadingFavorites: isLoading,
         favoritesError: error,
         toggleFavorite,
-        isFavorite: (productId: string) => favoriteIds.has(productId)
+        isFavorite
     };
 };

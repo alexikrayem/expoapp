@@ -24,6 +24,9 @@ const validateTelegramAuth = (req, res, next) => {
     if (decoded.role !== 'customer') {
       return res.status(403).json({ message: 'Forbidden: invalid token role.' });
     }
+    if (decoded.type !== 'access') {
+      return res.status(403).json({ message: 'Forbidden: invalid token type.' });
+    }
 
     // Add user information to request object
     req.user = decoded;

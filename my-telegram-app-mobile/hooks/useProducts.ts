@@ -6,7 +6,16 @@ import { Product } from '@/types';
 import { useDebounce } from '@/hooks/useDebounce';
 import { prefetchImages } from '@/utils/image';
 
-export const useProducts = (cityId: string | null | undefined, externalFilters: any = {}) => {
+interface ProductFilters {
+    category?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    onSale?: boolean;
+    supplier?: string;
+    searchQuery?: string;
+}
+
+export const useProducts = (cityId: string | null | undefined, externalFilters: ProductFilters = {}) => {
     const effectiveFilters = useMemo(() => ({
         category: externalFilters.category || 'all',
         minPrice: externalFilters.minPrice || '',
@@ -37,23 +46,26 @@ export const useProducts = (cityId: string | null | undefined, externalFilters: 
         isRefetching
     } = useInfiniteQuery({
         queryKey: ['products', cityId, debouncedFilters],
-        queryFn: async ({ pageParam = 1 }) => {
+        queryFn: async ({ pageParam = 1, signal }) => {
             if (!cityId) return { items: [], currentPage: 1, totalPages: 1 };
 
-            const params: any = {
+            const params: Record<string, string | number | boolean> = {
                 page: pageParam,
                 limit: PAGINATION.PRODUCTS_PER_PAGE,
                 cityId,
                 ...debouncedFilters,
             };
 
-            Object.keys(params).forEach(key => {
-                if (params[key] === '' || params[key] === 'all' || (key === 'onSale' && params[key] === false)) {
-                    delete params[key];
-                }
-            });
+            // Strip empty/default filter values before sending to the API
+            const cleanedParams = Object.fromEntries(
+                Object.entries(params).filter(([key, value]) => {
+                    if (value === '' || value === 'all') return false;
+                    if (key === 'onSale' && value === false) return false;
+                    return true;
+                })
+            );
 
-            return productService.getProducts(params);
+            return productService.getProducts(cleanedParams, { signal });
         },
         initialPageParam: 1,
         getNextPageParam: (lastPage) => {
@@ -70,13 +82,16 @@ export const useProducts = (cityId: string | null | undefined, externalFilters: 
         return (data?.pages.flatMap(page => page.items || []) || []) as Product[];
     }, [data]);
 
+    // Memoize the URL list so prefetchImages isn't called with a new array on every render
+    const imageUrls = useMemo(
+        () => products.map((item) => item.image_url),
+        [products],
+    );
+
     useEffect(() => {
-        if (products.length === 0) return;
-        prefetchImages(
-            products.map((item: any) => item.image_url || item.imageUrl || item.image),
-            12
-        );
-    }, [products]);
+        if (imageUrls.length === 0) return;
+        prefetchImages(imageUrls, 12);
+    }, [imageUrls]);
 
     return {
         products,

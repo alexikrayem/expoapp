@@ -1,32 +1,83 @@
 // telegram-app-backend/createAdminHash.js
 const bcrypt = require('bcrypt');
-const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS || 12); // Standard number of salt rounds for bcrypt
+const { validatePassword } = require('./services/passwordPolicy');
 
-// --- CHOOSE YOUR ADMIN PASSWORD HERE ---
-const adminPlainPassword = ''; 
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// IMPORTANT: Replace this with a strong, unique password for your admin account.
-//            Do NOT commit this file with the plain password to Git if it's a real production password.
-//            For local testing, it's okay, but remember to use a strong one for deployment.
+const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS || 12);
+const DISALLOWED_PLACEHOLDERS = new Set([
+    'yoursecureadminpassword123!',
+    'admin123',
+    'password',
+    'changeme'
+]);
 
-if (!adminPlainPassword || adminPlainPassword === 'YourSecureAdminPassword123!') {
-    console.error("ERROR: Please set a strong adminPlainPassword in createAdminHash.js before running.");
-    process.exit(1); // Exit if default password is still there
+const getArgValue = (argv, flagName) => {
+    const index = argv.findIndex((arg) => arg === flagName);
+    if (index === -1) return null;
+    return argv[index + 1] || null;
+};
+
+const getAdminPasswordInput = (argv = process.argv.slice(2), env = process.env) => {
+    const cliPassword = getArgValue(argv, '--password');
+    if (cliPassword) return cliPassword;
+    return env.ADMIN_PLAIN_PASSWORD || null;
+};
+
+const assertSecureAdminPassword = (password) => {
+    const normalized = String(password || '').trim();
+    if (!normalized) {
+        throw new Error('Missing admin password. Provide --password "<value>" or ADMIN_PLAIN_PASSWORD.');
+    }
+
+    if (DISALLOWED_PLACEHOLDERS.has(normalized.toLowerCase())) {
+        throw new Error('Rejected insecure placeholder password. Choose a unique strong password.');
+    }
+
+    const passwordErrors = validatePassword(normalized);
+    if (passwordErrors.length > 0) {
+        throw new Error(`Password does not meet policy: ${passwordErrors.join('; ')}`);
+    }
+
+    return normalized;
+};
+
+const buildUsageMessage = () => [
+    'Usage:',
+    '  node createAdminHash.js --password <secure-value>',
+    '  or set ADMIN_PLAIN_PASSWORD in your environment before running'
+].join('\n');
+
+const createAdminHash = async (password) => {
+    const adminPassword = assertSecureAdminPassword(password);
+    return bcrypt.hash(adminPassword, saltRounds);
+};
+
+const run = async () => {
+    try {
+        const password = getAdminPasswordInput();
+        const hash = await createAdminHash(password);
+        console.log('--- Admin Password Hash ---');
+        console.log('Bcrypt Hash (Copy this into your database):');
+        console.log(hash);
+        console.log('-----------------------------');
+        console.log('Now, go to your SQL editor and run an INSERT or UPDATE command.');
+        console.log('Example INSERT for a new admin (replace email/full_name):');
+        console.log(`INSERT INTO admins (email, password_hash, full_name, role) VALUES ('admin@example.com', '${hash}', 'Platform Super Admin', 'admin');`);
+        console.log('\nExample UPDATE if admin user already exists:');
+        console.log(`UPDATE admins SET password_hash = '${hash}' WHERE email = 'admin@example.com';`);
+    } catch (error) {
+        console.error('Failed to create admin password hash:', error.message);
+        console.error(buildUsageMessage());
+        process.exitCode = 1;
+    }
+};
+
+if (require.main === module) {
+    void run();
 }
 
-bcrypt.hash(adminPlainPassword, saltRounds, function(err, hash) {
-    if (err) {
-        console.error('Error hashing password:', err);
-        return;
-    }
-    console.log('--- Admin Password Hash ---');
-    console.log('Plain Password Used (for your reference, do not store this):', adminPlainPassword);
-    console.log('Bcrypt Hash (Copy this into your database):');
-    console.log(hash);
-    console.log('-----------------------------');
-    console.log("Now, go to your Neon SQL Editor (or other DB tool) and run an INSERT or UPDATE command.");
-    console.log("Example INSERT for a new admin (replace email and full_name):");
-    console.log(`INSERT INTO admins (email, password_hash, full_name, role) VALUES ('admin@example.com', '${hash}', 'Platform Super Admin', 'admin');`);
-    console.log("\nExample UPDATE if admin user 'admin@example.com' already exists but needs a password:");
-    console.log(`UPDATE admins SET password_hash = '${hash}' WHERE email = 'admin@example.com';`);
-});
+module.exports = {
+    createAdminHash,
+    getAdminPasswordInput,
+    assertSecureAdminPassword,
+    DISALLOWED_PLACEHOLDERS
+};

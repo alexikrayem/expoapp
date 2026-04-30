@@ -10,9 +10,11 @@ export default function TabLayout() {
     <>
       <Tabs
         tabBar={props => <CustomTabBar {...props} />}
+        detachInactiveScreens={true}
         screenOptions={{
           header: () => <Header />,
           headerShown: true,
+          lazy: true,
           tabBarHideOnKeyboard: true,
           freezeOnBlur: true,
         }}>

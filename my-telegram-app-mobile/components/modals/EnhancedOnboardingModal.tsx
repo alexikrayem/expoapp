@@ -33,7 +33,7 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
         clinic_address_line1: '',
         clinic_address_line2: '',
         clinic_city: '',
-        selected_city_id: null as number | null,
+        selected_city_id: null as string | null,
         professional_role: '',
         years_of_experience: '',
         education_background: '',

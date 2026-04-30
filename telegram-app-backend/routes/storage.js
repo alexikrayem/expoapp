@@ -11,8 +11,17 @@ router.post(
   '/signed-upload',
   authUploader,
   [
-    body('filename').isString().notEmpty().withMessage('filename is required'),
-    body('folder').optional().isString(),
+    body('filename')
+      .isString()
+      .notEmpty()
+      .matches(/^[a-zA-Z0-9._-]+$/)
+      .isLength({ max: 255 })
+      .withMessage('Invalid filename'),
+    body('folder')
+      .optional()
+      .isString()
+      .matches(/^[a-zA-Z0-9/_-]+$/)
+      .isLength({ max: 255 }),
     body('bucket').optional().isString(),
     body('expiresIn').optional().isInt({ min: 60, max: 3600 }),
   ],

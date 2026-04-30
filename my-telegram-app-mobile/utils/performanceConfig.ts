@@ -1,13 +1,5 @@
 import { Image } from "expo-image"
 
-/**
- * Configure global image caching settings
- * Call this once in app initialization
- */
-export function configureImageCache() {
-  // Set memory cache limit (in bytes) - 100MB
-  Image.prefetch
-}
 
 /**
  * Performance constants for lists

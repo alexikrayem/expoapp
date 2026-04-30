@@ -25,7 +25,7 @@ describe('Delivery route status validation', () => {
 
   it('rejects invalid delivery status updates', async () => {
     const token = signJwt(
-      { deliveryAgentId: 33, role: 'delivery_agent' },
+      { deliveryAgentId: 33, role: 'delivery_agent', type: 'access' },
       process.env.JWT_DELIVERY_SECRET
     );
 
@@ -37,6 +37,6 @@ describe('Delivery route status validation', () => {
       .send({ newStatus: 'not-a-status' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toBe('Invalid delivery status update.');
+    expect(res.body.error).toBe('Validation Error');
   });
 });

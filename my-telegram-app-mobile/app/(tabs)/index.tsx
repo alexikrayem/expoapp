@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useState, useCallback, useMemo } from "react"
 import { View, ActivityIndicator, RefreshControl, ScrollView } from "react-native"
 import { FlashList } from "@shopify/flash-list"
@@ -92,8 +90,7 @@ export default function HomeScreen() {
     actions: { addToCart },
   } = useCart()
 
-  const telegramUser = userProfile || { id: 12345 }
-  const { isFavorite, toggleFavorite, favoriteIds, isLoadingFavorites } = useFavorites(telegramUser)
+  const { isFavorite, toggleFavorite, favoriteIds, isLoadingFavorites } = useFavorites()
 
   // Handlers
   const handleShowProductDetails = useCallback(
@@ -103,13 +100,19 @@ export default function HomeScreen() {
     [openModal],
   )
 
-  const handleShowDealDetails = useCallback((dealId: string) => {
-    console.log("Show deal details:", dealId)
-  }, [])
+  const handleShowDealDetails = useCallback(
+    (dealId: string) => {
+      openModal("dealDetail", { dealId })
+    },
+    [openModal],
+  )
 
-  const handleShowSupplierDetails = useCallback((supplierId: string) => {
-    console.log("Show supplier details:", supplierId)
-  }, [])
+  const handleShowSupplierDetails = useCallback(
+    (supplierId: string) => {
+      openModal("supplierDetail", { supplierId })
+    },
+    [openModal],
+  )
 
   const handleAddToCart = useCallback(
     (product: any) => {

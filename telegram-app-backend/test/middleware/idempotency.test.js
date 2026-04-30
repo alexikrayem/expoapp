@@ -20,7 +20,9 @@ const hashRequest = (method, url, body) => {
   return crypto.createHash('sha256').update(payload).digest('hex');
 };
 
-const buildApp = () => {
+const buildApp = (handler = (req, res) => {
+  res.json({ ok: true, echo: req.body });
+}) => {
   const app = express();
   app.use(express.json());
 
@@ -31,9 +33,7 @@ const buildApp = () => {
       next();
     },
     idempotency({ scope: 'test', requireKey: true }),
-    (req, res) => {
-      res.json({ ok: true, echo: req.body });
-    }
+    handler
   );
 
   return app;
@@ -152,5 +152,79 @@ describe('Idempotency middleware', () => {
 
     expect(res.status).toBe(409);
     expect(res.body.error).toBe('Request is already in progress');
+  });
+
+  it('allows retry for the same key after a 5xx response', async () => {
+    let shouldFail = true;
+    app = buildApp((req, res) => {
+      if (shouldFail) {
+        shouldFail = false;
+        return res.status(500).json({ error: 'transient failure' });
+      }
+      return res.status(201).json({ ok: true, echo: req.body });
+    });
+
+    let record = null;
+    global.mockDb.query.mockImplementation((sql, params = []) => {
+      const normalizedSql = String(sql).replace(/\s+/g, ' ').trim().toLowerCase();
+
+      if (normalizedSql.startsWith('select * from idempotency_keys')) {
+        return Promise.resolve({ rows: record ? [{ ...record }] : [] });
+      }
+
+      if (normalizedSql.startsWith('delete from idempotency_keys')) {
+        return Promise.resolve({ rows: [] });
+      }
+
+      if (normalizedSql.startsWith('insert into idempotency_keys')) {
+        record = {
+          id: 1,
+          status: 'in_progress',
+          request_hash: params[3],
+          created_at: new Date().toISOString(),
+        };
+        return Promise.resolve({ rows: [{ id: 1 }] });
+      }
+
+      if (normalizedSql.includes("set status = 'failed'")) {
+        record = { ...record, status: 'failed' };
+        return Promise.resolve({ rows: [] });
+      }
+
+      if (normalizedSql.includes("set status = 'in_progress'")) {
+        record = { ...record, status: 'in_progress' };
+        return Promise.resolve({ rows: [] });
+      }
+
+      if (normalizedSql.includes("set status = 'completed'")) {
+        record = {
+          ...record,
+          status: 'completed',
+          response_status: params[0],
+          response_body: params[1],
+        };
+        return Promise.resolve({ rows: [] });
+      }
+
+      return Promise.resolve({ rows: [] });
+    });
+
+    const first = await request(app)
+      .post('/test')
+      .set('Idempotency-Key', 'retry-on-error')
+      .send({ foo: 'bar' });
+
+    expect(first.status).toBe(500);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const second = await request(app)
+      .post('/test')
+      .set('Idempotency-Key', 'retry-on-error')
+      .send({ foo: 'bar' });
+
+    expect(second.status).toBe(201);
+    expect(second.headers['idempotency-replay']).toBeUndefined();
+    expect(second.body).toEqual({ ok: true, echo: { foo: 'bar' } });
   });
 });

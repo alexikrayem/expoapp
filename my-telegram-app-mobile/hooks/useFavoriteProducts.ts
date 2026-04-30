@@ -1,49 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { productService } from '../services/productService';
-import { useCache } from '../context/CacheContext';
 import { prefetchImages } from '@/utils/image';
+import { Product } from '@/types';
 
 export const useFavoriteProducts = (favoriteIds: Set<string>, active: boolean) => {
-    const [products, setProducts] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const { cachedApiCall } = useCache();
+    const idsArray = useMemo(() => Array.from(favoriteIds).sort(), [favoriteIds]);
+    const idsKey = useMemo(() => idsArray.join(','), [idsArray]);
 
-    const fetchProducts = useCallback(async () => {
-        if (!active || favoriteIds.size === 0) {
-            setProducts([]);
-            setIsLoading(false);
-            return;
-        }
+    const { data, isLoading, error } = useQuery<Product[]>({
+        queryKey: ['favorite-products', idsKey],
+        queryFn: () => productService.getProductBatch(idsArray.join(',')),
+        enabled: active && favoriteIds.size > 0,
+        staleTime: 1000 * 60 * 2, // 2 minutes
+    });
 
-        const idsArray = Array.from(favoriteIds);
-        const cacheKey = `favorite_products_${idsArray.sort().join(',')}`;
-
-        setIsLoading(true);
-        setError(null);
-        try {
-            const idsString = idsArray.join(',');
-            const data = await cachedApiCall(
-                cacheKey,
-                () => productService.getProductBatch(idsString),
-                2 * 60 * 1000
-            );
-            setProducts(data || []);
-        } catch (err: any) {
-            console.error("Failed to fetch favorite products:", err);
-            setError(err.message);
-            setProducts([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [active, favoriteIds, cachedApiCall]);
+    const products = data || [];
 
     useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
-
-    useEffect(() => {
-        if (!products || products.length === 0) return;
+        if (products.length === 0) return;
         prefetchImages(
             products.map((item: any) => item.image_url || item.imageUrl || item.image),
             12
@@ -53,6 +28,7 @@ export const useFavoriteProducts = (favoriteIds: Set<string>, active: boolean) =
     return {
         favoriteProducts: products,
         isLoadingFavoritesTab: isLoading,
-        favoritesTabError: error
+        favoritesTabError: error ? (error as Error).message : null,
     };
 };
+

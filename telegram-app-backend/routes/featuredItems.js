@@ -2,7 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const logger = require('../services/logger');
 const { cacheResponse } = require('../middleware/cache');
+const { param } = require('express-validator');
+const validateRequest = require('../middleware/validateRequest');
 
 // Get featured items for the slider
 router.get('/', cacheResponse(300, 'featured:items'), async (req, res) => {
@@ -59,13 +62,18 @@ router.get('/', cacheResponse(300, 'featured:items'), async (req, res) => {
         res.json(featuredItems);
         
     } catch (error) {
-        console.error('Error fetching featured items:', error);
+        logger.error('Error fetching featured items', error);
         res.status(500).json({ error: 'Failed to fetch featured items' });
     }
 });
 
+const validateFeaturedListItems = [
+    param('listId').isInt({ min: 1 }).withMessage('List ID must be a positive integer'),
+    validateRequest
+];
+
 // Get items in a featured list
-router.get('/list/:listId', cacheResponse(300, 'featured:list'), async (req, res) => {
+router.get('/list/:listId', validateFeaturedListItems, cacheResponse(300, 'featured:list'), async (req, res) => {
     try {
         const { listId } = req.params
 
@@ -118,7 +126,7 @@ router.get('/list/:listId', cacheResponse(300, 'featured:list'), async (req, res
 
         res.json(items)
     } catch (error) {
-        console.error('Error fetching featured list items:', error);
+        logger.error('Error fetching featured list items', error);
         res.status(500).json({ error: 'Failed to fetch featured list items' });
     }
 });

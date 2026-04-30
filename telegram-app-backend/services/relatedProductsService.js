@@ -10,10 +10,13 @@ const { normalizeText } = require('../utils/textNormalize');
 const { EFFECTIVE_PRICE_SQL } = require('../utils/pricing');
 
 const DEFAULT_LIMIT = Number(process.env.RELATED_PRODUCTS_LIMIT || 20);
-const MAX_LIMIT = 50;
-const CACHE_TTL = Number(process.env.RELATED_PRODUCTS_TTL || 900);
+const MAX_LIMIT = Number.parseInt('50', 10);
+const DEFAULT_CACHE_TTL_SECONDS = Number.parseInt('900', 10);
+const OPEN_SEARCH_DEFAULT_K = Number.parseInt('50', 10);
+const OPEN_SEARCH_SIZE_CAP = Number.parseInt('100', 10);
+const CACHE_TTL = Number(process.env.RELATED_PRODUCTS_TTL || DEFAULT_CACHE_TTL_SECONDS);
 
-const fetchProductBase = async (productId) => {
+const fetchProductBase = async function (productId) {
   const result = await db.query(
     `
       SELECT p.*, s.is_active as supplier_is_active
@@ -26,7 +29,7 @@ const fetchProductBase = async (productId) => {
   return result.rows[0];
 };
 
-const fetchProductsByIds = async (ids) => {
+const fetchProductsByIds = async function (ids) {
   if (ids.length === 0) return [];
   const result = await db.query(
     `
@@ -42,7 +45,7 @@ const fetchProductsByIds = async (ids) => {
   return result.rows;
 };
 
-const getRelatedByMaster = async ({ masterProductId, productId, limit }) => {
+const getRelatedByMaster = async function ({ masterProductId, productId, limit }) {
   if (!masterProductId) return [];
   const result = await db.query(
     `
@@ -65,7 +68,7 @@ const getRelatedByMaster = async ({ masterProductId, productId, limit }) => {
   }));
 };
 
-const getRelatedByOpenSearch = async ({ product, limit, excludeIds }) => {
+const getRelatedByOpenSearch = async function ({ product, limit, excludeIds }) {
   if (!isOpenSearchEnabled() || !isEmbeddingsEnabled()) return [];
   const client = getOpenSearchClient();
   if (!client) return [];
@@ -99,12 +102,12 @@ const getRelatedByOpenSearch = async ({ product, limit, excludeIds }) => {
     });
   }
 
-  const k = Math.max(Number(process.env.RELATED_PRODUCTS_OS_K || 50), limit * 3);
+  const k = Math.max(Number(process.env.RELATED_PRODUCTS_OS_K || OPEN_SEARCH_DEFAULT_K), limit * 3);
 
   try {
     const response = await client.search({
       index: getIndexName('products'),
-      size: Math.min(k, 100),
+      size: Math.min(k, OPEN_SEARCH_SIZE_CAP),
       track_total_hits: false,
       query: {
         knn: {
@@ -131,7 +134,7 @@ const getRelatedByOpenSearch = async ({ product, limit, excludeIds }) => {
   }
 };
 
-const getRelatedByTrgm = async ({ product, limit, excludeIds }) => {
+const getRelatedByTrgm = async function ({ product, limit, excludeIds }) {
   const normalized = normalizeText(product.standardized_name_input || product.name || '');
   if (!normalized) return [];
 
@@ -173,7 +176,7 @@ const getRelatedByTrgm = async ({ product, limit, excludeIds }) => {
   }));
 };
 
-const getRelatedProducts = async (productId, limit = DEFAULT_LIMIT) => {
+const getRelatedProducts = async function (productId, limit = DEFAULT_LIMIT) {
   const safeLimit = Math.min(Math.max(Number(limit) || DEFAULT_LIMIT, 1), MAX_LIMIT);
   const redis = getRedisClient();
   const cacheKey = `related:product:${productId}:limit:${safeLimit}`;

@@ -37,123 +37,127 @@ const buildAnalysis = () => {
 
 const baseTextField = { type: 'text', analyzer: 'multilang', fields: { keyword: { type: 'keyword' } } };
 
-const buildIndexBody = (type) => {
+const getEmbeddingConfig = () => {
   const embeddingDim = Number(process.env.EMBEDDINGS_DIM || 768);
-  const knnMethod = {
-    engine: process.env.OPENSEARCH_KNN_ENGINE || 'nmslib',
-    space_type: process.env.OPENSEARCH_KNN_SPACE || 'cosinesimil',
-    name: process.env.OPENSEARCH_KNN_METHOD || 'hnsw',
-    parameters: {
-      ef_construction: Number(process.env.OPENSEARCH_KNN_EF_CONSTRUCTION || 128),
-      m: Number(process.env.OPENSEARCH_KNN_M || 16),
+  return {
+    embeddingDim,
+    knnMethod: {
+      engine: process.env.OPENSEARCH_KNN_ENGINE || 'nmslib',
+      space_type: process.env.OPENSEARCH_KNN_SPACE || 'cosinesimil',
+      name: process.env.OPENSEARCH_KNN_METHOD || 'hnsw',
+      parameters: {
+        ef_construction: Number(process.env.OPENSEARCH_KNN_EF_CONSTRUCTION || 128),
+        m: Number(process.env.OPENSEARCH_KNN_M || 16),
+      },
     },
   };
+};
 
-  const common = {
-    settings: {
-      number_of_shards: Number(process.env.OPENSEARCH_SHARDS || 1),
-      number_of_replicas: Number(process.env.OPENSEARCH_REPLICAS || 1),
-      index: { knn: true },
-      analysis: buildAnalysis(),
-    },
-  };
+const buildEmbeddingField = ({ embeddingDim, knnMethod }) => ({
+  type: 'knn_vector',
+  dimension: embeddingDim,
+  method: knnMethod,
+});
 
-  if (type === 'products') {
-    return {
-      ...common,
-      mappings: {
-        properties: {
-          id: { type: 'integer' },
-          supplier_id: { type: 'integer' },
-          supplier_name: baseTextField,
-          supplier_is_active: { type: 'boolean' },
-          name: baseTextField,
-          description: baseTextField,
-          category: baseTextField,
-          standardized_name_input: baseTextField,
-          image_url: { type: 'keyword' },
-          price: { type: 'double' },
-          discount_price: { type: 'double' },
-          effective_selling_price: { type: 'double' },
-          is_on_sale: { type: 'boolean' },
-          stock_level: { type: 'integer' },
-          master_product_id: { type: 'integer' },
-          linking_status: { type: 'keyword' },
-          created_at: { type: 'date' },
-          updated_at: { type: 'date' },
-          city_ids: { type: 'integer' },
-          embedding: { type: 'knn_vector', dimension: embeddingDim, method: knnMethod },
-        },
-      },
-    };
-  }
+const buildCommonIndexBody = () => ({
+  settings: {
+    number_of_shards: Number(process.env.OPENSEARCH_SHARDS || 1),
+    number_of_replicas: Number(process.env.OPENSEARCH_REPLICAS || 1),
+    index: { knn: true },
+    analysis: buildAnalysis(),
+  },
+});
 
-  if (type === 'deals') {
-    return {
-      ...common,
-      mappings: {
-        properties: {
-          id: { type: 'integer' },
-          supplier_id: { type: 'integer' },
-          supplier_name: baseTextField,
-          supplier_is_active: { type: 'boolean' },
-          product_id: { type: 'integer' },
-          product_name: baseTextField,
-          title: baseTextField,
-          description: baseTextField,
-          discount_percentage: { type: 'double' },
-          start_date: { type: 'date' },
-          end_date: { type: 'date' },
-          image_url: { type: 'keyword' },
-          is_active: { type: 'boolean' },
-          created_at: { type: 'date' },
-          updated_at: { type: 'date' },
-          city_ids: { type: 'integer' },
-          embedding: { type: 'knn_vector', dimension: embeddingDim, method: knnMethod },
-        },
-      },
-    };
-  }
+const buildProductProperties = (embeddingField) => ({
+  id: { type: 'integer' },
+  supplier_id: { type: 'integer' },
+  supplier_name: baseTextField,
+  supplier_is_active: { type: 'boolean' },
+  name: baseTextField,
+  description: baseTextField,
+  category: baseTextField,
+  standardized_name_input: baseTextField,
+  image_url: { type: 'keyword' },
+  price: { type: 'double' },
+  discount_price: { type: 'double' },
+  effective_selling_price: { type: 'double' },
+  is_on_sale: { type: 'boolean' },
+  stock_level: { type: 'integer' },
+  master_product_id: { type: 'integer' },
+  linking_status: { type: 'keyword' },
+  created_at: { type: 'date' },
+  updated_at: { type: 'date' },
+  city_ids: { type: 'integer' },
+  embedding: embeddingField,
+});
 
-  if (type === 'master-products') {
-    return {
-      ...common,
-      mappings: {
-        properties: {
-          id: { type: 'integer' },
-          standardized_name_normalized: baseTextField,
-          display_name: baseTextField,
-          description: baseTextField,
-          image_url: { type: 'keyword' },
-          brand: baseTextField,
-          category: baseTextField,
-          attributes: { type: 'object', enabled: false },
-          created_at: { type: 'date' },
-          updated_at: { type: 'date' },
-          embedding: { type: 'knn_vector', dimension: embeddingDim, method: knnMethod },
-        },
-      },
-    };
-  }
+const buildDealProperties = (embeddingField) => ({
+  id: { type: 'integer' },
+  supplier_id: { type: 'integer' },
+  supplier_name: baseTextField,
+  supplier_is_active: { type: 'boolean' },
+  product_id: { type: 'integer' },
+  product_name: baseTextField,
+  title: baseTextField,
+  description: baseTextField,
+  discount_percentage: { type: 'double' },
+  start_date: { type: 'date' },
+  end_date: { type: 'date' },
+  image_url: { type: 'keyword' },
+  is_active: { type: 'boolean' },
+  created_at: { type: 'date' },
+  updated_at: { type: 'date' },
+  city_ids: { type: 'integer' },
+  embedding: embeddingField,
+});
 
+const buildMasterProductProperties = (embeddingField) => ({
+  id: { type: 'integer' },
+  standardized_name_normalized: baseTextField,
+  display_name: baseTextField,
+  description: baseTextField,
+  image_url: { type: 'keyword' },
+  brand: baseTextField,
+  category: baseTextField,
+  attributes: { type: 'object', enabled: false },
+  created_at: { type: 'date' },
+  updated_at: { type: 'date' },
+  embedding: embeddingField,
+});
+
+const buildSupplierProperties = (embeddingField) => ({
+  id: { type: 'integer' },
+  name: baseTextField,
+  category: baseTextField,
+  location: baseTextField,
+  description: baseTextField,
+  image_url: { type: 'keyword' },
+  rating: { type: 'double' },
+  is_active: { type: 'boolean' },
+  product_count: { type: 'integer' },
+  created_at: { type: 'date' },
+  updated_at: { type: 'date' },
+  city_ids: { type: 'integer' },
+  embedding: embeddingField,
+});
+
+const INDEX_PROPERTY_BUILDERS = Object.freeze({
+  products: buildProductProperties,
+  deals: buildDealProperties,
+  'master-products': buildMasterProductProperties,
+  suppliers: buildSupplierProperties,
+});
+
+const buildIndexBody = (type) => {
+  const embeddingConfig = getEmbeddingConfig();
+  const embeddingField = buildEmbeddingField(embeddingConfig);
+  const common = buildCommonIndexBody();
+
+  const builder = INDEX_PROPERTY_BUILDERS[type] || INDEX_PROPERTY_BUILDERS.suppliers;
   return {
     ...common,
     mappings: {
-      properties: {
-        id: { type: 'integer' },
-        name: baseTextField,
-        category: baseTextField,
-        location: baseTextField,
-        description: baseTextField,
-        image_url: { type: 'keyword' },
-        rating: { type: 'double' },
-        is_active: { type: 'boolean' },
-        product_count: { type: 'integer' },
-        created_at: { type: 'date' },
-        updated_at: { type: 'date' },
-        city_ids: { type: 'integer' },
-        embedding: { type: 'knn_vector', dimension: embeddingDim, method: knnMethod },
-      },
+      properties: builder(embeddingField),
     },
   };
 };

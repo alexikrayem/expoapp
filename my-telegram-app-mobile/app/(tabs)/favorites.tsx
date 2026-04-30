@@ -1,5 +1,3 @@
-"use client"
-
 /// <reference types="nativewind/types" />
 import { useState, useMemo, useCallback } from "react"
 import { View, Pressable } from "react-native"
@@ -17,23 +15,14 @@ import ProductCard from "@/components/ProductCard" // This expects specific prop
 import { Search, X, Heart } from "lucide-react-native"
 import { haptics } from "@/utils/haptics"
 import AnimatedScreen from "@/components/ui/AnimatedScreen"
+import { Product } from "@/types"
 
 // -------------------------------
 // Types
 // -------------------------------
 // UPDATED: This now matches the interface defined inside ProductCard.tsx
 // plus the 'category' field needed for filtering in this screen.
-type Product = {
-  id: string 
-  name: string
-  price: number
-  effective_selling_price: number
-  image_url?: string // Fixed: ProductCard uses 'image_url', not 'image'
-  supplier_name?: string
-  category?: string
-  is_on_sale?: boolean
-  discount_price?: number
-}
+
 
 type Category = {
   id: string
@@ -43,7 +32,7 @@ type Category = {
 
 export default function FavoritesScreen() {
   const { userProfile } = useAuth()
-  const { favoriteIds, toggleFavorite, isLoadingFavorites } = useFavorites(userProfile)
+  const { favoriteIds, toggleFavorite, isLoadingFavorites } = useFavorites()
   
   // useFavoriteProducts returns raw data (any[]), we will cast it later
   const { favoriteProducts, isLoadingFavoritesTab, favoritesTabError } =

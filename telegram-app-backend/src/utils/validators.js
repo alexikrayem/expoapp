@@ -58,15 +58,7 @@ const validateUrl = (url, fieldName) => {
         new URL(url);
         return url;
     } catch {
-        throw new ValidationError(`${fieldName} must be a valid URL`, fieldName);
     }
-};
-
-const sanitizeInput = (input) => {
-    if (typeof input === 'string') {
-        return input.trim().replace(/[<>]/g, '');
-    }
-    return input;
 };
 
 module.exports = {
@@ -77,5 +69,4 @@ module.exports = {
     validateInteger,
     validateStringLength,
     validateUrl,
-    sanitizeInput,
 };

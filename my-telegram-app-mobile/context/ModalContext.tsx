@@ -1,14 +1,16 @@
-import React, { createContext, useState, useContext, useCallback } from 'react';
-import { View, Modal, TouchableOpacity } from 'react-native';
-import ProductDetailModal from '../components/modals/ProductDetailModal';
-import ProfileModal from '../components/modals/ProfileModal';
-import AddressModal from '../components/modals/AddressModal';
-import AddressConfirmationModal from '../components/modals/AddressConfirmationModal';
-import OrderConfirmationModal from '../components/modals/OrderConfirmationModal';
-import DealDetailModal from '../components/modals/DealDetailModal';
-import SupplierDetailModal from '../components/modals/SupplierDetailModal';
-import FeaturedListModal from '../components/modals/FeaturedListModal';
-import FeedbackModal from '../components/modals/FeedbackModal';
+import React, { createContext, useState, useContext, useCallback, useMemo, Suspense } from 'react';
+
+// Lazy-load modals — each modal's JS is only parsed when first opened,
+// reducing app startup time and memory pressure on lower-end devices.
+const ProductDetailModal = React.lazy(() => import('../components/modals/ProductDetailModal'));
+const ProfileModal = React.lazy(() => import('../components/modals/ProfileModal'));
+const AddressModal = React.lazy(() => import('../components/modals/AddressModal'));
+const AddressConfirmationModal = React.lazy(() => import('../components/modals/AddressConfirmationModal'));
+const OrderConfirmationModal = React.lazy(() => import('../components/modals/OrderConfirmationModal'));
+const DealDetailModal = React.lazy(() => import('../components/modals/DealDetailModal'));
+const SupplierDetailModal = React.lazy(() => import('../components/modals/SupplierDetailModal'));
+const FeaturedListModal = React.lazy(() => import('../components/modals/FeaturedListModal'));
+const FeedbackModal = React.lazy(() => import('../components/modals/FeedbackModal'));
 
 // Define the context shape
 interface ModalContextType {
@@ -33,7 +35,6 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     const openModal = useCallback((type: string, props = {}) => {
-        console.log(`[ModalContext] openModal called with type: "${type}"`, props);
         setModalState({ type, props });
     }, []);
 
@@ -41,9 +42,7 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
         setModalState({ type: null, props: {} });
     }, []);
 
-    const renderModal = () => {
-        const { type, props } = modalState;
-
+    const renderModalContent = (type: string, props: any) => {
         switch (type) {
             case 'productDetail':
                 return <ProductDetailModal show={true} onClose={closeModal} {...props} />;
@@ -68,10 +67,24 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+    const renderModal = () => {
+        const { type, props } = modalState;
+        if (!type) return null;
+
+        return (
+            <Suspense fallback={null}>
+                {renderModalContent(type, props)}
+            </Suspense>
+        );
+    };
+
+    const value = useMemo(() => ({ openModal, closeModal }), [openModal, closeModal]);
+
     return (
-        <ModalContext.Provider value={{ openModal, closeModal }}>
+        <ModalContext.Provider value={value}>
             {children}
             {renderModal()}
         </ModalContext.Provider>
     );
 };
+

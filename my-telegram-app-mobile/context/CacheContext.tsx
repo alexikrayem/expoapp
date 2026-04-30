@@ -1,3 +1,9 @@
+/**
+ * @deprecated CacheContext duplicates React Query's built-in caching (staleTime, gcTime, dedup).
+ * All consumers have been migrated to useQuery. This provider is retained temporarily for
+ * backward compatibility and should be removed in a follow-up cleanup.
+ * See: Finding 4 in Architecture & Navigation Review.
+ */
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 
 const CacheContext = createContext<any>(null);

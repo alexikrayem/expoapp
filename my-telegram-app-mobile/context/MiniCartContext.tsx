@@ -1,6 +1,14 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useCallback, useMemo } from 'react';
+import { Product } from '@/types';
 
-const MiniCartContext = createContext<any>(null);
+interface MiniCartContextType {
+    activeMiniCartItem: Product | null;
+    showActiveItemControls: boolean;
+    showMiniCartBar: (product: Product) => void;
+    hideMiniCartBar: () => void;
+}
+
+const MiniCartContext = createContext<MiniCartContextType | null>(null);
 
 export const useMiniCart = () => {
     const context = useContext(MiniCartContext);
@@ -11,24 +19,22 @@ export const useMiniCart = () => {
 };
 
 export const MiniCartProvider = ({ children }: { children: React.ReactNode }) => {
-    const [activeItem, setActiveItem] = useState<any>(null);
+    const [activeItem, setActiveItem] = useState<Product | null>(null);
 
-    const showMiniCartBar = (product: any) => {
+    const showMiniCartBar = useCallback((product: Product) => {
         setActiveItem(product);
-        // In mobile, we might show a toast or snackbar instead of a persistent bar
-        console.log("Item added to cart (MiniCart):", product.name);
-    };
+    }, []);
 
-    const hideMiniCartBar = () => {
+    const hideMiniCartBar = useCallback(() => {
         setActiveItem(null);
-    };
+    }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         activeMiniCartItem: activeItem,
         showActiveItemControls: !!activeItem,
         showMiniCartBar,
         hideMiniCartBar,
-    };
+    }), [activeItem, showMiniCartBar, hideMiniCartBar]);
 
     return (
         <MiniCartContext.Provider value={value}>
@@ -36,3 +42,4 @@ export const MiniCartProvider = ({ children }: { children: React.ReactNode }) =>
         </MiniCartContext.Provider>
     );
 };
+

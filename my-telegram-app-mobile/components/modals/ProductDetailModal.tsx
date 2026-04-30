@@ -31,9 +31,7 @@ import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
 
 export default function ProductDetailModal({ show, onClose, product }: any) {
     const { actions: { addToCart } } = useCart();
-    // Mock telegramUser for now
-    const telegramUser = { id: 12345 };
-    const { isFavorite, toggleFavorite } = useFavorites(telegramUser);
+    const { isFavorite, toggleFavorite } = useFavorites();
     const { formatPrice } = useCurrency();
     const [quantity, setQuantity] = useState(0);
     const [imageViewerVisible, setImageViewerVisible] = useState(false);

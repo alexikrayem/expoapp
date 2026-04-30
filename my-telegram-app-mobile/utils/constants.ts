@@ -28,7 +28,7 @@ const replaceLocalhost = (baseUrl: string, host: string) => {
 }
 
 const resolveBaseUrl = () => {
-    const envBase = process.env.EXPO_PUBLIC_API_BASE_URL
+    const envBase = process.env['EXPO_PUBLIC_API_BASE_URL']
     const shouldInferHost = (__DEV__ && Platform.OS !== "web")
     const inferredHost = shouldInferHost ? getDevHost() : null
 

@@ -20,6 +20,21 @@ const DealCard = React.memo(
     }, [onShowDetails, deal.id])
 
     const dealImageUrl = deal.imageUrl || deal.image_url
+    const discountPercent = Number(deal.discountPercentage ?? deal.discount_percentage ?? 0)
+    const rawDaysRemaining = deal.daysRemaining ?? deal.days_remaining
+    const endDateValue = deal.endDate || deal.end_date
+    const computedDaysRemaining =
+      rawDaysRemaining !== undefined && rawDaysRemaining !== null
+        ? Number(rawDaysRemaining)
+        : (() => {
+            if (!endDateValue) return 0
+            const endTimestamp = new Date(endDateValue).getTime()
+            if (!Number.isFinite(endTimestamp)) return 0
+            const dayMs = 24 * 60 * 60 * 1000
+            return Math.max(0, Math.ceil((endTimestamp - Date.now()) / dayMs))
+          })()
+
+    const daysRemaining = Number.isFinite(computedDaysRemaining) ? computedDaysRemaining : 0
 
     return (
       <Pressable
@@ -46,12 +61,12 @@ const DealCard = React.memo(
 
           <View className="absolute top-4 right-4 bg-red-500 px-3 py-1.5 rounded-full shadow-lg flex-row items-center">
             <Tag size={14} color="white" strokeWidth={2.5} />
-            <Text className="text-white font-bold text-xs ml-1.5">{deal.discountPercentage}% خصم</Text>
+            <Text className="text-white font-bold text-xs ml-1.5">{discountPercent}% خصم</Text>
           </View>
 
           <View className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full flex-row items-center border border-white/20">
             <Clock size={12} color="white" />
-            <Text className="text-white text-xs font-medium ml-1.5">ينتهي خلال {deal.daysRemaining} أيام</Text>
+            <Text className="text-white text-xs font-medium ml-1.5">ينتهي خلال {daysRemaining} أيام</Text>
           </View>
         </View>
 
@@ -73,10 +88,15 @@ const DealCard = React.memo(
     )
   },
   (prevProps, nextProps) => {
+    const prevDiscount = Number(prevProps.deal.discountPercentage ?? prevProps.deal.discount_percentage ?? 0)
+    const nextDiscount = Number(nextProps.deal.discountPercentage ?? nextProps.deal.discount_percentage ?? 0)
+    const prevDays = Number(prevProps.deal.daysRemaining ?? prevProps.deal.days_remaining ?? 0)
+    const nextDays = Number(nextProps.deal.daysRemaining ?? nextProps.deal.days_remaining ?? 0)
+
     return (
       prevProps.deal.id === nextProps.deal.id &&
-      prevProps.deal.discountPercentage === nextProps.deal.discountPercentage &&
-      prevProps.deal.daysRemaining === nextProps.deal.daysRemaining
+      prevDiscount === nextDiscount &&
+      prevDays === nextDays
     )
   },
 )
