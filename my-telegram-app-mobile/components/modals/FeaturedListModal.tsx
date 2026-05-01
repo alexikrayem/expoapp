@@ -222,8 +222,7 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
                             <FlashList
                                 data={items}
                                 renderItem={renderItem}
-                                // @ts-ignore
-                                estimatedItemSize={150}
+                                                                estimatedItemSize={150}
                                 keyExtractor={(item: any) => `${item.type}-${item.id}`}
                                 showsVerticalScrollIndicator={false}
                                 contentContainerStyle={{ paddingBottom: 20 }}

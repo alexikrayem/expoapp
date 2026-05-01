@@ -1,5 +1,5 @@
 import React from "react"
-import { ActivityIndicator, View, PressableProps } from "react-native"
+import { ActivityIndicator, View, PressableProps, I18nManager, StyleSheet } from "react-native"
 
 import Text from "@/components/ThemedText"
 import PressableScale from "@/components/ui/PressableScale"
@@ -29,6 +29,7 @@ export const Button = ({
   ...props
 }: ButtonProps) => {
   const isDisabled = disabled || loading
+  const isRTL = I18nManager.isRTL
   const baseStyles = "flex-row items-center justify-center rounded-2xl border border-transparent"
 
   const variants = {
@@ -67,12 +68,19 @@ export const Button = ({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={variant === "primary" ? "#ffffff" : "#2563eb"} className="mr-2" />
+        <ActivityIndicator color={variant === "primary" ? "#ffffff" : "#2563eb"} style={isRTL ? styles.leadingIconRTL : styles.leadingIconLTR} />
       ) : leftIcon ? (
-        <View className="mr-2">{leftIcon}</View>
+        <View style={isRTL ? styles.leadingIconRTL : styles.leadingIconLTR}>{leftIcon}</View>
       ) : null}
       <Text className={`${textVariants[variant]} ${textSizes[size]} ${textClassName}`}>{title}</Text>
-      {!loading && rightIcon ? <View className="ml-2">{rightIcon}</View> : null}
+      {!loading && rightIcon ? <View style={isRTL ? styles.trailingIconRTL : styles.trailingIconLTR}>{rightIcon}</View> : null}
     </PressableScale>
   )
 }
+
+const styles = StyleSheet.create({
+  leadingIconLTR: { marginRight: 8 },
+  leadingIconRTL: { marginLeft: 8 },
+  trailingIconLTR: { marginLeft: 8 },
+  trailingIconRTL: { marginRight: 8 },
+})

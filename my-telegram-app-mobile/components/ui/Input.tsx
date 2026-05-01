@@ -40,11 +40,11 @@ export const Input = React.forwardRef<TextInput, InputProps>(({
       {label && <Text className={`mb-1.5 text-sm font-medium text-text-main ${labelAlignClass}`}>{label}</Text>}
 
       <View
-        className={`flex-row items-center rounded-2xl border border-border bg-surface px-4 py-3.5 ${
+        className={`${isRTL ? "flex-row-reverse" : "flex-row"} items-center rounded-2xl border border-border bg-surface px-4 py-3.5 ${
           error ? "border-error" : ""
         } ${fieldClassName}`}
       >
-        {leftIcon ? <View className="mr-3">{leftIcon}</View> : null}
+        {leftIcon ? <View style={isRTL ? styles.leftIconRTL : styles.leftIconLTR}>{leftIcon}</View> : null}
         <TextInput
           ref={ref}
           className={`flex-1 text-base text-text-main placeholder:text-text-secondary ${className}`}
@@ -52,7 +52,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(({
           style={inputStyle}
           {...props}
         />
-        {rightIcon ? <View className="ml-3">{rightIcon}</View> : null}
+        {rightIcon ? <View style={isRTL ? styles.rightIconRTL : styles.rightIconLTR}>{rightIcon}</View> : null}
       </View>
 
       {error && <Text className={`mt-1 text-sm text-error ${errorAlignClass}`}>{error}</Text>}
@@ -65,5 +65,17 @@ Input.displayName = "Input"
 const styles = StyleSheet.create({
   input: {
     fontFamily: "TajawalCustom",
+  },
+  leftIconLTR: {
+    marginRight: 12,
+  },
+  leftIconRTL: {
+    marginLeft: 12,
+  },
+  rightIconLTR: {
+    marginLeft: 12,
+  },
+  rightIconRTL: {
+    marginRight: 12,
   },
 })

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated } from 'react-native';
+import { View, Animated, StyleSheet, I18nManager } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Text from '@/components/ThemedText';
 import { CheckCircle, XCircle, Info, X } from 'lucide-react-native';
@@ -95,25 +95,23 @@ export default function Toast({
 
     return (
         <Animated.View
-            style={{
-                opacity: fadeAnim,
-                transform: [{ translateY }],
-                position: 'absolute',
-                top: 60, // Adjust based on safe area or header height
-                left: 20,
-                right: 20,
-                zIndex: 9999,
-            }}
+            style={[
+                styles.container,
+                {
+                    opacity: fadeAnim,
+                    transform: [{ translateY }],
+                },
+            ]}
         >
             <View className="rounded-xl overflow-hidden shadow-sm">
-                <BlurView intensity={95} tint="light" className={`flex-row items-center p-4 border ${getStyles()}`}>
-                    <View className="mr-3">
+                <BlurView intensity={95} tint="light" className={`items-center p-4 border ${getStyles()} ${I18nManager.isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <View className={I18nManager.isRTL ? 'ml-3' : 'mr-3'}>
                         {getIcon()}
                     </View>
                     <Text className={`flex-1 font-medium text-right ${getTextStyles()}`}>
                         {message}
                     </Text>
-                    <PressableScale onPress={hideToast} scaleTo={0.9} className="ml-3">
+                    <PressableScale onPress={hideToast} scaleTo={0.9} className={I18nManager.isRTL ? 'mr-3' : 'ml-3'}>
                         <X size={16} color="#6B7280" />
                     </PressableScale>
                 </BlurView>
@@ -121,3 +119,13 @@ export default function Toast({
         </Animated.View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        position: 'absolute',
+        top: 60,
+        left: 20,
+        right: 20,
+        zIndex: 9999,
+    },
+});

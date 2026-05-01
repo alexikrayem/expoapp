@@ -1,3 +1,5 @@
+/* eslint-env jest */
+/* eslint-disable @typescript-eslint/no-require-imports */
 // Basic mock for Native Animated
 import 'react-native-gesture-handler/jestSetup';
 

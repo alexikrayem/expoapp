@@ -151,8 +151,7 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
                         <FlashList
                             data={filteredProducts}
                             numColumns={2}
-                            // @ts-ignore
-                            estimatedItemSize={280}
+                                                        estimatedItemSize={280}
                             keyExtractor={productKeyExtractor}
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={{ paddingBottom: 40 }}

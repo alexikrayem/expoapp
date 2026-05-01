@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, I18nManager } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Home, Heart, ShoppingBag, Settings } from 'lucide-react-native';
 import Text from '@/components/ThemedText';
@@ -26,7 +26,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
 
     return (
         <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-            <View style={styles.tabBar}>
+            <View style={[styles.tabBar, I18nManager.isRTL && styles.tabBarRTL]}>
                 {state.routes.map((route, index) => {
                     const { options } = descriptors[route.key];
                     const isFocused = state.index === index;
@@ -99,6 +99,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         height: 64,
         paddingHorizontal: 12,
+    },
+    tabBarRTL: {
+        flexDirection: 'row-reverse',
     },
     tabItem: {
         flex: 1,

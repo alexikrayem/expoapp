@@ -93,7 +93,8 @@ export async function apiClient<T = any>(
 
     if (body) config.body = JSON.stringify(body)
 
-    const fullUrl = `${API_BASE_URL}/${endpoint}`
+    const normalizedEndpoint = endpoint.replace(/^\/+/, "")
+    const fullUrl = `${API_BASE_URL}/${normalizedEndpoint}`
 
     try {
         let response = await fetchWithTimeout(fullUrl, config, REQUEST_TIMEOUT)

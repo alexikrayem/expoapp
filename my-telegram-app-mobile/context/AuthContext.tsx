@@ -6,6 +6,7 @@ import { userService } from "@/services/userService"
 import { getAccessToken, ensureValidToken } from "@/utils/tokenManager"
 import { authService } from "@/services/authService"
 import { UserProfile } from "@/types"
+import { logger } from "@/utils/logger"
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const profile = await userService.getProfile()
       setUserProfile(profile)
     } catch (error) {
-      console.error("[AuthContext] Failed to fetch profile:", error)
+      logger.error("[AuthContext] Failed to fetch profile:", error)
       throw error
     }
   }, [])
@@ -79,17 +80,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshAuth = useCallback(async () => {
     setIsLoading(true)
     try {
-      const token = await getAccessToken()
+      const token = await ensureValidToken()
       if (token) {
         setIsAuthenticated(true)
         await fetchProfile()
       }
     } catch (error) {
-      console.error("[AuthContext] refreshAuth failed:", error)
+      logger.error("[AuthContext] refreshAuth failed:", error)
+      await logout()
     } finally {
       setIsLoading(false)
     }
-  }, [fetchProfile])
+  }, [fetchProfile, logout])
 
   const value = useMemo(
     () => ({ isAuthenticated, isLoading, userProfile, logout, refreshProfile: fetchProfile, refreshAuth }),

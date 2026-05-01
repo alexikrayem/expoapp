@@ -129,8 +129,7 @@ export default function CitySelectionModal({ visible, onClose }: CitySelectionMo
                             data={cities}
                             keyExtractor={(item: any) => item.id.toString()}
                             contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-                            // @ts-ignore
-                            estimatedItemSize={80}
+                                                        estimatedItemSize={80}
                             removeClippedSubviews
                             initialNumToRender={10}
                             maxToRenderPerBatch={10}

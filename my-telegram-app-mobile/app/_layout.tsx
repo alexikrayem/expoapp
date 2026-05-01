@@ -9,6 +9,8 @@ import { Stack, useRouter, useSegments } from "expo-router"
 import * as SplashScreen from "expo-splash-screen"
 import { useEffect, useState } from "react"
 import { QueryClient, QueryClientProvider, MutationCache, QueryCache } from "@tanstack/react-query"
+import { Text, TextInput } from "react-native"
+import MontserratArabicBold from "../assets/fonts/Montserrat-Arabic SemiBold 600.otf"
 
 import { useColorScheme } from "@/components/useColorScheme"
 import { AuthProvider, useAuth } from "@/context/AuthContext"
@@ -82,7 +84,7 @@ export default function RootLayout() {
     Tajawal_700Bold,
     // Alias TajawalCustom to Google Fonts source (avoids duplicate .ttf loading)
     TajawalCustom: Tajawal_400Regular,
-    MontserratArabic_Bold: require("../assets/fonts/Montserrat-Arabic SemiBold 600.otf"),
+    MontserratArabic_Bold: MontserratArabicBold,
     ...FontAwesome.font,
   })
 
@@ -100,7 +102,6 @@ export default function RootLayout() {
       SplashScreen.hideAsync()
 
       // Set default font for all Text components using defaultProps
-      const { Text, TextInput } = require("react-native")
       const defaultFontFamily = { fontFamily: "TajawalCustom" }
 
       const applyDefaultFont = (Component: any) => {

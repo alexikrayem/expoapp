@@ -21,6 +21,8 @@ import { Redirect, router } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import { authService } from "@/services/authService"
+import BackgroundImage from "../assets/images/IMG_1787.jpg"
+import LogoImage from "../assets/images/logo.png"
 
 const isRTL = I18nManager.isRTL
 
@@ -88,7 +90,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       {/* Background Image */}
-      <Image source={require("../assets/images/IMG_1787.jpg")} style={styles.backgroundImage} />
+      <Image source={BackgroundImage} style={styles.backgroundImage} />
 
       {/* Gradient Overlay */}
       <LinearGradient
@@ -112,7 +114,7 @@ export default function LoginScreen() {
         >
           {/* Logo & Header */}
           <View style={styles.header}>
-            <Image source={require("../assets/images/logo.png")} style={styles.logo} />
+            <Image source={LogoImage} style={styles.logo} />
             <Text style={styles.title}>المعرض الطبي</Text>
             <Text style={styles.subtitle}>
               {step === 'PHONE'

@@ -238,8 +238,7 @@ export default function OrdersScreen() {
         <FlashList
           data={filteredOrders}
           renderItem={renderOrderItem}
-          // @ts-ignore
-          estimatedItemSize={200}
+                    estimatedItemSize={200}
           keyExtractor={(item: any) => item.id.toString()}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}

@@ -3,6 +3,7 @@ import {
     View,
     StyleSheet,
     ActivityIndicator,
+    I18nManager,
 } from 'react-native';
 import Text from '@/components/ThemedText';
 import Animated, {
@@ -14,7 +15,6 @@ import Animated, {
     interpolateColor,
     Extrapolation,
     FadeIn,
-    FadeOut,
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { Check, ChevronRight, X } from 'lucide-react-native';
@@ -23,6 +23,7 @@ import PressableScale from '@/components/ui/PressableScale';
 const BUTTON_HEIGHT = 64;
 const PADDING = 4;
 const THUMB_SIZE = BUTTON_HEIGHT - PADDING * 2;
+const IS_RTL = I18nManager.isRTL;
 
 interface CheckoutSliderProps {
     onSlideComplete: () => void;
@@ -90,7 +91,8 @@ const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
         })
         .onUpdate((event) => {
             if (!enabled || isComplete || isLoading) return;
-            const newX = Math.max(0, Math.min(maxDrag, context.value + event.translationX));
+            const directionalTranslation = IS_RTL ? -event.translationX : event.translationX;
+            const newX = Math.max(0, Math.min(maxDrag, context.value + directionalTranslation));
             translateX.value = newX;
         })
         .onEnd(() => {
@@ -102,6 +104,7 @@ const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
                             if (isCompleteFinished) {
                                 runOnJS(setIsComplete)(true);
                                 runOnJS(setShowActions)(true);
+                                runOnJS(onSlideComplete)();
                             }
                         });
                     }
@@ -144,7 +147,7 @@ const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
 
     const thumbStyle = useAnimatedStyle(() => {
         return {
-            transform: [{ translateX: translateX.value }],
+            transform: [{ translateX: IS_RTL ? -translateX.value : translateX.value }],
             opacity: isComplete ? 0 : 1,
         };
     });
@@ -176,7 +179,7 @@ const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
             {showActions && (
                 <Animated.View
                     entering={FadeIn.duration(200)}
-                    style={styles.actionsContainer}
+                    style={[styles.actionsContainer, IS_RTL && styles.actionsContainerRTL]}
                 >
                     {/* Checkmark */}
                     <View style={styles.successIcon}>
@@ -206,11 +209,11 @@ const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
             )}
 
             <GestureDetector gesture={pan}>
-                <Animated.View style={[styles.thumb, thumbStyle]}>
+                <Animated.View style={[styles.thumb, thumbStyle]} pointerEvents={isComplete ? 'none' : 'auto'}>
                     {isLoading ? (
                         <ActivityIndicator color="#16a34a" size="small" />
                     ) : (
-                        <ChevronRight color="#16a34a" size={28} />
+                        IS_RTL ? <ChevronRight color="#16a34a" size={28} style={styles.chevronRTL} /> : <ChevronRight color="#16a34a" size={28} />
                     )}
                 </Animated.View>
             </GestureDetector>
@@ -261,7 +264,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
-        marginLeft: PADDING,
+        marginLeft: IS_RTL ? 0 : PADDING,
+        marginRight: IS_RTL ? PADDING : 0,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -277,6 +281,9 @@ const styles = StyleSheet.create({
         top: 0,
         bottom: 0,
         gap: 10,
+    },
+    actionsContainerRTL: {
+        flexDirection: 'row-reverse',
     },
     successIcon: {
         width: THUMB_SIZE,
@@ -329,6 +336,9 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         fontFamily: 'TajawalCustom',
+    },
+    chevronRTL: {
+        transform: [{ rotate: '180deg' }],
     },
 });
 
