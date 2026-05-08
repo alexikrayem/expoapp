@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">55.55% </span>
+                <span class="strong">77.77% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>5/9</span>
+                <span class='fraction'>7/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">25% </span>
+                <span class="strong">37.5% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/8</span>
+                <span class='fraction'>3/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/4</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">55.55% </span>
+                <span class="strong">77.77% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/9</span>
+                <span class='fraction'>7/9</span>
             </div>
         
             
@@ -87,50 +87,59 @@
 <a name='L22'></a><a href='#L22'>22</a>
 <a name='L23'></a><a href='#L23'>23</a>
 <a name='L24'></a><a href='#L24'>24</a>
-<a name='L25'></a><a href='#L25'>25</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">&nbsp;
 export const logger = {
-    log: (message: string, ...args: any[]) =&gt; {
+    // eslint-disable-next-line no-console
+    log: (message: string, ...args: unknown[]) =&gt; {
         <span class="missing-if-branch" title="else path not taken" >E</span>if (__DEV__) {
+            // eslint-disable-next-line no-console
             console.log(message, ...args);
         }
     },
-    error: (message: string, error: any, ...args: any[]) =&gt; {
+    error: (message: string, error: unknown, ...args: unknown[]) =&gt; {
         // In production, this would send to Sentry/Crashlytics
         <span class="missing-if-branch" title="else path not taken" >E</span>if (__DEV__) {
             console.error(message, error, ...args);
         }
     },
-    warn: <span class="fstat-no" title="function not covered" >(m</span>essage: string, ...args: any[]) =&gt; {
-<span class="cstat-no" title="statement not covered" >        if (__DEV__) {</span>
-<span class="cstat-no" title="statement not covered" >            console.warn(message, ...args);</span>
+    warn: (message: string, ...args: unknown[]) =&gt; {
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (__DEV__) {
+            console.warn(message, ...args);
         }
     },
-    info: <span class="fstat-no" title="function not covered" >(m</span>essage: string, ...args: any[]) =&gt; {
+    info: <span class="fstat-no" title="function not covered" >(m</span>essage: string, ...args: unknown[]) =&gt; {
 <span class="cstat-no" title="statement not covered" >        if (__DEV__) {</span>
+            // eslint-disable-next-line no-console
 <span class="cstat-no" title="statement not covered" >            console.info(message, ...args);</span>
         }
     }
@@ -142,7 +151,7 @@ export const logger = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-12T11:40:20.952Z
+                at 2026-05-08T08:22:05.697Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

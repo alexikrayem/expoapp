@@ -11,8 +11,9 @@ import { ArrowRight, ChevronUp, ChevronDown } from "lucide-react-native"
 import { useRouter } from "expo-router"
 import PressableScale from "@/components/ui/PressableScale"
 import { IMAGE_PLACEHOLDER_BLURHASH } from "@/utils/image"
+import type { CartItem as CartItemType } from "@/types"
 
-const CartItem = React.memo(({ item, formatPrice }: { item: any; formatPrice: (price: number) => string }) => (
+const CartItem = React.memo(({ item, formatPrice }: { item: CartItemType; formatPrice: (price: number) => string }) => (
   <View className="flex-row items-center p-3 border-b border-border last:border-0">
     <Image
       source={{ uri: item.image_url }}
@@ -26,13 +27,15 @@ const CartItem = React.memo(({ item, formatPrice }: { item: any; formatPrice: (p
       <Text className="text-sm font-bold text-text-main text-right" numberOfLines={1}>
         {item.name}
       </Text>
-      <Text className="text-xs text-text-secondary text-right">{formatPrice(item.effective_selling_price)}</Text>
+      <Text className="text-xs text-text-secondary text-right">{formatPrice(Number(item.effective_selling_price))}</Text>
     </View>
     <View className="bg-primary-50 px-2 py-1 rounded-md border border-primary-100">
       <Text className="text-primary-700 font-bold text-xs">x{item.quantity}</Text>
     </View>
   </View>
 ))
+
+CartItem.displayName = 'CartItem';
 
 export default function MiniCart() {
   const { getCartTotal, getCartItemCount, cartItems } = useCart()
@@ -50,7 +53,7 @@ export default function MiniCart() {
       damping: 20,
       stiffness: 90,
     })
-  }, [isExpanded])
+  }, [isExpanded, expandProgress])
 
   const expandedListStyle = useAnimatedStyle(() => ({
     opacity: expandProgress.value,
@@ -86,7 +89,7 @@ export default function MiniCart() {
           </View>
 
           <ScrollView className="max-h-64" showsVerticalScrollIndicator={true}>
-            {cartItems.map((item: any) => (
+            {cartItems.map((item: CartItemType) => (
               <CartItem key={item.product_id} item={item} formatPrice={formatPrice} />
             ))}
           </ScrollView>

@@ -5,14 +5,22 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { X, User, Phone, Home, MapPin, Mail, Save } from 'lucide-react-native';
 import PressableScale from '@/components/ui/PressableScale';
+import type { UserProfile, ProfileFormPayload } from '@/types';
+
+interface TelegramUser {
+    first_name?: string;
+    last_name?: string;
+    username?: string;
+    photo_url?: string;
+}
 
 interface ProfileModalProps {
     visible: boolean;
     onClose: () => void;
-    telegramUser?: any;
-    userProfile: any;
-    onSave?: (data: any) => Promise<void>;
-    onFormSubmit?: (event: any, data: any) => Promise<void>;
+    telegramUser?: unknown;
+    userProfile: UserProfile;
+    onSave?: (data: ProfileFormPayload) => Promise<void>;
+    onFormSubmit?: (event: unknown, data: ProfileFormPayload) => Promise<void>;
 }
 
 export default function ProfileModal({ visible, onClose, telegramUser, userProfile, onSave, onFormSubmit }: ProfileModalProps) {
@@ -30,10 +38,10 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
     useEffect(() => {
         if (visible && userProfile) {
             setFormData({
-                fullName: userProfile.fullName || userProfile.full_name || '',
-                phoneNumber: userProfile.phoneNumber || userProfile.phone_number || '',
-                addressLine1: userProfile.addressLine1 || userProfile.address_line1 || '',
-                addressLine2: userProfile.addressLine2 || userProfile.address_line2 || '',
+                fullName: userProfile.full_name || '',
+                phoneNumber: userProfile.phone_number || '',
+                addressLine1: userProfile.address_line1 || '',
+                addressLine2: userProfile.address_line2 || '',
                 city: userProfile.city || userProfile.selected_city_name || '',
             });
         }
@@ -64,8 +72,8 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
             }
 
             onClose();
-        } catch (err: any) {
-            setError(err.message || 'Failed to save profile');
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Failed to save profile');
         } finally {
             setIsSaving(false);
         }
@@ -107,9 +115,9 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
                         <View className="items-center mb-8 mt-2">
                             <View className="relative">
                                 <View className="w-28 h-28 rounded-full bg-primary-100 items-center justify-center overflow-hidden border-4 border-white shadow-lg">
-                                    {telegramUser?.photo_url ? (
+                                    {(telegramUser as TelegramUser)?.photo_url ? (
                                         <Image
-                                            source={{ uri: telegramUser.photo_url }}
+                                            source={{ uri: (telegramUser as TelegramUser).photo_url }}
                                             className="w-full h-full"
                                         />
                                     ) : (
@@ -123,10 +131,10 @@ export default function ProfileModal({ visible, onClose, telegramUser, userProfi
                             </View>
                             <View className="mt-4 items-center">
                                 <Text className="text-xl font-bold text-text-main">
-                                    {telegramUser?.first_name} {telegramUser?.last_name || ""}
+                                    {(telegramUser as TelegramUser)?.first_name} {(telegramUser as TelegramUser)?.last_name || ""}
                                 </Text>
-                                {telegramUser?.username && (
-                                    <Text className="text-sm text-primary-600 font-medium mt-0.5">@{telegramUser.username}</Text>
+                                {(telegramUser as TelegramUser)?.username && (
+                                    <Text className="text-sm text-primary-600 font-medium mt-0.5">@{(telegramUser as TelegramUser).username}</Text>
                                 )}
                                 <Text className="text-xs text-text-secondary mt-2 bg-surface px-3 py-1 rounded-full border border-border">
                                     قم بتحديث معلوماتك الشخصية

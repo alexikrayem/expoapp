@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, ViewStyle, StyleProp } from 'react-native';
+import { ViewStyle, StyleProp } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -35,7 +35,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
             -1,
             true
         );
-    }, []);
+    }, [opacity]);
 
     const animatedStyle = useAnimatedStyle(() => ({
         opacity: opacity.value,

@@ -147,7 +147,7 @@ export const useSearchResults = (searchTerm: string, cityId: string) => {
 
     const searchQuery = useQuery({
         queryKey: ['search', cityId, normalizedKeyTerm],
-        queryFn: ({ signal }) => searchService.search(normalizedTerm, cityId, SEARCH_LIMIT, { signal }),
+        queryFn: ({ signal }) => searchService.search(normalizedTerm, cityId, SEARCH_LIMIT, { signal }) as Promise<SearchApiResponse>,
         select: normalizeSearchResults,
         enabled: hasSearchQuery && !!cityId,
         staleTime: 1000 * 30, // 30 seconds

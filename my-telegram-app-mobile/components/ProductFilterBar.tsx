@@ -3,10 +3,11 @@ import { View, ScrollView, ActivityIndicator } from 'react-native';
 import Text from '@/components/ThemedText';
 import { useCategories } from '@/hooks/useCategories';
 import PressableScale from '@/components/ui/PressableScale';
+import type { ProductFilters } from '@/types';
 
 interface ProductFilterBarProps {
-    currentFilters: any;
-    onFiltersChange: (filters: any) => void;
+    currentFilters: ProductFilters;
+    onFiltersChange: (filters: ProductFilters) => void;
     selectedCityId: string | null;
 }
 

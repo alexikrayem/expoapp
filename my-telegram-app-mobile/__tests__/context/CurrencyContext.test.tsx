@@ -1,6 +1,11 @@
 import React from "react"
 import { Text, View } from "react-native"
 import { render, waitFor } from "@testing-library/react-native"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock")
+)
 
 import { CurrencyProvider, useCurrency } from "../../context/CurrencyContext"
 
@@ -16,9 +21,10 @@ const CurrencyConsumer = () => {
 describe("CurrencyContext", () => {
   const originalFetch = global.fetch
 
-  afterEach(() => {
+  afterEach(async () => {
     global.fetch = originalFetch
     jest.clearAllMocks()
+    await AsyncStorage.clear()
   })
 
   it("formats price using fetched conversion rate", async () => {
@@ -29,7 +35,7 @@ describe("CurrencyContext", () => {
         code: 200,
         data: [{ currency: "SYP", buy_rate: "15000" }],
       }),
-    }) as any
+    }) as unknown as jest.Mock
 
     const { getByTestId } = render(
       <CurrencyProvider>
@@ -47,7 +53,7 @@ describe("CurrencyContext", () => {
   })
 
   it("falls back to default rate when fetch fails", async () => {
-    global.fetch = jest.fn().mockRejectedValue(new Error("network")) as any
+    global.fetch = jest.fn().mockRejectedValue(new Error("network")) as jest.Mock
 
     const { getByTestId } = render(
       <CurrencyProvider>

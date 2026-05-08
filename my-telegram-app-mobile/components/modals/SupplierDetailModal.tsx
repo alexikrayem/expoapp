@@ -1,21 +1,29 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useEffect } from 'react';
-import { View, Modal, ActivityIndicator, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Modal, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import Text from '@/components/ThemedText';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { X, Package, MapPin, Star, Filter } from 'lucide-react-native';
+import { X, Package, MapPin, Star } from 'lucide-react-native';
 import { cityService } from '../../services/cityService';
 import ProductCard from '../ProductCard';
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../hooks/useFavorites';
 import PressableScale from '@/components/ui/PressableScale';
 import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
+import type { Supplier, Product } from '@/types';
 
-export default function SupplierDetailModal({ show, onClose, supplierId, onProductClick }: any) {
-    const [supplier, setSupplier] = useState<any>(null);
+interface SupplierDetailModalProps {
+    show: boolean;
+    onClose: () => void;
+    supplierId: string;
+    onProductClick: (product: Product) => void;
+}
+
+export default function SupplierDetailModal({ show, onClose, supplierId, onProductClick }: SupplierDetailModalProps) {
+    const [supplier, setSupplier] = useState<Supplier & { products?: Product[] } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [categoryFilter, setCategoryFilter] = useState('all');
@@ -32,11 +40,11 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
 
             try {
                 const data = await cityService.getSupplierDetails(supplierId);
-                setSupplier(data);
+                setSupplier(data as Supplier & { products?: Product[] });
                 setCategoryFilter('all');
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error("Failed to fetch supplier details:", err);
-                setError(err.message || "فشل في تحميل تفاصيل المورد");
+                setError(err instanceof Error ? err.message : "فشل في تحميل تفاصيل المورد");
             } finally {
                 setIsLoading(false);
             }
@@ -58,17 +66,17 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
     const filteredProducts = React.useMemo(() => {
         if (!supplier?.products) return [];
         if (categoryFilter === 'all') return supplier.products;
-        return supplier.products.filter((p: any) => p.category === categoryFilter);
+        return supplier.products.filter((p: Product) => p.category === categoryFilter);
     }, [supplier?.products, categoryFilter]);
 
     const renderProductItem = React.useCallback(
-        ({ item }: { item: any }) => (
+        ({ item }: { item: Product }) => (
             <View className="w-full px-2 mb-4">
                 <ProductCard
                     product={item}
                     onShowDetails={() => {
                         onClose();
-                        if (onProductClick) onProductClick(item.id);
+                        if (onProductClick) onProductClick(item);
                     }}
                     onAddToCart={addToCart}
                     onToggleFavorite={toggleFavorite}
@@ -79,7 +87,7 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
         [addToCart, isFavorite, onClose, onProductClick, toggleFavorite]
     );
 
-    const productKeyExtractor = React.useCallback((item: any) => item.id.toString(), []);
+    const productKeyExtractor = React.useCallback((item: Product) => String(item.id ?? Math.random()), []);
 
     if (!show) return null;
 
@@ -151,7 +159,7 @@ export default function SupplierDetailModal({ show, onClose, supplierId, onProdu
                         <FlashList
                             data={filteredProducts}
                             numColumns={2}
-                                                        estimatedItemSize={280}
+                            estimatedItemSize={280}
                             keyExtractor={productKeyExtractor}
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={{ paddingBottom: 40 }}

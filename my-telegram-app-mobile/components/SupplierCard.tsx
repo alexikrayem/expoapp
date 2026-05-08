@@ -4,9 +4,10 @@ import { Image } from 'expo-image';
 import Text from '@/components/ThemedText';
 import { MapPin, Star } from 'lucide-react-native';
 import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
+import type { Supplier } from '@/types';
 
 interface SupplierCardProps {
-    supplier: any;
+    supplier: Supplier;
     onShowDetails: (supplierId: string) => void;
 }
 
@@ -53,5 +54,7 @@ const SupplierCard = React.memo(({ supplier, onShowDetails }: SupplierCardProps)
         </Pressable>
     );
 });
+
+SupplierCard.displayName = 'SupplierCard';
 
 export default SupplierCard;

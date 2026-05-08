@@ -5,17 +5,20 @@ import { FlashList } from "@shopify/flash-list"
 import { SafeAreaView } from "react-native-safe-area-context"
 import Text from "@/components/ThemedText"
 import { Input } from "@/components/ui/Input"
+import { Button } from "@/components/ui/Button"
 import PressableScale from "@/components/ui/PressableScale"
-import { useAuth } from "@/context/AuthContext"
+
 import { useFavorites } from "@/hooks/useFavorites"
 import { useFavoriteProducts } from "@/hooks/useFavoriteProducts"
 import { useCart } from "@/context/CartContext"
 import { useModal } from "@/context/ModalContext"
-import ProductCard from "@/components/ProductCard" // This expects specific props
-import { Search, X, Heart } from "lucide-react-native"
+import { useAuthGate } from "@/hooks/useAuthGate"
+import ProductCard from "@/components/ProductCard"
+import { Search, X, Heart, LogIn } from "lucide-react-native"
 import { haptics } from "@/utils/haptics"
 import AnimatedScreen from "@/components/ui/AnimatedScreen"
 import { Product } from "@/types"
+import { useRouter } from "expo-router"
 
 // -------------------------------
 // Types
@@ -31,9 +34,46 @@ type Category = {
 }
 
 export default function FavoritesScreen() {
-  const { userProfile } = useAuth()
+  const router = useRouter()
+  const { isGuest } = useAuthGate()
+
+  // Guest CTA — show sign-in prompt instead of fetching favorites
+  if (isGuest) {
+    return (
+      <View className="flex-1 bg-surface">
+        <AnimatedScreen>
+          <View className="bg-white shadow-sm mb-1 border-b border-border z-10">
+            <View className="px-5 pt-4 pb-3">
+              <Text className="text-2xl font-bold text-text-main mb-3 text-right leading-tight">
+                المفضلة
+              </Text>
+            </View>
+          </View>
+          <View className="flex-1 justify-center items-center p-8">
+            <View className="bg-red-50 p-8 rounded-full mb-6 shadow-sm">
+              <Heart size={56} color="#ef4444" fill="#ef4444" />
+            </View>
+            <Text className="text-xl font-semibold text-text-main mb-2 leading-tight text-center">
+              سجّل الدخول لحفظ المفضلة
+            </Text>
+            <Text className="text-text-secondary text-center leading-6 text-sm px-8 mb-6">
+              أنشئ حسابك لحفظ المنتجات المفضلة والوصول إليها في أي وقت
+            </Text>
+            <Button
+              title="تسجيل الدخول"
+              onPress={() => router.push('/login')}
+              size="lg"
+              className="w-full max-w-xs"
+              rightIcon={<LogIn size={20} color="#ffffff" />}
+            />
+          </View>
+        </AnimatedScreen>
+      </View>
+    )
+  }
+
   const { favoriteIds, toggleFavorite, isLoadingFavorites } = useFavorites()
-  
+
   // useFavoriteProducts returns raw data (any[]), we will cast it later
   const { favoriteProducts, isLoadingFavoritesTab, favoritesTabError } =
     useFavoriteProducts(favoriteIds, true)
@@ -57,14 +97,14 @@ export default function FavoritesScreen() {
   const normalizedProducts: Product[] = useMemo(() => {
     if (!favoriteProducts || !Array.isArray(favoriteProducts)) return []
 
-    return favoriteProducts.map((p: any) => ({
+    return favoriteProducts.map((p: Partial<Product> & { image?: string }) => ({
       ...p,
       id: String(p.id), // Force ID to string to satisfy ProductCard and useFavorites
       price: Number(p.price || 0),
       effective_selling_price: Number(p.effective_selling_price || 0),
       // Ensure we map image correctly if API sends 'image' but Card needs 'image_url'
-      image_url: p.image_url || p.image || null 
-    }))
+      image_url: p.image_url || p.image || null
+    })) as Product[]
   }, [favoriteProducts])
 
   // -------------------------------
@@ -110,9 +150,9 @@ export default function FavoritesScreen() {
     return items
   }, [normalizedProducts, activeCategory, searchQuery])
 
-  const handleShowDetails = (product: Product) => {
+  const handleShowDetails = useCallback((product: Product) => {
     openModal("productDetail", { product })
-  }
+  }, [openModal])
 
   const keyExtractor = useCallback((item: Product) => item.id, [])
 
@@ -227,26 +267,23 @@ export default function FavoritesScreen() {
                   }}
                   android_ripple={{ color: "#e2e8f0" }}
                   style={({ pressed }) => [{ opacity: pressed ? 0.96 : 1 }]}
-                  className={`mr-2 px-4 py-2.5 rounded-full border ${
-                    activeCategory === item.id
-                      ? "bg-blue-600 border-blue-600"
-                      : "bg-white border-gray-200"
-                  }`}
+                  className={`mr-2 px-4 py-2.5 rounded-full border ${activeCategory === item.id
+                    ? "bg-blue-600 border-blue-600"
+                    : "bg-white border-gray-200"
+                    }`}
                 >
                   <Text
-                    className={`text-sm font-medium ${
-                      activeCategory === item.id
-                        ? "text-white"
-                        : "text-gray-700"
-                    }`}
+                    className={`text-sm font-medium ${activeCategory === item.id
+                      ? "text-white"
+                      : "text-gray-700"
+                      }`}
                   >
                     {item.name}{" "}
                     <Text
-                      className={`text-xs ${
-                        activeCategory === item.id
-                          ? "text-white/80"
-                          : "text-gray-400"
-                      }`}
+                      className={`text-xs ${activeCategory === item.id
+                        ? "text-white/80"
+                        : "text-gray-400"
+                        }`}
                     >
                       ({item.count})
                     </Text>

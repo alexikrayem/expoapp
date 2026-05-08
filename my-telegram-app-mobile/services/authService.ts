@@ -2,6 +2,7 @@ import { ensureValidToken, getRefreshToken, clearTokens } from "../utils/tokenMa
 import { apiClient } from "../api/apiClient"
 import { logger } from "../utils/logger"
 import { API_CONFIG } from "../utils/constants"
+import type { RegistrationProfileData } from "../types"
 
 const API_BASE_URL = API_CONFIG.BASE_URL
 
@@ -9,12 +10,6 @@ export const authService = {
   // --- Phone Number OTP Auth ---
 
   sendOtp: async (phoneNumber: string) => {
-    // Note: apiClient automatically appends API_BASE_URL
-    // so we pass 'auth/send-otp' -> ${API_BASE_URL}/auth/send-otp
-    // This assumes API_BASE_URL ends with /api. 
-    // If not, we might need to adjust, but based on apiClient.ts it seems generic.
-    // However, apiClient is a wrapper that does JSON stringify etc.
-    // Let's use apiClient directly.
     return apiClient("auth/send-otp", {
       method: "POST",
       body: { phone_number: phoneNumber },
@@ -31,7 +26,7 @@ export const authService = {
     return data
   },
 
-  registerWithPhone: async (phoneNumber: string, code: string, profileData: any) => {
+  registerWithPhone: async (phoneNumber: string, code: string, profileData: RegistrationProfileData) => {
     const data = await apiClient("auth/register-phone", {
       method: "POST",
       body: { phone_number: phoneNumber, code, profileData },
@@ -44,7 +39,7 @@ export const authService = {
     try {
       const token = await ensureValidToken()
       return !!token
-    } catch (error) {
+    } catch {
       return false
     }
   },
@@ -68,7 +63,7 @@ export const authService = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refreshToken }),
       })
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("Logout error:", error)
     } finally {
       await clearTokens()

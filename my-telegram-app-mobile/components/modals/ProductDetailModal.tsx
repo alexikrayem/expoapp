@@ -2,34 +2,34 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Modal, StyleSheet, Platform, StatusBar } from 'react-native';
 import { Image } from 'expo-image';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
-    withSpring,
     withTiming,
-    interpolate,
-    Extrapolate
+    interpolate
 } from 'react-native-reanimated';
 import Text from '@/components/ThemedText';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { X, ShoppingCart, Heart, Minus, Plus, Share2, Star, Check } from 'lucide-react-native';
+import { X, ShoppingCart, Heart, Minus, Plus, Star, Check } from 'lucide-react-native';
 import { useCart } from '@/context/CartContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useCurrency } from '@/context/CurrencyContext';
 import ImageViewer from './ImageViewer';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptics } from '@/utils/haptics';
-import { useModal } from '@/context/ModalContext';
-import { useRelatedProducts } from '@/hooks/useRelatedProducts';
-import ProductCard from '@/components/ProductCard';
 import { RelatedProductsSection } from '@/components/RelatedProductsSection';
 import PressableScale from '@/components/ui/PressableScale';
 import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
+import type { Product } from '@/types';
 
+interface ProductDetailModalProps {
+    show: boolean;
+    onClose: () => void;
+    product: Product | null;
+}
 
-export default function ProductDetailModal({ show, onClose, product }: any) {
+export default function ProductDetailModal({ show, onClose, product }: ProductDetailModalProps) {
     const { actions: { addToCart } } = useCart();
     const { isFavorite, toggleFavorite } = useFavorites();
     const { formatPrice } = useCurrency();
@@ -38,7 +38,7 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
     const insets = useSafeAreaInsets();
 
     const [isLoading, setIsLoading] = useState(true);
-    const [fullProduct, setFullProduct] = useState<any>(product);
+    const [fullProduct, setFullProduct] = useState<Product | null>(product);
 
     // Animation values
     const animationProgress = useSharedValue(0);
@@ -57,7 +57,7 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
         animationProgress.value = withTiming(quantity > 0 ? 1 : 0, {
             duration: 250,
         });
-    }, [quantity]);
+    }, [quantity, animationProgress]);
 
     useEffect(() => {
         if (product?.id) {
@@ -197,7 +197,7 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
                                     {/* Related Products */}
                                     <RelatedProductsSection
                                         currentProductId={displayProduct.id}
-                                        category={displayProduct.category} // Assuming category name or ID is here. If ID needed, adjust.
+                                        category={displayProduct.category || ''} // Assuming category name or ID is here. If ID needed, adjust.
                                     />
                                 </View>
                             </>
@@ -320,7 +320,7 @@ export default function ProductDetailModal({ show, onClose, product }: any) {
             {/* Image Viewer */}
             <ImageViewer
                 visible={imageViewerVisible}
-                imageUrl={displayProduct?.image_url}
+                imageUrl={displayProduct?.image_url || null}
                 imageName={displayProduct?.name}
                 onClose={() => setImageViewerVisible(false)}
             />

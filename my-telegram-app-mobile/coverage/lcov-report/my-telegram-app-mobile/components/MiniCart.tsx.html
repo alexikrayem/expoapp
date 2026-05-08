@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/22</span>
+                <span class='fraction'>0/23</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/18</span>
+                <span class='fraction'>0/19</span>
             </div>
         
             
@@ -190,7 +190,14 @@
 <a name='L125'></a><a href='#L125'>125</a>
 <a name='L126'></a><a href='#L126'>126</a>
 <a name='L127'></a><a href='#L127'>127</a>
-<a name='L128'></a><a href='#L128'>128</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -223,6 +230,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -329,27 +339,32 @@ import { useCurrency } from "@/context/CurrencyContext"
 import { ArrowRight, ChevronUp, ChevronDown } from "lucide-react-native"
 import { useRouter } from "expo-router"
 import PressableScale from "@/components/ui/PressableScale"
+import { IMAGE_PLACEHOLDER_BLURHASH } from "@/utils/image"
+import type { CartItem as CartItemType } from "@/types"
 &nbsp;
-const CartItem = <span class="cstat-no" title="statement not covered" >React.memo(<span class="fstat-no" title="function not covered" >({</span> item, formatPrice }: { item: any; formatPrice: (price: number) =&gt; string }) =&gt; (</span>
+const CartItem = <span class="cstat-no" title="statement not covered" >React.memo(<span class="fstat-no" title="function not covered" >({</span> item, formatPrice }: { item: CartItemType; formatPrice: (price: number) =&gt; string }) =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >  &lt;View className="flex-row items-center p-3 border-b border-border last:border-0"&gt;</span>
     &lt;Image
       source={{ uri: item.image_url }}
       style={{ width: 48, height: 48, borderRadius: 8, backgroundColor: "#f3f4f6" }}
       contentFit="cover"
       cachePolicy="memory-disk"
+      placeholder={IMAGE_PLACEHOLDER_BLURHASH}
       recyclingKey={`cart-${item.product_id}`}
     /&gt;
     &lt;View className="flex-1 mx-3 items-end"&gt;
       &lt;Text className="text-sm font-bold text-text-main text-right" numberOfLines={1}&gt;
         {item.name}
       &lt;/Text&gt;
-      &lt;Text className="text-xs text-text-secondary text-right"&gt;{formatPrice(item.effective_selling_price)}&lt;/Text&gt;
+      &lt;Text className="text-xs text-text-secondary text-right"&gt;{formatPrice(Number(item.effective_selling_price))}&lt;/Text&gt;
     &lt;/View&gt;
     &lt;View className="bg-primary-50 px-2 py-1 rounded-md border border-primary-100"&gt;
       &lt;Text className="text-primary-700 font-bold text-xs"&gt;x{item.quantity}&lt;/Text&gt;
     &lt;/View&gt;
   &lt;/View&gt;
 ))
+&nbsp;
+<span class="cstat-no" title="statement not covered" >CartItem.displayName = 'CartItem';</span>
 &nbsp;
 export default function <span class="fstat-no" title="function not covered" >MiniCart(</span>) {
   const { getCartTotal, getCartItemCount, cartItems } = <span class="cstat-no" title="statement not covered" >useCart()</span>
@@ -367,7 +382,7 @@ export default function <span class="fstat-no" title="function not covered" >Min
       damping: 20,
       stiffness: 90,
     })
-  }, [isExpanded])
+  }, [isExpanded, expandProgress])
 &nbsp;
   const expandedListStyle = <span class="cstat-no" title="statement not covered" >useAnimatedStyle(<span class="fstat-no" title="function not covered" >()</span> =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
     opacity: expandProgress.value,
@@ -403,7 +418,7 @@ export default function <span class="fstat-no" title="function not covered" >Min
           &lt;/View&gt;
 &nbsp;
           &lt;ScrollView className="max-h-64" showsVerticalScrollIndicator={true}&gt;
-            {cartItems.map(<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; (
+            {cartItems.map(<span class="fstat-no" title="function not covered" >(i</span>tem: CartItemType) =&gt; (
 <span class="cstat-no" title="statement not covered" >              &lt;CartItem key={item.product_id} item={item} formatPrice={formatPrice} /&gt;</span>
             ))}
           &lt;/ScrollView&gt;
@@ -451,7 +466,7 @@ export default function <span class="fstat-no" title="function not covered" >Min
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-12T11:40:20.952Z
+                at 2026-05-08T08:22:05.697Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

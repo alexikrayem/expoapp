@@ -65,12 +65,13 @@ export const useProducts = (cityId: string | null | undefined, externalFilters: 
                 })
             );
 
-            return productService.getProducts(cleanedParams, { signal });
+            return productService.getProducts(cleanedParams as unknown as Parameters<typeof productService.getProducts>[0], { signal });
         },
         initialPageParam: 1,
-        getNextPageParam: (lastPage) => {
-            if (lastPage.currentPage < lastPage.totalPages) {
-                return lastPage.currentPage + 1;
+        getNextPageParam: (lastPage: unknown) => {
+            const page = lastPage as { currentPage?: number; totalPages?: number };
+            if (page.currentPage && page.totalPages && page.currentPage < page.totalPages) {
+                return page.currentPage + 1;
             }
             return undefined;
         },
@@ -79,7 +80,7 @@ export const useProducts = (cityId: string | null | undefined, externalFilters: 
     });
 
     const products = useMemo(() => {
-        return (data?.pages.flatMap(page => page.items || []) || []) as Product[];
+        return (data?.pages.flatMap((page: unknown) => (page as { items?: Product[] })?.items || []) || []) as Product[];
     }, [data]);
 
     // Memoize the URL list so prefetchImages isn't called with a new array on every render

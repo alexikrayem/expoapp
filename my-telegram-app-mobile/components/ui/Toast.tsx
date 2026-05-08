@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { View, Animated, StyleSheet, I18nManager } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Text from '@/components/ThemedText';
@@ -25,6 +25,23 @@ export default function Toast({
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const translateY = useRef(new Animated.Value(-20)).current;
 
+    const hideToast = useCallback(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+            Animated.timing(translateY, {
+                toValue: -20,
+                duration: 200,
+                useNativeDriver: true,
+            })
+        ]).start(() => {
+            if (visible) onHide();
+        });
+    }, [fadeAnim, translateY, visible, onHide]);
+
     useEffect(() => {
         if (visible) {
             Animated.parallel([
@@ -48,24 +65,7 @@ export default function Toast({
         } else {
             hideToast();
         }
-    }, [visible]);
-
-    const hideToast = () => {
-        Animated.parallel([
-            Animated.timing(fadeAnim, {
-                toValue: 0,
-                duration: 200,
-                useNativeDriver: true,
-            }),
-            Animated.timing(translateY, {
-                toValue: -20,
-                duration: 200,
-                useNativeDriver: true,
-            })
-        ]).start(() => {
-            if (visible) onHide();
-        });
-    };
+    }, [visible, duration, fadeAnim, hideToast, translateY]);
 
     if (!visible) return null;
 

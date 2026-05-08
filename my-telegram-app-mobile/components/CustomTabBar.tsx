@@ -7,7 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { haptics } from '@/utils/haptics';
 import PressableScale from '@/components/ui/PressableScale';
 
-const TAB_ICONS: { [key: string]: any } = {
+
+const TAB_ICONS: Record<string, React.ElementType> = {
     index: Home,
     favorites: Heart,
     orders: ShoppingBag,
@@ -32,7 +33,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
                     const isFocused = state.index === index;
 
                     // Skip hidden routes
-                    if ((options as any).href === null) return null;
+                    if ((options as { href?: string | null }).href === null) return null;
 
                     const Icon = TAB_ICONS[route.name] || Home;
                     const label = TAB_LABELS[route.name] || route.name;

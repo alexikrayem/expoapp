@@ -1,5 +1,5 @@
 import React from "react"
-import { Pressable, PressableProps } from "react-native"
+import { Pressable, PressableProps, StyleProp, ViewStyle } from "react-native"
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
 import { haptics } from "@/utils/haptics"
 import { MOTION } from "@/utils/motion"
@@ -11,7 +11,7 @@ interface PressableScaleProps extends PressableProps {
   children?: React.ReactNode | ((state: { pressed: boolean }) => React.ReactNode)
   className?: string
   pressableClassName?: string
-  style?: any
+  style?: StyleProp<ViewStyle>
 }
 
 export default function PressableScale({

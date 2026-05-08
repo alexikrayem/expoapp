@@ -1,7 +1,7 @@
-type Listener = (...args: any[]) => void;
+type Listener = (...args: unknown[]) => void;
 
 class EventEmitter {
-    private events: { [key: string]: Listener[] } = {};
+    private events: Record<string, Listener[]> = {};
 
     on(event: string, listener: Listener) {
         if (!this.events[event]) {
@@ -15,7 +15,7 @@ class EventEmitter {
         this.events[event] = this.events[event].filter(l => l !== listener);
     }
 
-    emit(event: string, ...args: any[]) {
+    emit(event: string, ...args: unknown[]) {
         if (!this.events[event]) return;
         this.events[event].forEach(listener => listener(...args));
     }

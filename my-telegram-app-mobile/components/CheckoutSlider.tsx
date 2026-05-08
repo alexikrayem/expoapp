@@ -4,6 +4,7 @@ import {
     StyleSheet,
     ActivityIndicator,
     I18nManager,
+    LayoutChangeEvent,
 } from 'react-native';
 import Text from '@/components/ThemedText';
 import Animated, {
@@ -51,7 +52,7 @@ const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
     const animatedSuccess = useSharedValue(0); // 0 (initial) to 1 (complete)
     const context = useSharedValue(0);
 
-    const handleLayout = (e: any) => {
+    const handleLayout = (e: LayoutChangeEvent) => {
         setContainerWidth(e.nativeEvent.layout.width);
     };
 
@@ -82,7 +83,7 @@ const CheckoutSlider: React.FC<CheckoutSliderProps> = ({
             setIsComplete(false);
             setShowActions(false);
         }
-    }, [enabled]);
+    }, [enabled, translateX, animatedSuccess]);
 
     const pan = Gesture.Pan()
         .onStart(() => {

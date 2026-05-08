@@ -1,10 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutRight } from 'react-native-reanimated';
+import { View, StyleSheet } from 'react-native';
+import Animated, { SlideInRight, SlideOutRight } from 'react-native-reanimated';
 import Text from '@/components/ThemedText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width, height } = Dimensions.get('window');
 
 interface AIChatOverlayProps {
     visible: boolean;

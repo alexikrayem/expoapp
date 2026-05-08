@@ -1,8 +1,9 @@
 import { apiClient } from '../api/apiClient';
+import type { UserProfile, FavoritesResponse } from '../types';
 
 export const userService = {
     getFavorites: () => {
-        return apiClient('favorites');
+        return apiClient<FavoritesResponse>('favorites');
     },
     addFavorite: (productId: string) => {
         return apiClient('favorites', {
@@ -15,13 +16,13 @@ export const userService = {
             method: 'DELETE',
         });
     },
-    updateProfile: (profileData: any) => {
-        return apiClient('user/profile', {
+    updateProfile: (profileData: Partial<UserProfile>) => {
+        return apiClient<UserProfile>('user/profile', {
             method: 'PUT',
             body: profileData,
         });
     },
     getProfile: () => {
-        return apiClient('user/profile');
+        return apiClient<UserProfile>('user/profile');
     }
 };

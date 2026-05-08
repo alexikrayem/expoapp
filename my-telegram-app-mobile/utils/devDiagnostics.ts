@@ -3,14 +3,23 @@ import { Platform } from "react-native"
 
 import { logger } from "@/utils/logger"
 
+/** Minimal shape of the legacy Constants.manifest / manifest2 */
+interface LegacyManifest {
+  version?: string
+  name?: string
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const _globalThis = globalThis as any
+
 export function logDevDiagnostics() {
   if (!__DEV__) return
 
-  const isHermes = !!(globalThis as any).HermesInternal
+  const isHermes = !!_globalThis.HermesInternal
   const hasWindow =
-    typeof globalThis !== "undefined" && (globalThis as any).window != null
+    typeof globalThis !== "undefined" && _globalThis.window != null
   const userAgent = hasWindow
-    ? (globalThis as any).window?.navigator?.userAgent
+    ? _globalThis.window?.navigator?.userAgent
     : undefined
   const isRemoteDebuggingLikely =
     Platform.OS !== "web" &&
@@ -18,14 +27,15 @@ export function logDevDiagnostics() {
     typeof userAgent === "string" &&
     userAgent.includes("Chrome")
 
+  const constantsRecord = Constants as unknown as Record<string, LegacyManifest | undefined>
   const appVersion =
     Constants.expoConfig?.version ??
-    (Constants as any).manifest2?.version ??
-    (Constants as any).manifest?.version
+    constantsRecord["manifest2"]?.version ??
+    constantsRecord["manifest"]?.version
   const appName =
     Constants.expoConfig?.name ??
-    (Constants as any).manifest2?.name ??
-    (Constants as any).manifest?.name
+    constantsRecord["manifest2"]?.name ??
+    constantsRecord["manifest"]?.name
 
   logger.info("[dev-diagnostics] app", {
     name: appName,

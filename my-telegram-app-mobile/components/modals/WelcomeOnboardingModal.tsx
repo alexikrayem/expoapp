@@ -1,15 +1,12 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useEffect } from 'react';
-import { View, Image, Modal, Dimensions } from 'react-native';
+import { View, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
-import { ArrowRight, ArrowLeft, Check } from 'lucide-react-native';
 import { storage } from '@/utils/storage';
-import Animated, { FadeInDown, FadeInUp, useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import PressableScale from '@/components/ui/PressableScale';
-
-const { width } = Dimensions.get('window');
 
 const slides = [
     {
@@ -34,7 +31,12 @@ const slides = [
 
 const STORAGE_KEY = 'hasSeenWelcome_v1';
 
-export default function WelcomeOnboardingModal({ visible, onFinish }: any) {
+interface WelcomeOnboardingModalProps {
+    visible: boolean;
+    onFinish: () => void;
+}
+
+export default function WelcomeOnboardingModal({ visible, onFinish }: WelcomeOnboardingModalProps) {
     const [index, setIndex] = useState(0);
     const [showModal, setShowModal] = useState(visible);
 

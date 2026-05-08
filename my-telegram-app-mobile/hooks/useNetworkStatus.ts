@@ -14,7 +14,7 @@ export function useNetworkStatus() {
             // On iOS, isInternetReachable can be null initially, so we fallback to isConnected
             const online = status.isConnected && (status.isInternetReachable ?? true);
             setIsOnline(!!online);
-        } catch (_error) {
+        } catch {
             // Assume online on error to avoid blocking user
             setIsOnline(true);
         }

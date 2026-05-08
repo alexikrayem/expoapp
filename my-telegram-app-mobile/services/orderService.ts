@@ -1,15 +1,16 @@
 import { apiClient } from '../api/apiClient';
+import type { CreateOrderPayload, Order } from '../types';
 
 const buildIdempotencyKey = () =>
     `mobile-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
 
 export const orderService = {
     getUserOrders: () => {
-        return apiClient('orders');
+        return apiClient<Order[]>('orders');
     },
-    createOrderFromCart: (orderData: any) => {
+    createOrderFromCart: (orderData: CreateOrderPayload) => {
         const idempotencyKey = buildIdempotencyKey();
-        return apiClient('orders/from-cart', {
+        return apiClient<Order>('orders/from-cart', {
             method: 'POST',
             headers: {
                 'Idempotency-Key': idempotencyKey,
@@ -18,7 +19,7 @@ export const orderService = {
         });
     },
     updateOrderStatus: (orderId: string, status: string) => {
-        return apiClient(`orders/${orderId}/status`, {
+        return apiClient<Order>(`orders/${orderId}/status`, {
             method: 'PUT',
             body: { status },
         });

@@ -131,6 +131,101 @@ router.post('/products', authSupplier, validateSupplierProductCreate, async (req
     }
 });
 
+// Bulk update product stock
+router.put('/products/bulk-stock', authSupplier, validateSupplierBulkStockUpdate, async (req, res) => {
+    try {
+        const supplierId = req.supplier.supplierId;
+        const { updates } = req.body;
+        
+        if (!Array.isArray(updates) || updates.length === 0) {
+            return res.status(HTTP.BAD_REQUEST).json({ error: 'Updates array is required' });
+        }
+        
+        const client = await db.pool.connect();
+        
+        try {
+            await client.query('BEGIN');
+            const updateMap = new Map();
+            for (const update of updates) {
+                const id = Number(update?.id);
+                const stockLevel = Number(update?.stock_level);
+
+                if (!Number.isInteger(id) || id <= 0) {
+                    await client.query('ROLLBACK');
+                    return res.status(HTTP.BAD_REQUEST).json({ error: 'Each update must include a valid product id' });
+                }
+
+                if (!Number.isFinite(stockLevel) || stockLevel < 0) {
+                    await client.query('ROLLBACK');
+                    return res.status(HTTP.BAD_REQUEST).json({ error: 'Each update must include a non-negative stock_level' });
+                }
+
+                updateMap.set(id, Math.trunc(stockLevel));
+            }
+
+            const productIds = Array.from(updateMap.keys());
+            const stockLevels = Array.from(updateMap.values());
+
+            if (productIds.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(HTTP.BAD_REQUEST).json({ error: 'Updates array is required' });
+            }
+
+            // Verify all products belong to this supplier
+            const verifyQuery = 'SELECT id FROM products WHERE supplier_id = $1 AND id = ANY($2::int[])';
+            const verifyResult = await client.query(verifyQuery, [supplierId, productIds]);
+
+            if (verifyResult.rows.length !== productIds.length) {
+                const foundIds = new Set(verifyResult.rows.map((row) => row.id));
+                const missingIds = productIds.filter((id) => !foundIds.has(id));
+                await client.query('ROLLBACK');
+                return res.status(HTTP.NOT_FOUND).json({ error: `Product(s) not found or not owned by you: ${missingIds.join(', ')}` });
+            }
+
+            const updateQuery = `
+                UPDATE products p
+                SET stock_level = u.stock_level, updated_at = NOW()
+                FROM (
+                    SELECT unnest($1::int[]) AS id, unnest($2::int[]) AS stock_level
+                ) AS u
+                WHERE p.id = u.id AND p.supplier_id = $3
+                RETURNING p.id
+            `;
+            const updateResult = await client.query(updateQuery, [productIds, stockLevels, supplierId]);
+            const updatedProductIds = updateResult.rows.map((row) => row.id);
+            
+            await client.query('COMMIT');
+            void invalidateCache([
+                'products:list',
+                'products:categories',
+                'products:detail',
+                'products:batch',
+                'products:favorite-details',
+                'suppliers:list',
+                'suppliers:detail',
+                'search',
+                'featured:items',
+                'featured:list',
+                'deals:list'
+            ]);
+            updatedProductIds.forEach((productId) => {
+                void indexProductById(productId);
+            });
+            res.json({ message: 'Stock levels updated successfully', updated_count: updatedProductIds.length });
+            
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+        
+    } catch (error) {
+        logger.error('Error bulk updating stock', error);
+        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to update stock levels' });
+    }
+});
+
 // Update product
 router.put('/products/:id', authSupplier, validateSupplierProductUpdate, async (req, res) => {
     try {
@@ -293,101 +388,6 @@ router.delete('/products/:id', authSupplier, validateSupplierProductIdParam, asy
     } catch (error) {
         logger.error('Error deleting product', error);
         res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to delete product' });
-    }
-});
-
-// Bulk update product stock
-router.put('/products/bulk-stock', authSupplier, validateSupplierBulkStockUpdate, async (req, res) => {
-    try {
-        const supplierId = req.supplier.supplierId;
-        const { updates } = req.body;
-        
-        if (!Array.isArray(updates) || updates.length === 0) {
-            return res.status(HTTP.BAD_REQUEST).json({ error: 'Updates array is required' });
-        }
-        
-        const client = await db.pool.connect();
-        
-        try {
-            await client.query('BEGIN');
-            const updateMap = new Map();
-            for (const update of updates) {
-                const id = Number(update?.id);
-                const stockLevel = Number(update?.stock_level);
-
-                if (!Number.isInteger(id) || id <= 0) {
-                    await client.query('ROLLBACK');
-                    return res.status(HTTP.BAD_REQUEST).json({ error: 'Each update must include a valid product id' });
-                }
-
-                if (!Number.isFinite(stockLevel) || stockLevel < 0) {
-                    await client.query('ROLLBACK');
-                    return res.status(HTTP.BAD_REQUEST).json({ error: 'Each update must include a non-negative stock_level' });
-                }
-
-                updateMap.set(id, Math.trunc(stockLevel));
-            }
-
-            const productIds = Array.from(updateMap.keys());
-            const stockLevels = Array.from(updateMap.values());
-
-            if (productIds.length === 0) {
-                await client.query('ROLLBACK');
-                return res.status(HTTP.BAD_REQUEST).json({ error: 'Updates array is required' });
-            }
-
-            // Verify all products belong to this supplier
-            const verifyQuery = 'SELECT id FROM products WHERE supplier_id = $1 AND id = ANY($2::int[])';
-            const verifyResult = await client.query(verifyQuery, [supplierId, productIds]);
-
-            if (verifyResult.rows.length !== productIds.length) {
-                const foundIds = new Set(verifyResult.rows.map((row) => row.id));
-                const missingIds = productIds.filter((id) => !foundIds.has(id));
-                await client.query('ROLLBACK');
-                return res.status(HTTP.NOT_FOUND).json({ error: `Product(s) not found or not owned by you: ${missingIds.join(', ')}` });
-            }
-
-            const updateQuery = `
-                UPDATE products p
-                SET stock_level = u.stock_level, updated_at = NOW()
-                FROM (
-                    SELECT unnest($1::int[]) AS id, unnest($2::int[]) AS stock_level
-                ) AS u
-                WHERE p.id = u.id AND p.supplier_id = $3
-                RETURNING p.id
-            `;
-            const updateResult = await client.query(updateQuery, [productIds, stockLevels, supplierId]);
-            const updatedProductIds = updateResult.rows.map((row) => row.id);
-            
-            await client.query('COMMIT');
-            void invalidateCache([
-                'products:list',
-                'products:categories',
-                'products:detail',
-                'products:batch',
-                'products:favorite-details',
-                'suppliers:list',
-                'suppliers:detail',
-                'search',
-                'featured:items',
-                'featured:list',
-                'deals:list'
-            ]);
-            updatedProductIds.forEach((productId) => {
-                void indexProductById(productId);
-            });
-            res.json({ message: 'Stock levels updated successfully', updated_count: updatedProductIds.length });
-            
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
-        
-    } catch (error) {
-        logger.error('Error bulk updating stock', error);
-        res.status(HTTP.INTERNAL_SERVER_ERROR).json({ error: 'Failed to update stock levels' });
     }
 });
 

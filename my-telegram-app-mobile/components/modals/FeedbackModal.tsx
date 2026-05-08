@@ -24,7 +24,7 @@ export default function FeedbackModal({ visible, onClose }: FeedbackModalProps) 
         }
 
         // Here you would typically send the feedback to your backend
-        console.log({ rating, comment });
+        // console.log({ rating, comment });
 
         showToast('شكراً لك على ملاحظاتك!', 'success');
         setRating(0);

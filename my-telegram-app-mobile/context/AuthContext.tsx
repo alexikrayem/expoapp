@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { createContext, useState, useEffect, useContext, useCallback, useMemo } from "react"
 import { userService } from "@/services/userService"
@@ -10,6 +8,8 @@ import { logger } from "@/utils/logger"
 
 interface AuthContextType {
   isAuthenticated: boolean
+  /** True once the auth check is complete and the user is **not** logged in. */
+  isGuest: boolean
   isLoading: boolean
   userProfile: UserProfile | null
   logout: () => Promise<void>
@@ -63,10 +63,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           await ensureValidToken()
           await fetchProfile()
           setIsAuthenticated(true)
-        } catch (_error) {
+        } catch {
           await logout()
         }
-      } catch (_error) {
+      } catch {
         await logout()
       } finally {
         setIsLoading(false)
@@ -93,9 +93,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [fetchProfile, logout])
 
+  // isGuest is only true after loading finishes and the user is not authenticated.
+  // This prevents components from briefly treating an initialising session as a guest.
+  const isGuest = !isAuthenticated && !isLoading
+
   const value = useMemo(
-    () => ({ isAuthenticated, isLoading, userProfile, logout, refreshProfile: fetchProfile, refreshAuth }),
-    [isAuthenticated, isLoading, userProfile, logout, fetchProfile, refreshAuth],
+    () => ({ isAuthenticated, isGuest, isLoading, userProfile, logout, refreshProfile: fetchProfile, refreshAuth }),
+    [isAuthenticated, isGuest, isLoading, userProfile, logout, fetchProfile, refreshAuth],
   )
 
   return (

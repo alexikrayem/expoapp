@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { productService } from '../services/productService';
 import { prefetchImages } from '@/utils/image';
+import type { FeaturedItem } from '@/types';
 
 export const useFeaturedItems = () => {
     const { data, isLoading, isError, error, refetch, isRefetching } = useQuery({
@@ -13,7 +14,7 @@ export const useFeaturedItems = () => {
     useEffect(() => {
         if (!data || !Array.isArray(data)) return;
         prefetchImages(
-            data.map((item: any) => item.imageUrl || item.image_url),
+            data.map((item: FeaturedItem) => item.imageUrl || item.image_url),
             8
         );
     }, [data]);

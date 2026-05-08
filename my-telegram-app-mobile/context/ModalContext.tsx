@@ -14,7 +14,8 @@ const FeedbackModal = React.lazy(() => import('../components/modals/FeedbackModa
 
 // Define the context shape
 interface ModalContextType {
-    openModal: (type: string, props?: any) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    openModal: (type: string, props?: Record<string, any>) => void;
     closeModal: () => void;
 }
 
@@ -29,12 +30,14 @@ export const useModal = () => {
 };
 
 export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
-    const [modalState, setModalState] = useState<{ type: string | null; props: any }>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [modalState, setModalState] = useState<{ type: string | null; props: Record<string, any> }>({
         type: null,
         props: {}
     });
 
-    const openModal = useCallback((type: string, props = {}) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const openModal = useCallback((type: string, props: Record<string, any> = {}) => {
         setModalState({ type, props });
     }, []);
 
@@ -42,26 +45,27 @@ export const ModalProvider = ({ children }: { children: React.ReactNode }) => {
         setModalState({ type: null, props: {} });
     }, []);
 
-    const renderModalContent = (type: string, props: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const renderModalContent = (type: string, props: Record<string, any>) => {
         switch (type) {
             case 'productDetail':
-                return <ProductDetailModal show={true} onClose={closeModal} {...props} />;
+                return <ProductDetailModal {...(props as unknown as React.ComponentProps<typeof ProductDetailModal>)} show={true} onClose={closeModal} />;
             case 'profile':
-                return <ProfileModal visible={true} onClose={closeModal} {...props} />;
+                return <ProfileModal {...(props as unknown as React.ComponentProps<typeof ProfileModal>)} visible={true} onClose={closeModal} />;
             case 'address':
-                return <AddressModal visible={true} onClose={closeModal} {...props} />;
+                return <AddressModal {...(props as unknown as React.ComponentProps<typeof AddressModal>)} visible={true} onClose={closeModal} />;
             case 'addressConfirmation':
-                return <AddressConfirmationModal visible={true} onClose={closeModal} {...props} />;
+                return <AddressConfirmationModal {...(props as unknown as React.ComponentProps<typeof AddressConfirmationModal>)} visible={true} onClose={closeModal} />;
             case 'orderConfirmation':
-                return <OrderConfirmationModal visible={true} onClose={closeModal} {...props} />;
+                return <OrderConfirmationModal {...(props as unknown as React.ComponentProps<typeof OrderConfirmationModal>)} visible={true} onClose={closeModal} />;
             case 'dealDetail':
-                return <DealDetailModal show={true} onClose={closeModal} {...props} />;
+                return <DealDetailModal {...(props as unknown as React.ComponentProps<typeof DealDetailModal>)} show={true} onClose={closeModal} />;
             case 'supplierDetail':
-                return <SupplierDetailModal show={true} onClose={closeModal} {...props} />;
+                return <SupplierDetailModal {...(props as unknown as React.ComponentProps<typeof SupplierDetailModal>)} show={true} onClose={closeModal} />;
             case 'featuredList':
-                return <FeaturedListModal show={true} onClose={closeModal} openModal={openModal} {...props} />;
+                return <FeaturedListModal {...(props as unknown as React.ComponentProps<typeof FeaturedListModal>)} show={true} onClose={closeModal} openModal={openModal as unknown as (type: string, props?: unknown) => void} />;
             case 'feedback':
-                return <FeedbackModal visible={true} onClose={closeModal} {...props} />;
+                return <FeedbackModal {...(props as unknown as React.ComponentProps<typeof FeedbackModal>)} visible={true} onClose={closeModal} />;
             default:
                 return null;
         }

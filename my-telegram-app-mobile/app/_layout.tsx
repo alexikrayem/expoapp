@@ -36,9 +36,10 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       // Retry failed requests up to 3 times with exponential backoff
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
         // Don't retry on 401/403 (auth errors) or 404 (not found)
-        if (error?.status === 401 || error?.status === 403 || error?.status === 404) {
+        const status = (error as { status?: number })?.status;
+        if (status === 401 || status === 403 || status === 404) {
           return false
         }
         return failureCount < 3
@@ -55,17 +56,19 @@ const queryClient = new QueryClient({
     },
   },
   queryCache: new QueryCache({
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       // Don't show toast for auth errors (handled by auth context)
-      if (error?.status !== 401) {
-        emitter.emit("api-error", error.message || "حدث خطأ في الاتصال")
+      const err = error as Error & { status?: number };
+      if (err?.status !== 401) {
+        emitter.emit("api-error", err.message || "حدث خطأ في الاتصال")
       }
     },
   }),
   mutationCache: new MutationCache({
-    onError: (error: any) => {
-      if (error?.status !== 401) {
-        emitter.emit("api-error", error.message || "حدث خطأ في العملية")
+    onError: (error: unknown) => {
+      const err = error as Error & { status?: number };
+      if (err?.status !== 401) {
+        emitter.emit("api-error", err.message || "حدث خطأ في العملية")
       }
     },
   }),
@@ -104,6 +107,7 @@ export default function RootLayout() {
       // Set default font for all Text components using defaultProps
       const defaultFontFamily = { fontFamily: "TajawalCustom" }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const applyDefaultFont = (Component: any) => {
         const oldDefaultProps = Component.defaultProps
         Component.defaultProps = {
@@ -159,8 +163,8 @@ function RootLayoutNav() {
   }, [])
 
   useEffect(() => {
-    const onError = (message: string) => {
-      showToast(message, "error")
+    const onError = (message: unknown) => {
+      showToast(String(message), "error")
     }
     emitter.on("api-error", onError)
     return () => {
@@ -168,18 +172,16 @@ function RootLayoutNav() {
     }
   }, [showToast])
 
-  // Auth Guard Logic — only reacts to auth state changes, not navigation events.
-  // segments is read inside the effect body but intentionally excluded from deps
-  // to prevent re-firing on every screen transition.
+  // Auth Guard Logic — only redirects authenticated users AWAY from auth screens.
+  // Guests are allowed to browse freely; they are gated at action points (cart, checkout, etc.).
   useEffect(() => {
     if (!isMounted || isLoading) return
 
     const rootSegment = segments[0] ?? ""
     const inAuthFlow = rootSegment === "login" || rootSegment === "register"
 
-    if (!isAuthenticated && !inAuthFlow) {
-      router.replace("/login")
-    } else if (isAuthenticated && inAuthFlow) {
+    // Only redirect authenticated users away from login/register
+    if (isAuthenticated && inAuthFlow) {
       router.replace("/(tabs)")
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -216,12 +218,6 @@ function RootLayoutNav() {
 
   if (isLoading) {
     return <LoadingScreen message="جاري التحقق من الحساب..." />
-  }
-
-  const rootSegment = segments[0] ?? ""
-  const inAuthFlow = rootSegment === "login" || rootSegment === "register"
-  if (!isAuthenticated && !inAuthFlow) {
-    return <LoadingScreen message="جاري تحويلك لصفحة تسجيل الدخول..." />
   }
 
   const stackScreenOptions = {

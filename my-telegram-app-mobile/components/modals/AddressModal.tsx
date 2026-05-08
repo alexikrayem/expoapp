@@ -7,11 +7,13 @@ import { X, User, Phone, Building, AlertCircle } from 'lucide-react-native';
 import { Picker } from '@react-native-picker/picker';
 import PressableScale from '@/components/ui/PressableScale';
 
+import type { AddressData } from '@/types';
+
 interface AddressModalProps {
     visible: boolean;
     onClose: () => void;
-    initialData?: any;
-    onSaveAndProceed: (data: any) => Promise<void>;
+    initialData?: Partial<AddressData>;
+    onSaveAndProceed: (data: AddressData) => Promise<void>;
     availableCities?: string[];
     error?: string | null;
     isSaving?: boolean;
@@ -34,7 +36,7 @@ export default function AddressModal({
         addressLine2: '',
         city: '',
     });
-    const [validationErrors, setValidationErrors] = useState<any>({});
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [localError, setLocalError] = useState<string | null>(externalError);
 
@@ -55,20 +57,20 @@ export default function AddressModal({
     const handleChange = (name: string, value: string) => {
         setFormData(prev => ({ ...prev, [name]: value }));
         if (validationErrors[name]) {
-            setValidationErrors((prev: any) => ({ ...prev, [name]: '' }));
+            setValidationErrors((prev: Record<string, string>) => ({ ...prev, [name]: '' }));
         }
     };
 
     const validateForm = () => {
-        const errors: any = {};
-        if (!formData.fullName.trim()) errors.fullName = 'الاسم الكامل مطلوب';
+        const errors: Record<string, string> = {};
+        if (!formData.fullName.trim()) errors['fullName'] = 'الاسم الكامل مطلوب';
         if (!formData.phoneNumber.trim()) {
-            errors.phoneNumber = 'رقم الهاتف مطلوب';
+            errors['phoneNumber'] = 'رقم الهاتف مطلوب';
         } else if (!/^[0-9+\-\s()]{10,}$/.test(formData.phoneNumber.trim())) {
-            errors.phoneNumber = 'رقم الهاتف غير صحيح';
+            errors['phoneNumber'] = 'رقم الهاتف غير صحيح';
         }
-        if (!formData.addressLine1.trim()) errors.addressLine1 = 'العنوان مطلوب';
-        if (!formData.city.trim()) errors.city = 'المدينة مطلوبة';
+        if (!formData.addressLine1.trim()) errors['addressLine1'] = 'العنوان مطلوب';
+        if (!formData.city.trim()) errors['city'] = 'المدينة مطلوبة';
 
         setValidationErrors(errors);
         return Object.keys(errors).length === 0;
@@ -82,8 +84,8 @@ export default function AddressModal({
         try {
             await onSaveAndProceed(formData);
             // onClose is usually handled by the parent after successful save or by the next step
-        } catch (err: any) {
-            setLocalError(err.message || 'Failed to save address');
+        } catch (err: unknown) {
+            setLocalError(err instanceof Error ? err.message : 'Failed to save address');
         } finally {
             setIsSubmitting(false);
         }
@@ -139,7 +141,7 @@ export default function AddressModal({
                                 editable={!isSaving}
                                 className="text-right"
                                 fieldClassName="bg-white"
-                                error={validationErrors.fullName}
+                                error={validationErrors['fullName']}
                                 {...iconSlot(<User size={20} color="#94a3b8" />)}
                             />
 
@@ -154,14 +156,14 @@ export default function AddressModal({
                                 editable={!isSaving}
                                 className="text-right"
                                 fieldClassName="bg-white"
-                                error={validationErrors.phoneNumber}
+                                error={validationErrors['phoneNumber']}
                                 {...iconSlot(<Phone size={20} color="#94a3b8" />)}
                             />
 
                             {/* City */}
                             <View>
                                 <Text className="text-sm font-bold text-text-main mb-2 text-right">المدينة</Text>
-                                <View className={`border rounded-xl bg-white overflow-hidden ${validationErrors.city ? 'border-red-300 bg-red-50' : 'border-border'}`}>
+                                <View className={`border rounded-xl bg-white overflow-hidden ${validationErrors['city'] ? 'border-red-300 bg-red-50' : 'border-border'}`}>
                                     <Picker
                                         selectedValue={formData.city}
                                         onValueChange={(itemValue: string) => handleChange('city', itemValue)}
@@ -174,7 +176,7 @@ export default function AddressModal({
                                         ))}
                                     </Picker>
                                 </View>
-                                {validationErrors.city && <Text className="text-red-500 text-xs mt-1.5 text-right font-medium">{validationErrors.city}</Text>}
+                                {validationErrors['city'] && <Text className="text-red-500 text-xs mt-1.5 text-right font-medium">{validationErrors['city']}</Text>}
                             </View>
 
                             {/* Address Line 1 */}
@@ -187,7 +189,7 @@ export default function AddressModal({
                                 editable={!isSaving}
                                 className="text-right"
                                 fieldClassName="bg-white"
-                                error={validationErrors.addressLine1}
+                                error={validationErrors['addressLine1']}
                                 {...iconSlot(<Building size={20} color="#94a3b8" />)}
                             />
 

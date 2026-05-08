@@ -30,25 +30,25 @@ function setDevFlag(value: boolean) {
       configurable: true,
     })
   } catch {
-    ;(global as any).__DEV__ = value
+    ; (global as unknown as { __DEV__?: boolean }).__DEV__ = value
   }
 }
 
 describe("devDiagnostics", () => {
-  const originalWindow = (globalThis as any).window
-  const originalHermes = (globalThis as any).HermesInternal
+  const originalWindow = (globalThis as unknown as { window?: unknown }).window
+  const originalHermes = (globalThis as unknown as { HermesInternal?: unknown }).HermesInternal
 
   beforeEach(() => {
     jest.clearAllMocks()
     Platform.OS = "ios"
     setDevFlag(true)
-    ;(globalThis as any).window = undefined
-    ;(globalThis as any).HermesInternal = {}
+      ; (globalThis as unknown as { window?: unknown }).window = undefined
+      ; (globalThis as unknown as { HermesInternal?: unknown }).HermesInternal = {}
   })
 
   afterEach(() => {
-    ;(globalThis as any).window = originalWindow
-    ;(globalThis as any).HermesInternal = originalHermes
+    ; (globalThis as unknown as { window?: unknown }).window = originalWindow
+      ; (globalThis as unknown as { HermesInternal?: unknown }).HermesInternal = originalHermes
   })
 
   it("logs baseline diagnostics in dev mode", () => {
@@ -70,10 +70,10 @@ describe("devDiagnostics", () => {
   })
 
   it("warns when remote debugging is likely enabled", () => {
-    ;(globalThis as any).HermesInternal = undefined
-    ;(globalThis as any).window = {
-      navigator: { userAgent: "Chrome/123" },
-    }
+    ; (globalThis as { HermesInternal?: unknown }).HermesInternal = undefined
+      ; (globalThis as { window?: unknown }).window = {
+        navigator: { userAgent: "Chrome/123" },
+      }
 
     logDevDiagnostics()
 
@@ -83,10 +83,10 @@ describe("devDiagnostics", () => {
   })
 
   it("warns when Hermes is not detected and remote debugging is not likely", () => {
-    ;(globalThis as any).HermesInternal = undefined
-    ;(globalThis as any).window = {
-      navigator: { userAgent: "Safari" },
-    }
+    ; (globalThis as { HermesInternal?: unknown }).HermesInternal = undefined
+      ; (globalThis as { window?: unknown }).window = {
+        navigator: { userAgent: "Safari" },
+      }
 
     logDevDiagnostics()
 

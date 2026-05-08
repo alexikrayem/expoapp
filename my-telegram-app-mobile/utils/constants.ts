@@ -7,10 +7,11 @@ const DEFAULT_API_PATH = "/api"
 const normalizeBaseUrl = (baseUrl: string) => baseUrl.trim().replace(/\/+$/, "")
 
 const getDevHost = () => {
+    const constantsRec = Constants as unknown as Record<string, { hostUri?: string } | undefined>
     const hostUri =
         Constants.expoConfig?.hostUri ??
-        (Constants as any).manifest2?.hostUri ??
-        (Constants as any).manifest?.hostUri
+        constantsRec["manifest2"]?.hostUri ??
+        constantsRec["manifest"]?.hostUri
 
     if (!hostUri) return null
 

@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>17/17</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>16/16</span>
             </div>
         
             
@@ -113,10 +113,29 @@
 <a name='L48'></a><a href='#L48'>48</a>
 <a name='L49'></a><a href='#L49'>49</a>
 <a name='L50'></a><a href='#L50'>50</a>
-<a name='L51'></a><a href='#L51'>51</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
@@ -133,6 +152,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -168,14 +188,23 @@ import { Platform } from "react-native"
 &nbsp;
 import { logger } from "@/utils/logger"
 &nbsp;
+/** Minimal shape of the legacy Constants.manifest / manifest2 */
+interface LegacyManifest {
+  version?: string
+  name?: string
+}
+&nbsp;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const _globalThis = globalThis as any
+&nbsp;
 export function logDevDiagnostics() {
   if (!__DEV__) return
 &nbsp;
-  const isHermes = !!(globalThis as any).HermesInternal
+  const isHermes = !!_globalThis.HermesInternal
   const hasWindow =
-    typeof globalThis !== "undefined" &amp;&amp; (globalThis as any).window != null
+    typeof globalThis !== "undefined" &amp;&amp; _globalThis.window != null
   const userAgent = hasWindow
-    ? (globalThis as any).window?.navigator?.userAgent
+    ? _globalThis.window?.navigator?.userAgent
     : undefined
   const isRemoteDebuggingLikely =
     Platform.OS !== "web" &amp;&amp;
@@ -183,14 +212,15 @@ export function logDevDiagnostics() {
     typeof userAgent === "string" &amp;&amp;
     userAgent.includes("Chrome")
 &nbsp;
+  const constantsRecord = Constants as unknown as Record&lt;string, LegacyManifest | undefined&gt;
   const appVersion =
     Constants.expoConfig?.version ??
-<span class="branch-1 cbranch-no" title="branch not covered" >    (Constants as any).manifest2?.version </span>??
-<span class="branch-2 cbranch-no" title="branch not covered" >    (Constants as any).manifest?.version</span>
+<span class="branch-1 cbranch-no" title="branch not covered" >    constantsRecord["manifest2"]?.version </span>??
+<span class="branch-2 cbranch-no" title="branch not covered" >    constantsRecord["manifest"]?.version</span>
   const appName =
     Constants.expoConfig?.name ??
-<span class="branch-1 cbranch-no" title="branch not covered" >    (Constants as any).manifest2?.name </span>??
-<span class="branch-2 cbranch-no" title="branch not covered" >    (Constants as any).manifest?.name</span>
+<span class="branch-1 cbranch-no" title="branch not covered" >    constantsRecord["manifest2"]?.name </span>??
+<span class="branch-2 cbranch-no" title="branch not covered" >    constantsRecord["manifest"]?.name</span>
 &nbsp;
   logger.info("[dev-diagnostics] app", {
     name: appName,
@@ -220,7 +250,7 @@ export function logDevDiagnostics() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-12T11:40:20.952Z
+                at 2026-05-08T08:22:05.697Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

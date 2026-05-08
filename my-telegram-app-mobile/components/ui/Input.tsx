@@ -1,4 +1,5 @@
 import React from "react"
+import type { TextStyle } from "react-native"
 import { TextInput, View, TextInputProps, StyleSheet, I18nManager } from "react-native"
 
 import Text from "@/components/ThemedText"
@@ -29,7 +30,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(({
   rightIcon,
   ...props
 }, ref) => {
-  const resolvedFont = resolveFontStyle(style as any)
+  const resolvedFont = resolveFontStyle(style as TextStyle | TextStyle[])
   const inputStyle = resolvedFont ? [styles.input, style, resolvedFont] : [styles.input, style]
   const isRTL = I18nManager.isRTL
   const labelAlignClass = labelClassName ?? (isRTL ? "text-right" : "text-left")
@@ -40,9 +41,8 @@ export const Input = React.forwardRef<TextInput, InputProps>(({
       {label && <Text className={`mb-1.5 text-sm font-medium text-text-main ${labelAlignClass}`}>{label}</Text>}
 
       <View
-        className={`${isRTL ? "flex-row-reverse" : "flex-row"} items-center rounded-2xl border border-border bg-surface px-4 py-3.5 ${
-          error ? "border-error" : ""
-        } ${fieldClassName}`}
+        className={`${isRTL ? "flex-row-reverse" : "flex-row"} items-center rounded-2xl border border-border bg-surface px-4 py-3.5 ${error ? "border-error" : ""
+          } ${fieldClassName}`}
       >
         {leftIcon ? <View style={isRTL ? styles.leftIconRTL : styles.leftIconLTR}>{leftIcon}</View> : null}
         <TextInput

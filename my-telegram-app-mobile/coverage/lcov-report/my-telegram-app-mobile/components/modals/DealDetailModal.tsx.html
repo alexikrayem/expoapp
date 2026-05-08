@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/63</span>
+                <span class='fraction'>0/75</span>
             </div>
         
             
@@ -421,7 +421,33 @@
 <a name='L356'></a><a href='#L356'>356</a>
 <a name='L357'></a><a href='#L357'>357</a>
 <a name='L358'></a><a href='#L358'>358</a>
-<a name='L359'></a><a href='#L359'>359</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L359'></a><a href='#L359'>359</a>
+<a name='L360'></a><a href='#L360'>360</a>
+<a name='L361'></a><a href='#L361'>361</a>
+<a name='L362'></a><a href='#L362'>362</a>
+<a name='L363'></a><a href='#L363'>363</a>
+<a name='L364'></a><a href='#L364'>364</a>
+<a name='L365'></a><a href='#L365'>365</a>
+<a name='L366'></a><a href='#L366'>366</a>
+<a name='L367'></a><a href='#L367'>367</a>
+<a name='L368'></a><a href='#L368'>368</a>
+<a name='L369'></a><a href='#L369'>369</a>
+<a name='L370'></a><a href='#L370'>370</a>
+<a name='L371'></a><a href='#L371'>371</a>
+<a name='L372'></a><a href='#L372'>372</a>
+<a name='L373'></a><a href='#L373'>373</a>
+<a name='L374'></a><a href='#L374'>374</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -576,6 +602,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -781,18 +811,29 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/// &lt;reference types="nativewind/types" /&gt;
 import React, { useState, useEffect } from 'react';
-import { View, Image, ScrollView, Modal, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, ScrollView, Modal } from 'react-native';
+import { Image } from 'expo-image';
+&nbsp;
 import Text from '@/components/ThemedText';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { X, Tag, Clock, Package, MapPin, Percent, Gift, ShoppingCart, ExternalLink } from 'lucide-react-native';
+import { X, Tag, Clock, Package, MapPin, Percent, Gift, ShoppingCart } from 'lucide-react-native';
 import { cityService } from '../../services/cityService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
 import PressableScale from '@/components/ui/PressableScale';
+import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
+import type { DealDetail, Product } from '@/types';
 &nbsp;
-export default function <span class="fstat-no" title="function not covered" >DealDetailModal(</span>{ show, onClose, dealId, onProductClick, onSupplierClick }: any) {
-    const [deal, setDeal] = <span class="cstat-no" title="statement not covered" >useState&lt;any&gt;(null);</span>
+interface DealDetailModalProps {
+    show: boolean;
+    onClose: () =&gt; void;
+    dealId: string;
+    onProductClick?: (productId: string) =&gt; void;
+    onSupplierClick?: (supplierName: string) =&gt; void;
+}
+&nbsp;
+export default function <span class="fstat-no" title="function not covered" >DealDetailModal(</span>{ show, onClose, dealId, onProductClick, onSupplierClick }: DealDetailModalProps) {
+    const [deal, setDeal] = <span class="cstat-no" title="statement not covered" >useState&lt;DealDetail | null&gt;(null);</span>
     const [isLoading, setIsLoading] = <span class="cstat-no" title="statement not covered" >useState(true);</span>
     const [error, setError] = <span class="cstat-no" title="statement not covered" >useState&lt;string | null&gt;(null);</span>
     const { formatPrice } = <span class="cstat-no" title="statement not covered" >useCurrency();</span>
@@ -807,10 +848,10 @@ export default function <span class="fstat-no" title="function not covered" >Dea
 &nbsp;
 <span class="cstat-no" title="statement not covered" >            try {</span>
                 const data = <span class="cstat-no" title="statement not covered" >await cityService.getDealDetails(dealId);</span>
-<span class="cstat-no" title="statement not covered" >                setDeal(data);</span>
-            } catch (err: any) {
+<span class="cstat-no" title="statement not covered" >                setDeal(data as DealDetail);</span>
+            } catch (err: unknown) {
 <span class="cstat-no" title="statement not covered" >                console.error("Failed to fetch deal details:", err);</span>
-<span class="cstat-no" title="statement not covered" >                setError(err.message || "فشل في تحميل تفاصيل العرض");</span>
+<span class="cstat-no" title="statement not covered" >                setError(err instanceof Error ? err.message : "فشل في تحميل تفاصيل العرض");</span>
             } finally {
 <span class="cstat-no" title="statement not covered" >                setIsLoading(false);</span>
             }
@@ -834,17 +875,17 @@ export default function <span class="fstat-no" title="function not covered" >Dea
     };
 &nbsp;
     const handleAddToCart = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        if (deal) {</span>
+<span class="cstat-no" title="statement not covered" >        if (deal &amp;&amp; deal.product_id) {</span>
             const product = <span class="cstat-no" title="statement not covered" >{</span>
                 id: deal.product_id,
-                name: deal.product_name,
-                image_url: deal.product_image_url,
-                supplier_name: deal.supplier_name,
+                name: deal.product_name || '',
+                image_url: deal.product_image_url || '',
+                supplier_name: deal.supplier_name || '',
                 effective_selling_price: deal.discount_percentage
-                    ? deal.product_price * (1 - deal.discount_percentage / 100)
-                    : deal.product_price,
+                    ? (deal.product_price ?? 0) * (1 - deal.discount_percentage / 100)
+                    : (deal.product_price ?? 0),
                 // Add other necessary fields if needed by CartContext
-            };
+            } as Product;
 <span class="cstat-no" title="statement not covered" >            addToCart(product);</span>
 <span class="cstat-no" title="statement not covered" >            onClose();</span>
         }
@@ -952,7 +993,11 @@ export default function <span class="fstat-no" title="function not covered" >Dea
                                             &lt;Image
                                                 source={{ uri: deal.image_url }}
                                                 className="w-full h-full"
-                                                resizeMode="cover"
+                                                contentFit="cover"
+                                                transition={200}
+                                                cachePolicy="memory-disk"
+                                                placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+                                                recyclingKey={`deal-detail-${deal.id}`}
                                             /&gt;
                                         ) : (
                                             &lt;View className="items-center bg-gradient-to-br from-primary-400 to-primary-600 w-full h-full justify-center"&gt;
@@ -1144,7 +1189,7 @@ export default function <span class="fstat-no" title="function not covered" >Dea
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-12T11:40:20.952Z
+                at 2026-05-08T08:22:05.697Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

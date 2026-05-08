@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback } from "react"
-import { View, Dimensions, StyleSheet } from "react-native"
+import { View, Dimensions, StyleSheet, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
 import Animated from "react-native-reanimated"
 import { Image } from "expo-image"
 import Text from "@/components/ThemedText"
@@ -9,6 +9,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import { Sparkles } from "lucide-react-native"
 import PressableScale from "@/components/ui/PressableScale"
 import { IMAGE_PLACEHOLDER_BLURHASH } from "@/utils/image"
+import type { FeaturedItem } from "@/types"
 
 const { width } = Dimensions.get("window")
 const SLIDER_HEIGHT = 240
@@ -17,8 +18,8 @@ const CARD_SPACING = 16
 const AUTO_PLAY_INTERVAL = 4000
 
 interface FeaturedSliderProps {
-  items: any[]
-  onSlideClick: (item: any) => void
+  items: FeaturedItem[]
+  onSlideClick: (item: FeaturedItem) => void
   isLoading?: boolean
 }
 
@@ -29,7 +30,7 @@ const SlideItem = React.memo(
     totalItems,
     onPress,
   }: {
-    item: any
+    item: FeaturedItem
     index: number
     totalItems: number
     onPress: () => void
@@ -85,13 +86,17 @@ const SlideItem = React.memo(
   ),
 )
 
+SlideItem.displayName = 'SlideItem';
+
 const IndicatorDot = React.memo(({ isActive }: { isActive: boolean }) => (
   <View className={`h-2 rounded-full ${isActive ? "w-8 bg-primary-600" : "w-2 bg-gray-300"}`} />
 ))
 
+IndicatorDot.displayName = 'IndicatorDot';
+
 const FeaturedSlider = React.memo(({ items, onSlideClick, isLoading }: FeaturedSliderProps) => {
   const [activeIndex, setActiveIndex] = useState(0)
-  const flatListRef = useRef<Animated.FlatList<any>>(null)
+  const flatListRef = useRef<Animated.FlatList<FeaturedItem>>(null)
   const autoPlayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Auto-play functionality
@@ -120,7 +125,7 @@ const FeaturedSlider = React.memo(({ items, onSlideClick, isLoading }: FeaturedS
     }
   }, [items]) // Updated to use items directly
 
-  const handleScroll = useCallback((event: any) => {
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x
     const index = Math.round(contentOffsetX / (CARD_WIDTH + CARD_SPACING))
     setActiveIndex(index)
@@ -131,19 +136,19 @@ const FeaturedSlider = React.memo(({ items, onSlideClick, isLoading }: FeaturedS
   }, [])
 
   const renderItem = useCallback(
-    ({ item, index }: { item: any; index: number }) => (
+    ({ item, index }: { item: FeaturedItem; index: number }) => (
       <SlideItem item={item} index={index} totalItems={items.length} onPress={() => onSlideClick(item)} />
     ),
     [items, onSlideClick],
   )
 
   const keyExtractor = useCallback(
-    (item: any, index: number) => `featured-${item.id ?? "item"}-${index}`,
+    (item: FeaturedItem, index: number) => `featured-${item.id ?? "item"}-${index}`,
     [],
   )
 
   const getItemLayout = useCallback(
-    (data: any, index: number) => ({
+    (_data: ArrayLike<FeaturedItem> | null | undefined, index: number) => ({
       length: CARD_WIDTH + CARD_SPACING,
       offset: (CARD_WIDTH + CARD_SPACING) * index,
       index,
@@ -186,6 +191,8 @@ const FeaturedSlider = React.memo(({ items, onSlideClick, isLoading }: FeaturedS
     </View>
   )
 })
+
+FeaturedSlider.displayName = 'FeaturedSlider';
 
 export default FeaturedSlider
 

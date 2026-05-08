@@ -35,11 +35,11 @@ describe("CacheContext", () => {
     let second: string | null = null
 
     await act(async () => {
-      first = await cacheRef!.cachedApiCall("products:1", fetcher, 1000)
+      first = await cacheRef!.cachedApiCall("products:1", fetcher, 1000) as string
     })
 
     await act(async () => {
-      second = await cacheRef!.cachedApiCall("products:1", fetcher, 1000)
+      second = await cacheRef!.cachedApiCall("products:1", fetcher, 1000) as string
     })
 
     expect(first).toBe("data")

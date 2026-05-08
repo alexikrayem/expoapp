@@ -5,7 +5,7 @@ export const useCategories = (cityId: string | null) => {
     const { data, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['categories', cityId],
         queryFn: async () => {
-            if (!cityId) return { categories: [] };
+            if (!cityId) return [];
             return productService.getProductCategories(cityId);
         },
         enabled: !!cityId,
@@ -13,7 +13,7 @@ export const useCategories = (cityId: string | null) => {
     });
 
     return {
-        categories: data?.categories || [],
+        categories: (data as { categories?: { category: string, product_count: number | null }[] })?.categories || [],
         isLoadingCategories: isLoading,
         categoriesError: isError ? (error as Error).message : null,
         refreshCategories: refetch

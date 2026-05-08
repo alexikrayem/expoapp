@@ -2,7 +2,7 @@
 
 /// <reference types="nativewind/types" />
 import React from "react"
-import { View, Dimensions, Pressable } from "react-native"
+import { View, Pressable } from "react-native"
 import { Image } from "expo-image"
 import Text from "@/components/ThemedText"
 import { ShoppingCart, Heart } from "lucide-react-native"
@@ -11,11 +11,8 @@ import { haptics } from "@/utils/haptics"
 import { Product } from "@/types"
 import { IMAGE_PLACEHOLDER_BLURHASH } from "@/utils/image"
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window")
-const CARD_MARGIN = 6
-// Calculation used by parent FlashLists usually, but kept here if stand-alone usage
 
-const CARD_WIDTH = (SCREEN_WIDTH - 32 - CARD_MARGIN * 2) / 2
+
 
 interface ProductCardProps {
   product: Product
@@ -25,8 +22,8 @@ interface ProductCardProps {
   isFavorite: boolean
 }
 
-const ProductCard: React.FC<ProductCardProps> = React.memo(
-  ({ product, onAddToCart, onToggleFavorite, onShowDetails, isFavorite }) => {
+const ProductCard = React.memo(
+  ({ product, onAddToCart, onToggleFavorite, onShowDetails, isFavorite }: ProductCardProps) => {
     const { formatPrice } = useCurrency()
     const handleAddToCart = React.useCallback(() => {
       haptics.medium()
@@ -134,4 +131,5 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(
   },
 )
 
+ProductCard.displayName = "ProductCard"
 export default ProductCard

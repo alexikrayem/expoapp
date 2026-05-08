@@ -1,12 +1,11 @@
 import React from 'react';
-import { View, Modal, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Modal, StyleSheet, Dimensions } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withSpring,
     withTiming,
-    runOnJS,
 } from 'react-native-reanimated';
 import Text from '@/components/ThemedText';
 import { X } from 'lucide-react-native';

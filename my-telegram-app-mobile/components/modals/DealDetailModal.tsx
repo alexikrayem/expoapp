@@ -1,19 +1,28 @@
 /// <reference types="nativewind/types" />
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Modal, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Modal } from 'react-native';
 import { Image } from 'expo-image';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import Text from '@/components/ThemedText';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { X, Tag, Clock, Package, MapPin, Percent, Gift, ShoppingCart, ExternalLink } from 'lucide-react-native';
+import { X, Tag, Clock, Package, MapPin, Percent, Gift, ShoppingCart } from 'lucide-react-native';
 import { cityService } from '../../services/cityService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
 import PressableScale from '@/components/ui/PressableScale';
 import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
+import type { DealDetail, Product } from '@/types';
 
-export default function DealDetailModal({ show, onClose, dealId, onProductClick, onSupplierClick }: any) {
-    const [deal, setDeal] = useState<any>(null);
+interface DealDetailModalProps {
+    show: boolean;
+    onClose: () => void;
+    dealId: string;
+    onProductClick?: (productId: string) => void;
+    onSupplierClick?: (supplierName: string) => void;
+}
+
+export default function DealDetailModal({ show, onClose, dealId, onProductClick, onSupplierClick }: DealDetailModalProps) {
+    const [deal, setDeal] = useState<DealDetail | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { formatPrice } = useCurrency();
@@ -28,10 +37,10 @@ export default function DealDetailModal({ show, onClose, dealId, onProductClick,
 
             try {
                 const data = await cityService.getDealDetails(dealId);
-                setDeal(data);
-            } catch (err: any) {
+                setDeal(data as DealDetail);
+            } catch (err: unknown) {
                 console.error("Failed to fetch deal details:", err);
-                setError(err.message || "فشل في تحميل تفاصيل العرض");
+                setError(err instanceof Error ? err.message : "فشل في تحميل تفاصيل العرض");
             } finally {
                 setIsLoading(false);
             }
@@ -55,17 +64,17 @@ export default function DealDetailModal({ show, onClose, dealId, onProductClick,
     };
 
     const handleAddToCart = () => {
-        if (deal) {
+        if (deal && deal.product_id) {
             const product = {
                 id: deal.product_id,
-                name: deal.product_name,
-                image_url: deal.product_image_url,
-                supplier_name: deal.supplier_name,
+                name: deal.product_name || '',
+                image_url: deal.product_image_url || '',
+                supplier_name: deal.supplier_name || '',
                 effective_selling_price: deal.discount_percentage
-                    ? deal.product_price * (1 - deal.discount_percentage / 100)
-                    : deal.product_price,
+                    ? (deal.product_price ?? 0) * (1 - deal.discount_percentage / 100)
+                    : (deal.product_price ?? 0),
                 // Add other necessary fields if needed by CartContext
-            };
+            } as Product;
             addToCart(product);
             onClose();
         }

@@ -6,7 +6,19 @@
  */
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 
-const CacheContext = createContext<any>(null);
+interface CacheEntry {
+    data: unknown;
+    expiry: number;
+}
+
+interface CacheContextType {
+    cachedApiCall: (key: string, apiCallFn: () => Promise<unknown>, ttl?: number) => Promise<unknown>;
+    invalidateCache: (prefix: string) => void;
+    clearCache: () => void;
+    isLoading: (key: string) => boolean;
+}
+
+const CacheContext = createContext<CacheContextType | null>(null);
 
 export const useCache = () => {
     const context = useContext(CacheContext);
@@ -17,12 +29,12 @@ export const useCache = () => {
 };
 
 export const CacheProvider = ({ children }: { children: React.ReactNode }) => {
-    const [cacheState, setCacheState] = useState(new Map());
-    const [loadingState, setLoadingState] = useState(new Map());
+    const [cacheState, setCacheState] = useState(new Map<string, CacheEntry>());
+    const [loadingState, setLoadingState] = useState(new Map<string, boolean>());
 
     const cacheRef = useRef(cacheState);
     const loadingRef = useRef(loadingState);
-    const activeRequests = useRef(new Map());
+    const activeRequests = useRef(new Map<string, Promise<unknown>>());
 
     useEffect(() => {
         cacheRef.current = cacheState;
@@ -40,8 +52,8 @@ export const CacheProvider = ({ children }: { children: React.ReactNode }) => {
         return null;
     }, []);
 
-    const setCachedData = useCallback((key: string, data: any, ttl = 5 * 60 * 1000) => {
-        setCacheState((prev: Map<string, any>) => {
+    const setCachedData = useCallback((key: string, data: unknown, ttl = 5 * 60 * 1000) => {
+        setCacheState((prev: Map<string, CacheEntry>) => {
             const newCache = new Map(prev);
             newCache.set(key, {
                 data,
@@ -52,7 +64,7 @@ export const CacheProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     const invalidateCache = useCallback((prefix: string) => {
-        setCacheState((prev: Map<string, any>) => {
+        setCacheState((prev: Map<string, CacheEntry>) => {
             const newCache = new Map(prev);
             for (const key of Array.from(newCache.keys())) {
                 if (key.startsWith(prefix)) {
@@ -85,7 +97,7 @@ export const CacheProvider = ({ children }: { children: React.ReactNode }) => {
         return loadingRef.current.has(key);
     }, []);
 
-    const cachedApiCall = useCallback(async (key: string, apiCallFn: () => Promise<any>, ttl = 5 * 60 * 1000) => {
+    const cachedApiCall = useCallback(async (key: string, apiCallFn: () => Promise<unknown>, ttl = 5 * 60 * 1000) => {
         const cachedData = getCachedData(key);
         if (cachedData !== null) {
             return cachedData;

@@ -65,7 +65,7 @@ export const Button = ({
       haptic={isDisabled ? false : "selection"}
       disabled={isDisabled}
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${isDisabled ? "opacity-60" : ""} ${className}`}
-      {...props}
+      {...(props as unknown as React.ComponentProps<typeof PressableScale>)}
     >
       {loading ? (
         <ActivityIndicator color={variant === "primary" ? "#ffffff" : "#2563eb"} style={isRTL ? styles.leadingIconRTL : styles.leadingIconLTR} />

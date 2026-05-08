@@ -3,6 +3,7 @@ import { apiClient } from "@/api/apiClient"
 import { useEffect } from "react"
 import { prefetchImages } from "@/utils/image"
 import { productService } from "@/services/productService"
+import type { Product, ApiListResponse } from "@/types"
 
 export const useRelatedProducts = (currentProductId: string, categoryId?: string) => {
     const query = useQuery({
@@ -14,12 +15,12 @@ export const useRelatedProducts = (currentProductId: string, categoryId?: string
             // GET /api/products/:id/related -> { items: Product[], total: number }
             try {
                 const related = await productService.getRelatedProducts(currentProductId, 6)
-                return (related || []).filter((p: any) => String(p.id) !== String(currentProductId))
-            } catch (_error) {
+                return (related || []).filter((p: Product) => String(p.id) !== String(currentProductId))
+            } catch {
                 // Fallback to category query if related endpoint is unavailable.
                 if (!categoryId) return []
-                const response = await apiClient(`products?category=${categoryId}&limit=6`)
-                return (response?.items || []).filter((p: any) => String(p.id) !== String(currentProductId))
+                const response = await apiClient<ApiListResponse<Product>>(`products?category=${categoryId}&limit=6`)
+                return (response?.items || []).filter((p: Product) => String(p.id) !== String(currentProductId))
             }
         },
         enabled: !!currentProductId,
@@ -29,7 +30,7 @@ export const useRelatedProducts = (currentProductId: string, categoryId?: string
     useEffect(() => {
         if (!query.data || query.data.length === 0) return
         prefetchImages(
-            query.data.map((item: any) => item.image_url || item.imageUrl || item.image),
+            query.data.map((item: Product) => item.image_url || item.imageUrl),
             6
         )
     }, [query.data])

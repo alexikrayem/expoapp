@@ -1,0 +1,216 @@
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+PASS components/__tests__/StyledText-test.js
+PASS __tests__/context/CheckoutContext.test.tsx
+PASS __tests__/utils/devDiagnostics.test.ts
+PASS __tests__/context/CacheContext.test.tsx
+PASS __tests__/context/SearchContext.test.tsx
+PASS __tests__/services/searchService.test.ts
+PASS __tests__/utils/logger.test.ts
+PASS __tests__/utils/storage.test.ts
+PASS __tests__/context/CartContext.test.tsx
+FAIL __tests__/context/CurrencyContext.test.tsx
+  ● CurrencyContext › falls back to default rate when fetch fails
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "14,000"
+    Received string:    "15,000 ل.س"
+
+      66 |     const value = getByTestId("price").props.children as string
+      67 |     expect(value).toContain("ل.س")
+    > 68 |     expect(value).toContain("14,000")
+         |                   ^
+      69 |   })
+      70 | })
+      71 |
+
+      at Object.toContain (__tests__/context/CurrencyContext.test.tsx:68:19)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+PASS __tests__/context/AuthContext.test.tsx
+  ● Console
+
+    console.error
+      Logout error: TypeError: (0 , _tokenManager.getRefreshToken) is not a function
+          at Object.<anonymous> (/Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/services/authService.ts:55:49)
+          at Generator.next (<anonymous>)
+          at asyncGeneratorStep (/Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+          at _next (/Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+          at /Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+          at new Promise (<anonymous>)
+          at Object.<anonymous> (/Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+          at Object.apply [as logout] (/Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/services/authService.ts:53:9)
+          at logout (/Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/context/AuthContext.tsx:46:23)
+          at Generator.next (<anonymous>)
+          at asyncGeneratorStep (/Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+          at _next (/Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+          at /Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+          at new Promise (<anonymous>)
+          at /Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12
+          at logout (/Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/context/AuthContext.tsx:67:17)
+          at Generator.throw (<anonymous>)
+          at asyncGeneratorStep (/Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+          at _throw (/Users/iskandermac/Desktop/expogithub/expoapp/my-telegram-app-mobile/node_modules/@babel/runtime/helpers/asyncToGenerator.js:20:9)
+
+      11 |         // In production, this would send to Sentry/Crashlytics
+      12 |         if (__DEV__) {
+    > 13 |             console.error(message, error, ...args);
+         |                          ^
+      14 |         }
+      15 |     },
+      16 |     warn: (message: string, ...args: unknown[]) => {
+
+      at Object.apply (utils/logger.ts:13:26)
+      at Object.error (services/authService.ts:67:14)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+      at Object.apply [as logout] (services/authService.ts:53:9)
+      at logout (context/AuthContext.tsx:46:23)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12
+      at logout (context/AuthContext.tsx:67:17)
+          at Generator.throw (<anonymous>)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _throw (node_modules/@babel/runtime/helpers/asyncToGenerator.js:20:9)
+
+PASS __tests__/components/ProductCard.test.tsx
+------------------------------------------|---------|----------|---------|---------|-------------------------------------
+File                                      | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                   
+------------------------------------------|---------|----------|---------|---------|-------------------------------------
+All files                                 |   16.23 |     7.77 |   13.21 |    16.8 |                                     
+ my-telegram-app-mobile                   |       0 |        0 |       0 |       0 |                                     
+  expo-env.d.ts                           |       0 |        0 |       0 |       0 |                                     
+  nativewind-env.d.ts                     |       0 |        0 |       0 |       0 |                                     
+ my-telegram-app-mobile/.expo/types       |       0 |        0 |       0 |       0 |                                     
+  router.d.ts                             |       0 |        0 |       0 |       0 |                                     
+ my-telegram-app-mobile/api               |    3.48 |        0 |       0 |     3.7 |                                     
+  apiClient.ts                            |    3.48 |        0 |       0 |     3.7 | 21-167                              
+ my-telegram-app-mobile/app               |       0 |        0 |       0 |       0 |                                     
+  +html.tsx                               |       0 |      100 |       0 |       0 | 8-30                                
+  +not-found.tsx                          |       0 |      100 |       0 |       0 | 7-21                                
+  _layout.tsx                             |       0 |        0 |       0 |       0 | 32-237                              
+  cart.tsx                                |       0 |        0 |       0 |       0 | 18-112                              
+  checkout.tsx                            |       0 |        0 |       0 |       0 | 19-200                              
+  login.tsx                               |       0 |        0 |       0 |       0 | 27-191                              
+  modal.tsx                               |       0 |        0 |       0 |       0 | 8-20                                
+  register.tsx                            |       0 |        0 |       0 |       0 | 22-128                              
+ my-telegram-app-mobile/app/(tabs)        |       0 |        0 |       0 |       0 |                                     
+  _layout.tsx                             |       0 |        0 |       0 |       0 | 9-47                                
+  favorites.tsx                           |       0 |        0 |       0 |       0 | 35-229                              
+  index.tsx                               |       0 |        0 |       0 |       0 | 23-312                              
+  orders.tsx                              |       0 |        0 |       0 |       0 | 22-283                              
+  settings.tsx                            |       0 |        0 |       0 |       0 | 23-175                              
+ my-telegram-app-mobile/components        |    8.33 |     6.96 |    9.27 |    8.99 |                                     
+  AIChatOverlay.tsx                       |       0 |        0 |       0 |       0 | 13-46                               
+  CheckoutSlider.tsx                      |       0 |        0 |       0 |       0 | 24-225                              
+  CustomTabBar.tsx                        |       0 |        0 |       0 |       0 | 11-85                               
+  DealCard.tsx                            |       0 |        0 |       0 |       0 | 17-105                              
+  EditScreenInfo.tsx                      |       0 |      100 |       0 |       0 | 11-49                               
+  ErrorBoundary.tsx                       |       0 |        0 |       0 |       0 | 18-57                               
+  ExternalLink.tsx                        |       0 |        0 |       0 |       0 | 9-19                                
+  FeaturedSlider.tsx                      |       0 |        0 |       0 |       0 | 14-199                              
+  Header.tsx                              |       0 |        0 |       0 |       0 | 17-49                               
+  MiniCart.tsx                            |       0 |        0 |       0 |       0 | 16-93                               
+  OfflineOverlay.tsx                      |       0 |        0 |       0 |       0 | 9-24                                
+  ProductCard.tsx                         |    62.5 |    56.52 |      50 |    62.5 | 29-30,34-35,39,125                  
+  ProductFilterBar.tsx                    |       0 |        0 |       0 |       0 | 15-58                               
+  RelatedProductsSection.tsx              |       0 |        0 |       0 |       0 | 18-46                               
+  StyledText.tsx                          |     100 |      100 |     100 |     100 |                                     
+  SupplierCard.tsx                        |       0 |        0 |       0 |       0 | 14-58                               
+  Themed.tsx                              |   71.42 |       50 |   66.66 |   71.42 | 29,47-50                            
+  ThemedText.tsx                          |     100 |       50 |     100 |     100 | 9                                   
+  useClientOnlyValue.ts                   |       0 |      100 |       0 |       0 | 3                                   
+  useClientOnlyValue.web.ts               |       0 |      100 |       0 |       0 | 6-11                                
+  useColorScheme.ts                       |     100 |      100 |     100 |     100 |                                     
+  useColorScheme.web.ts                   |       0 |      100 |       0 |       0 | 7                                   
+ my-telegram-app-mobile/components/modals |       0 |        0 |       0 |       0 |                                     
+  AddressConfirmationModal.tsx            |       0 |        0 |       0 |       0 | 25-27                               
+  AddressModal.tsx                        |       0 |        0 |       0 |       0 | 31-202                              
+  CitySelectionModal.tsx                  |       0 |        0 |       0 |       0 | 20-145                              
+  DealDetailModal.tsx                     |       0 |        0 |       0 |       0 | 25-166                              
+  EnhancedOnboardingModal.tsx             |       0 |        0 |       0 |       0 | 22-234                              
+  FeaturedListModal.tsx                   |       0 |        0 |       0 |       0 | 28-227                              
+  FeedbackModal.tsx                       |       0 |        0 |       0 |       0 | 16-64                               
+  ImageViewer.tsx                         |       0 |        0 |       0 |       0 | 21-127                              
+  OrderConfirmationModal.tsx              |       0 |        0 |       0 |       0 | 16-48                               
+  ProductDetailModal.tsx                  |       0 |        0 |       0 |       0 | 33-325                              
+  ProfileModal.tsx                        |       0 |        0 |       0 |       0 | 27-202                              
+  SearchModal.tsx                         |       0 |        0 |       0 |       0 | 43-438                              
+  SupplierDetailModal.tsx                 |       0 |        0 |       0 |       0 | 26-149                              
+  WelcomeOnboardingModal.tsx              |       0 |        0 |       0 |       0 | 11-123                              
+ my-telegram-app-mobile/components/ui     |       0 |        0 |       0 |       0 |                                     
+  AnimatedScreen.tsx                      |       0 |        0 |       0 |       0 | 14                                  
+  Button.tsx                              |       0 |        0 |       0 |       0 | 19-81                               
+  Input.tsx                               |       0 |        0 |       0 |       0 | 20-65                               
+  LoadingScreen.tsx                       |       0 |        0 |       0 |       0 | 16                                  
+  PressableScale.tsx                      |       0 |        0 |       0 |       0 | 30-54                               
+  Skeleton.tsx                            |       0 |        0 |       0 |       0 | 20-46                               
+  Toast.tsx                               |       0 |        0 |       0 |       0 | 25-123                              
+ my-telegram-app-mobile/constants         |     100 |      100 |     100 |     100 |                                     
+  Colors.ts                               |     100 |      100 |     100 |     100 |                                     
+ my-telegram-app-mobile/context           |   61.14 |     53.1 |   58.87 |   62.43 |                                     
+  AIChatContext.tsx                       |       0 |        0 |       0 |       0 | 11-42                               
+  AuthContext.tsx                         |   73.46 |       50 |    87.5 |   73.46 | 25,40-41,70,81-92                   
+  CacheContext.tsx                        |   89.06 |    68.75 |   83.33 |   88.88 | 26,79-81,97,107,118                 
+  CartContext.tsx                         |   83.07 |    68.75 |   73.07 |   86.53 | 42,63,100,114-115,119-120           
+  CheckoutContext.tsx                     |   58.46 |    57.14 |   63.63 |   57.81 | 33,80-88,97-123,137,151-152,173-174 
+  CurrencyContext.tsx                     |   84.41 |       75 |    90.9 |   86.11 | 25,48,96,106,111-120                
+  MiniCartContext.tsx                     |       0 |        0 |       0 |       0 | 11-39                               
+  ModalContext.tsx                        |       0 |        0 |       0 |       0 | 5-87                                
+  SearchContext.tsx                       |   94.11 |       50 |     100 |   93.75 | 18                                  
+  ToastContext.tsx                        |       0 |        0 |       0 |       0 | 9-47                                
+ my-telegram-app-mobile/hooks             |       0 |        0 |       0 |       0 |                                     
+  useCategories.ts                        |       0 |        0 |       0 |       0 | 4-15                                
+  useDeals.ts                             |       0 |        0 |       0 |       0 | 7-23                                
+  useDebounce.ts                          |       0 |      100 |       0 |       0 | 4-16                                
+  useFavoriteProducts.ts                  |       0 |        0 |       0 |       0 | 7-28                                
+  useFavorites.ts                         |       0 |        0 |       0 |       0 | 6-99                                
+  useFeaturedItems.ts                     |       0 |        0 |       0 |       0 | 7-22                                
+  useNetworkStatus.ts                     |       0 |        0 |       0 |       0 | 5-56                                
+  useOrders.ts                            |       0 |        0 |       0 |       0 | 11-35                               
+  useProducts.ts                          |       0 |        0 |       0 |       0 | 18-97                               
+  useRelatedProducts.ts                   |       0 |        0 |       0 |       0 | 8-38                                
+  useSearchResults.ts                     |       0 |        0 |       0 |       0 | 6-187                               
+  useSuppliers.ts                         |       0 |        0 |       0 |       0 | 7-23                                
+  useUser.ts                              |       0 |        0 |       0 |       0 | 4-18                                
+ my-telegram-app-mobile/services          |   31.54 |     5.55 |   27.45 |   33.08 |                                     
+  authService.ts                          |      30 |        0 |   16.66 |      30 | 13-49,56-61                         
+  cityService.ts                          |       0 |      100 |       0 |       0 | 3-17                                
+  orderService.ts                         |       0 |      100 |       0 |       0 | 4-22                                
+  productService.ts                       |       0 |        0 |       0 |       0 | 10-163                              
+  searchService.ts                        |   89.13 |       50 |     100 |   92.85 | 23,29-30                            
+  userService.ts                          |       0 |      100 |       0 |       0 | 4-26                                
+ my-telegram-app-mobile/types             |       0 |        0 |       0 |       0 |                                     
+  assets.d.ts                             |       0 |        0 |       0 |       0 |                                     
+  flash-list.d.ts                         |       0 |        0 |       0 |       0 |                                     
+  index.ts                                |       0 |        0 |       0 |       0 |                                     
+ my-telegram-app-mobile/utils             |   32.42 |    33.33 |      20 |   33.33 |                                     
+  constants.ts                            |   66.66 |    47.36 |      50 |   67.74 | 18-21,25,38-42,46                   
+  devDiagnostics.ts                       |     100 |    81.81 |     100 |     100 | 32-36                               
+  emitter.ts                              |       0 |        0 |       0 |       0 | 4-24                                
+  fonts.ts                                |      90 |    58.33 |     100 |      90 | 38                                  
+  haptics.ts                              |    6.66 |        0 |       0 |    6.66 | 6-37                                
+  image.ts                                |   27.27 |        0 |       0 |   33.33 | 12-23                               
+  logger.ts                               |   55.55 |       25 |      50 |   55.55 | 17-24                               
+  motion.ts                               |       0 |      100 |     100 |       0 | 1                                   
+  performanceConfig.ts                    |       0 |      100 |     100 |       0 | 5-37                                
+  storage.ts                              |   43.75 |    33.33 |      75 |   41.93 | 22-25,35,42-45,54-75                
+  tokenManager.ts                         |       0 |        0 |       0 |       0 | 5-178                               
+------------------------------------------|---------|----------|---------|---------|-------------------------------------
+
+Test Suites: 1 failed, 11 passed, 12 total
+Tests:       1 failed, 31 passed, 32 total
+Snapshots:   1 passed, 1 total
+Time:        3.519 s
+Ran all test suites.

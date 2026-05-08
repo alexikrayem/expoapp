@@ -1,8 +1,11 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import { useMiniCart } from './MiniCartContext';
 import { useToast } from './ToastContext';
+import { useAuth } from './AuthContext';
 import { storage } from '../utils/storage';
 import { Product } from '@/types';
+import { logger } from '@/utils/logger';
+import { router } from 'expo-router';
 
 /**
  * Represents an item in the user's cart.
@@ -48,6 +51,7 @@ const CART_STORAGE_KEY = 'my_app_cart';
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     const { showMiniCartBar } = useMiniCart();
     const { showToast } = useToast();
+    const { isAuthenticated } = useAuth();
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -58,8 +62,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
                 if (savedCart) {
                     setCartItems(JSON.parse(savedCart));
                 }
-            } catch (error) {
-                console.error('Failed to load cart from storage', error);
+            } catch (error: unknown) {
+                logger.error('Failed to load cart from storage', error);
             } finally {
                 setIsLoading(false);
             }
@@ -73,7 +77,14 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [cartItems, isLoading]);
 
-    const addToCart = useCallback((product: any) => {
+    const addToCart = useCallback((product: Product) => {
+        // Gate: guests must sign in before adding to cart
+        if (!isAuthenticated) {
+            showToast('سجّل الدخول لإضافة منتجات إلى السلة', 'info');
+            router.push('/login');
+            return;
+        }
+
         showMiniCartBar(product);
         showToast('تم إضافة المنتج إلى السلة', 'success');
         setCartItems(prevItems => {
@@ -88,12 +99,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
                 name: product.name,
                 image_url: product.image_url,
                 supplier_name: product.supplier_name,
-                effective_selling_price: product.effective_selling_price,
+                effective_selling_price: String(product.effective_selling_price),
                 quantity: 1
             };
             return [...prevItems, newItem];
         });
-    }, [showMiniCartBar, showToast]);
+    }, [isAuthenticated, showMiniCartBar, showToast]);
 
     const increaseQuantity = useCallback((productId: string) => {
         setCartItems(prev => prev.map(item => item.product_id === productId ? { ...item, quantity: item.quantity + 1 } : item));

@@ -5,13 +5,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
 import { useModal } from '@/context/ModalContext';
 import { useAuth } from '@/context/AuthContext';
-import { User, Briefcase, FileText, Shield, Share2, ChevronLeft, MessageSquare, MapPin, LogOut } from 'lucide-react-native';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import { User, Briefcase, FileText, Shield, Share2, ChevronLeft, MessageSquare, MapPin, LogOut, LogIn } from 'lucide-react-native';
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import CitySelectionModal from '@/components/modals/CitySelectionModal';
 import { useRouter } from 'expo-router';
 import { userService } from '@/services/userService';
+import type { ProfileFormPayload } from '@/types';
 
-const SettingItem = React.memo(({ icon: Icon, title, subtitle, onPress, color }: any) => (
+interface SettingItemProps {
+  icon: React.ElementType;
+  title: string;
+  subtitle?: string;
+  onPress: () => void;
+  color?: string;
+}
+
+const SettingItem = React.memo(({ icon: Icon, title, subtitle, onPress, color }: SettingItemProps) => (
   <Pressable
     onPress={onPress}
     android_ripple={{ color: '#e2e8f0' }}
@@ -30,9 +40,12 @@ const SettingItem = React.memo(({ icon: Icon, title, subtitle, onPress, color }:
   </Pressable>
 ));
 
+SettingItem.displayName = 'SettingItem';
+
 export default function SettingsScreen() {
   const { openModal } = useModal();
   const { userProfile, refreshProfile, logout } = useAuth();
+  const { isGuest } = useAuthGate();
   const [isCityModalVisible, setIsCityModalVisible] = useState(false);
   const router = useRouter();
 
@@ -40,8 +53,11 @@ export default function SettingsScreen() {
     openModal("profile", {
       telegramUser: userProfile,
       userProfile,
-      onSave: async (updatedData: any) => {
-        await userService.updateProfile(updatedData);
+      onSave: async (updatedData: ProfileFormPayload) => {
+        await userService.updateProfile({
+          ...updatedData,
+          selected_city_id: updatedData.selected_city_id ?? undefined,
+        });
         await refreshProfile();
         Alert.alert("تم بنجاح", "تم تحديث الملف الشخصي بنجاح");
       },
@@ -71,7 +87,7 @@ export default function SettingsScreen() {
                 icon={MapPin}
                 color="#3b82f6"
                 title="المدينة"
-                subtitle={(userProfile as any)?.selected_city_name || 'دبي'}
+                subtitle={(userProfile as { selected_city_name?: string })?.selected_city_name || 'دبي'}
                 onPress={() => setIsCityModalVisible(true)}
               />
             </View>
@@ -80,21 +96,42 @@ export default function SettingsScreen() {
           <View className="mb-6">
             <Text className="text-xs font-semibold text-text-secondary mb-3 px-2 text-right">الحساب</Text>
             <View className="bg-white rounded-2xl overflow-hidden border border-border shadow-sm">
-              <SettingItem
-                icon={User}
-                color="#3b82f6"
-                title="المعلومات الشخصية"
-                subtitle={userProfile?.full_name || "عرض وتعديل التفاصيل الشخصية"}
-                onPress={handleEditProfile}
-              />
-              <View className="h-px bg-gray-50 mx-4" />
-              <SettingItem
-                icon={Briefcase}
-                color="#6366f1"
-                title="معلومات العيادة"
-                subtitle={userProfile?.clinic_name || "عرض وتعديل تفاصيل العيادة"}
-                onPress={handleEditProfile}
-              />
+              {isGuest ? (
+                <Pressable
+                  onPress={() => router.push('/login')}
+                  android_ripple={{ color: '#e2e8f0' }}
+                  style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+                >
+                  <View className="flex-row items-center p-4 bg-white">
+                    <View className="p-2.5 bg-primary-50 rounded-xl mr-4 border border-primary-100">
+                      <LogIn size={22} color="#3b82f6" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="font-bold text-primary-600 text-base text-right mb-0.5">تسجيل الدخول</Text>
+                      <Text className="text-xs text-text-secondary text-right font-medium">سجّل دخولك لإدارة حسابك وطلباتك</Text>
+                    </View>
+                    <ChevronLeft size={18} color="#94a3b8" />
+                  </View>
+                </Pressable>
+              ) : (
+                <>
+                  <SettingItem
+                    icon={User}
+                    color="#3b82f6"
+                    title="المعلومات الشخصية"
+                    subtitle={userProfile?.full_name || "عرض وتعديل التفاصيل الشخصية"}
+                    onPress={handleEditProfile}
+                  />
+                  <View className="h-px bg-gray-50 mx-4" />
+                  <SettingItem
+                    icon={Briefcase}
+                    color="#6366f1"
+                    title="معلومات العيادة"
+                    subtitle={userProfile?.clinic_name || "عرض وتعديل تفاصيل العيادة"}
+                    onPress={handleEditProfile}
+                  />
+                </>
+              )}
             </View>
           </View>
 
@@ -137,34 +174,47 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* Logout Section */}
+          {/* Auth Section */}
           <View className="mb-6">
-            <Pressable
-              onPress={() => {
-                Alert.alert(
-                  'تسجيل الخروج',
-                  'هل أنت متأكد من تسجيل الخروج؟',
-                  [
-                    { text: 'إلغاء', style: 'cancel' },
-                    {
-                      text: 'تسجيل الخروج',
-                      style: 'destructive',
-                      onPress: async () => {
-                        await logout();
-                        router.replace('/login');
+            {isGuest ? (
+              <Pressable
+                onPress={() => router.push('/login')}
+                android_ripple={{ color: '#dbeafe' }}
+                style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+              >
+                <View className="bg-primary-50 rounded-2xl p-4 flex-row items-center justify-center border border-primary-200">
+                  <Text className="text-primary-600 font-bold text-base mr-2">تسجيل الدخول</Text>
+                  <LogIn size={20} color="#2563EB" />
+                </View>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  Alert.alert(
+                    'تسجيل الخروج',
+                    'هل أنت متأكد من تسجيل الخروج؟',
+                    [
+                      { text: 'إلغاء', style: 'cancel' },
+                      {
+                        text: 'تسجيل الخروج',
+                        style: 'destructive',
+                        onPress: async () => {
+                          await logout();
+                          router.replace('/login');
+                        },
                       },
-                    },
-                  ]
-                );
-              }}
-              android_ripple={{ color: '#fecaca' }}
-              style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
-            >
-              <View className="bg-red-50 rounded-2xl p-4 flex-row items-center justify-center border border-red-200">
-                <Text className="text-red-600 font-bold text-base mr-2">تسجيل الخروج</Text>
-                <LogOut size={20} color="#dc2626" />
-              </View>
-            </Pressable>
+                    ]
+                  );
+                }}
+                android_ripple={{ color: '#fecaca' }}
+                style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+              >
+                <View className="bg-red-50 rounded-2xl p-4 flex-row items-center justify-center border border-red-200">
+                  <Text className="text-red-600 font-bold text-base mr-2">تسجيل الخروج</Text>
+                  <LogOut size={20} color="#dc2626" />
+                </View>
+              </Pressable>
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render } from '@testing-library/react-native';
 import ProductCard from '@/components/ProductCard';
 import { Product } from '@/types';
 
@@ -43,7 +43,7 @@ describe('ProductCard', () => {
     });
 
     it('calls onAddToCart when cart button is pressed', () => {
-        const { getByLabelText, getAllByRole } = render(
+        render(
             <ProductCard
                 product={mockProduct}
                 onAddToCart={mockOnAddToCart}

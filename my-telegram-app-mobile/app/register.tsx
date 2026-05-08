@@ -62,9 +62,9 @@ export default function RegisterScreen() {
             // Redirect handled by isAuthenticated check or explicit push
             router.replace("/(tabs)")
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Registration error:", error);
-            Alert.alert("فشل التسجيل", error.message || "حدث خطأ أثناء إنشاء الحساب")
+            Alert.alert("فشل التسجيل", error instanceof Error ? error.message : "حدث خطأ أثناء إنشاء الحساب")
         } finally {
             setLoading(false)
         }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Modal, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Text from '@/components/ThemedText';
@@ -9,7 +9,8 @@ import { ChevronLeft, Check, User, Building2, Briefcase } from 'lucide-react-nat
 import { useAuth } from '@/context/AuthContext';
 import { userService } from '@/services/userService';
 import { cityService } from '@/services/cityService';
-import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
+import Animated, { SlideInRight, SlideOutLeft } from 'react-native-reanimated';
+import type { City } from '@/types';
 
 interface EnhancedOnboardingModalProps {
     visible: boolean;
@@ -21,7 +22,7 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
     const { userProfile, refreshProfile } = useAuth();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
-    const [cities, setCities] = useState<any[]>([]);
+    const [cities, setCities] = useState<City[]>([]);
     const [formData, setFormData] = useState({
         full_name: '',
         phone_number: '',
@@ -33,25 +34,19 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
         clinic_address_line1: '',
         clinic_address_line2: '',
         clinic_city: '',
-        selected_city_id: null as string | null,
+        selected_city_id: undefined as string | undefined,
         professional_role: '',
         years_of_experience: '',
         education_background: '',
         professional_license_number: '',
     });
 
-    useEffect(() => {
-        if (visible) {
-            loadInitialData();
-        }
-    }, [visible]);
-
-    const loadInitialData = async () => {
+    const loadInitialData = useCallback(async () => {
         try {
             const [citiesData] = await Promise.all([
                 cityService.getCities()
             ]);
-            setCities(citiesData || []);
+            setCities((citiesData as City[]) || []);
 
             if (userProfile) {
                 setFormData(prev => ({
@@ -66,7 +61,7 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
                     clinic_address_line1: userProfile.clinic_address_line1 || '',
                     clinic_address_line2: userProfile.clinic_address_line2 || '',
                     clinic_city: userProfile.clinic_city || '',
-                    selected_city_id: userProfile.selected_city_id || null,
+                    selected_city_id: userProfile.selected_city_id ?? undefined,
                     professional_role: userProfile.professional_role || '',
                     years_of_experience: userProfile.years_of_experience || '',
                     education_background: userProfile.education_background || '',
@@ -76,9 +71,15 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
         } catch (error) {
             console.error('Error loading initial data:', error);
         }
-    };
+    }, [userProfile]);
 
-    const updateField = (field: string, value: any) => {
+    useEffect(() => {
+        if (visible) {
+            loadInitialData();
+        }
+    }, [visible, loadInitialData]);
+
+    const updateField = (field: string, value: string | null) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
@@ -154,7 +155,7 @@ export default function EnhancedOnboardingModal({ visible, onFinish, onSkip }: E
         </View>
     );
 
-    const renderInput = (label: string, value: string, field: string, placeholder: string, keyboardType: any = 'default', required = false) => (
+    const renderInput = (label: string, value: string, field: string, placeholder: string, keyboardType: import('react-native').KeyboardTypeOptions = 'default', required = false) => (
         <View className="mb-5">
             <Text className="text-right text-text-secondary mb-2 font-medium text-sm">{label} {required && <Text className="text-red-500">*</Text>}</Text>
             <Input

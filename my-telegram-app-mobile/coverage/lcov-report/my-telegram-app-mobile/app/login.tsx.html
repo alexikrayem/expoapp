@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/35</span>
+                <span class='fraction'>0/37</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/35</span>
+                <span class='fraction'>0/37</span>
             </div>
         
             
@@ -265,7 +265,31 @@
 <a name='L200'></a><a href='#L200'>200</a>
 <a name='L201'></a><a href='#L201'>201</a>
 <a name='L202'></a><a href='#L202'>202</a>
-<a name='L203'></a><a href='#L203'>203</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -415,6 +439,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -429,6 +454,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -490,6 +534,8 @@ import { Redirect, router } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import { authService } from "@/services/authService"
+import BackgroundImage from "../assets/images/IMG_1787.jpg"
+import LogoImage from "../assets/images/logo.png"
 &nbsp;
 const isRTL = <span class="cstat-no" title="statement not covered" >I18nManager.isRTL</span>
 &nbsp;
@@ -519,8 +565,8 @@ export default function <span class="fstat-no" title="function not covered" >Log
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      await authService.sendOtp(phoneNumber)</span>
 <span class="cstat-no" title="statement not covered" >      setStep('OTP')</span>
-    } catch (error: any) {
-<span class="cstat-no" title="statement not covered" >      Alert.alert("فشل", error.message || "حدث خطأ أثناء إرسال الرمز")</span>
+    } catch (error: unknown) {
+<span class="cstat-no" title="statement not covered" >      Alert.alert("فشل", error instanceof Error ? error.message : "حدث خطأ أثناء إرسال الرمز")</span>
     } finally {
 <span class="cstat-no" title="statement not covered" >      setLoading(false)</span>
     }
@@ -535,7 +581,7 @@ export default function <span class="fstat-no" title="function not covered" >Log
 <span class="cstat-no" title="statement not covered" >    setLoading(true)</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
       // verifyOtp returns { isNew, ... }
-      const data = <span class="cstat-no" title="statement not covered" >await authService.verifyOtp(phoneNumber, otp)</span>
+      const data = <span class="cstat-no" title="statement not covered" >await authService.verifyOtp(phoneNumber, otp) as { isNew: boolean;[key: string]: unknown }</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      if (data.isNew) {</span>
         // Navigate to Registration
@@ -547,8 +593,8 @@ export default function <span class="fstat-no" title="function not covered" >Log
         // Existing user, tokens are already set by authService -&gt; apiClient
 <span class="cstat-no" title="statement not covered" >        await refreshAuth()</span>
       }
-    } catch (error: any) {
-<span class="cstat-no" title="statement not covered" >      Alert.alert("فشل", error.message || "رمز التحقق غير صحيح")</span>
+    } catch (error: unknown) {
+<span class="cstat-no" title="statement not covered" >      Alert.alert("فشل", error instanceof Error ? error.message : "رمز التحقق غير صحيح")</span>
     } finally {
 <span class="cstat-no" title="statement not covered" >      setLoading(false)</span>
     }
@@ -557,7 +603,7 @@ export default function <span class="fstat-no" title="function not covered" >Log
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;View style={styles.container}&gt;
       {/* Background Image */}
-      &lt;Image source={require("../assets/images/IMG_1787.jpg")} style={styles.backgroundImage} /&gt;
+      &lt;Image source={BackgroundImage} style={styles.backgroundImage} /&gt;
 &nbsp;
       {/* Gradient Overlay */}
       &lt;LinearGradient
@@ -581,7 +627,7 @@ export default function <span class="fstat-no" title="function not covered" >Log
         &gt;
           {/* Logo &amp; Header */}
           &lt;View style={styles.header}&gt;
-            &lt;Image source={require("../assets/images/logo.png")} style={styles.logo} /&gt;
+            &lt;Image source={LogoImage} style={styles.logo} /&gt;
             &lt;Text style={styles.title}&gt;المعرض الطبي&lt;/Text&gt;
             &lt;Text style={styles.subtitle}&gt;
               {step === 'PHONE'
@@ -611,6 +657,16 @@ export default function <span class="fstat-no" title="function not covered" >Log
                   loading={loading}
                   size="lg"
                   className="mt-2"
+                /&gt;
+&nbsp;
+                &lt;Button
+                  title="تصفح كضيف"
+                  variant="ghost"
+                  size="sm"
+                  onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >router.replace("/(tabs)")}</span>
+                  disabled={loading}
+                  className="self-center mt-3"
+                  textClassName="text-text-secondary"
                 /&gt;
               &lt;/&gt;
             ) : (
@@ -645,6 +701,16 @@ export default function <span class="fstat-no" title="function not covered" >Log
                   className="self-center mt-2"
                   textClassName="text-text-secondary"
                 /&gt;
+&nbsp;
+                &lt;Button
+                  title="تصفح كضيف"
+                  variant="ghost"
+                  size="sm"
+                  onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >router.replace("/(tabs)")}</span>
+                  disabled={loading}
+                  className="self-center mt-1"
+                  textClassName="text-text-secondary"
+                /&gt;
               &lt;/&gt;
             )}
           &lt;/View&gt;
@@ -676,7 +742,7 @@ const styles = <span class="cstat-no" title="statement not covered" >StyleSheet.
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-12T11:40:20.952Z
+                at 2026-05-08T08:22:05.697Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

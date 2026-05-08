@@ -12,17 +12,13 @@ import SupplierCard from "@/components/SupplierCard"
 import FeaturedSlider from "@/components/FeaturedSlider"
 import ProductFilterBar from "@/components/ProductFilterBar"
 import { useModal } from "@/context/ModalContext"
-import { useAuth } from "@/context/AuthContext"
 import { useFavorites } from "@/hooks/useFavorites"
 import { Package, Tag, Factory } from "lucide-react-native"
 import { useCart } from "@/context/CartContext"
 import AnimatedScreen from "@/components/ui/AnimatedScreen"
 import Header from "@/components/Header"
 import PressableScale from "@/components/ui/PressableScale"
-
-type FlashListLayout = {
-  span?: number
-}
+import type { Product, Deal, Supplier, FeaturedItem } from "@/types"
 
 const TABS = [
   { id: "products", label: "المنتجات", icon: Package },
@@ -46,9 +42,8 @@ const TabButton = React.memo(
         onPress={onPress}
         scaleTo={0.98}
         haptic="selection"
-        className={`flex-row items-center justify-center py-2 px-3.5 mx-1 rounded-full ${
-          isActive ? "bg-primary-500" : "bg-gray-100"
-        }`}
+        className={`flex-row items-center justify-center py-2 px-3.5 mx-1 rounded-full ${isActive ? "bg-primary-500" : "bg-gray-100"
+          }`}
         style={{ minWidth: 100 }}
       >
         <Icon size={16} color={isActive ? "#ffffff" : "#64748b"} />
@@ -62,17 +57,16 @@ const TabButton = React.memo(
     )
   },
 )
+TabButton.displayName = "TabButton"
 
 export default function HomeScreen() {
   const [activeSection, setActiveSection] = useState<string>("products")
-  const [selectedCityId, setSelectedCityId] = useState<string>("1")
-  const [filters, setFilters] = useState({ category: "all" })
+  const [selectedCityId] = useState<string>("1")
+  const [filters, setFilters] = useState<Record<string, string | number | boolean | undefined>>({ category: "all" })
 
   const {
     products,
-    isLoadingProducts,
     loadMoreProducts,
-    hasMorePages,
     isLoadingMore,
     refreshProducts,
     isRefetchingProducts,
@@ -82,19 +76,18 @@ export default function HomeScreen() {
 
   const { suppliers, isLoadingSuppliers, refreshSuppliers, isRefetchingSuppliers } = useSuppliers(selectedCityId)
 
-  const { featuredItems, isLoadingFeatured, refreshFeatured, isRefetchingFeatured } = useFeaturedItems()
+  const { featuredItems, isLoadingFeatured, refreshFeatured } = useFeaturedItems()
 
   const { openModal } = useModal()
-  const { userProfile } = useAuth()
   const {
     actions: { addToCart },
   } = useCart()
 
-  const { isFavorite, toggleFavorite, favoriteIds, isLoadingFavorites } = useFavorites()
+  const { isFavorite, toggleFavorite, favoriteIds } = useFavorites()
 
   // Handlers
   const handleShowProductDetails = useCallback(
-    (product: any) => {
+    (product: Product) => {
       openModal("productDetail", { product })
     },
     [openModal],
@@ -115,7 +108,7 @@ export default function HomeScreen() {
   )
 
   const handleAddToCart = useCallback(
-    (product: any) => {
+    (product: Product) => {
       addToCart(product)
     },
     [addToCart],
@@ -138,7 +131,7 @@ export default function HomeScreen() {
   const checkIsFavorite = useCallback((id: string) => isFavorite(id), [isFavorite])
 
   const renderProductItem = useCallback(
-    ({ item }: { item: any }) => (
+    ({ item }: { item: Product }) => (
       <ProductCard
         product={item}
         onAddToCart={handleAddToCart}
@@ -151,7 +144,7 @@ export default function HomeScreen() {
   )
 
   const renderDealItem = useCallback(
-    ({ item }: { item: any }) => (
+    ({ item }: { item: Deal }) => (
       <View className="px-4">
         <DealCard deal={item} onShowDetails={handleShowDealDetails} />
       </View>
@@ -160,7 +153,7 @@ export default function HomeScreen() {
   )
 
   const renderSupplierItem = useCallback(
-    ({ item }: { item: any }) => (
+    ({ item }: { item: Supplier }) => (
       <View className="px-4">
         <SupplierCard supplier={item} onShowDetails={handleShowSupplierDetails} />
       </View>
@@ -168,19 +161,20 @@ export default function HomeScreen() {
     [handleShowSupplierDetails],
   )
 
-  const productKeyExtractor = useCallback((item: any) => `prod-${item.id}`, [])
-  const dealKeyExtractor = useCallback((item: any) => `deal-${item.id}`, [])
-  const supplierKeyExtractor = useCallback((item: any) => `supp-${item.id}`, [])
+  const productKeyExtractor = useCallback((item: Product) => `prod-${item.id}`, [])
+  const dealKeyExtractor = useCallback((item: Deal) => `deal-${item.id}`, [])
+  const supplierKeyExtractor = useCallback((item: Supplier) => `supp-${item.id}`, [])
 
   const handleSlideClick = useCallback(
-    (item: any) => {
-      if (item.type === "product") {
-        handleShowProductDetails(item)
-      } else if (item.type === "deal") {
+    (item: FeaturedItem) => {
+      const itemType = item.type
+      if (itemType === "product") {
+        handleShowProductDetails(item as unknown as Product)
+      } else if (itemType === "deal") {
         openModal("dealDetail", { dealId: item.id })
-      } else if (item.type === "supplier") {
+      } else if (itemType === "supplier") {
         openModal("supplierDetail", { supplierId: item.id })
-      } else if (item.type === "list") {
+      } else if (itemType === "list") {
         openModal("featuredList", { list: item })
       }
     },
@@ -192,7 +186,7 @@ export default function HomeScreen() {
       <View>
         <FeaturedSlider items={featuredItems} onSlideClick={handleSlideClick} isLoading={isLoadingFeatured} />
         {activeSection === "products" && (
-          <ProductFilterBar currentFilters={filters} onFiltersChange={setFilters} selectedCityId={selectedCityId} />
+          <ProductFilterBar currentFilters={filters} onFiltersChange={setFilters as unknown as (f: unknown) => void} selectedCityId={selectedCityId} />
         )}
       </View>
     ),
@@ -237,7 +231,7 @@ export default function HomeScreen() {
   const renderContent = () => {
     if (activeSection === "products") {
       return (
-        <FlashList<any>
+        <FlashList<Product>
           data={products}
           renderItem={renderProductItem}
           keyExtractor={productKeyExtractor}
@@ -261,7 +255,7 @@ export default function HomeScreen() {
 
     if (activeSection === "exhibitions") {
       return (
-        <FlashList<any>
+        <FlashList<Deal>
           data={deals}
           renderItem={renderDealItem}
           keyExtractor={dealKeyExtractor}
@@ -281,7 +275,7 @@ export default function HomeScreen() {
 
     if (activeSection === "suppliers") {
       return (
-        <FlashList<any>
+        <FlashList<Supplier>
           data={suppliers}
           renderItem={renderSupplierItem}
           keyExtractor={supplierKeyExtractor}

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">40% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>4/10</span>
+                <span class='fraction'>0/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">16.66% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/6</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">33.33% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>3/9</span>
+                <span class='fraction'>0/11</span>
             </div>
         
             
@@ -117,7 +117,15 @@
 <a name='L52'></a><a href='#L52'>52</a>
 <a name='L53'></a><a href='#L53'>53</a>
 <a name='L54'></a><a href='#L54'>54</a>
-<a name='L55'></a><a href='#L55'>55</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -141,19 +149,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -172,21 +188,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from "react"
-import { Pressable, PressableProps } from "react-native"
+import { Pressable, PressableProps, StyleProp, ViewStyle } from "react-native"
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated"
+import { haptics } from "@/utils/haptics"
+import { MOTION } from "@/utils/motion"
 &nbsp;
 interface PressableScaleProps extends PressableProps {
   scaleTo?: number
   duration?: number
+  haptic?: "light" | "medium" | "heavy" | "selection" | false
+  children?: React.ReactNode | ((state: { pressed: boolean }) =&gt; React.ReactNode)
   className?: string
   pressableClassName?: string
-  style?: any
+  style?: StyleProp&lt;ViewStyle&gt;
 }
 &nbsp;
-export default function PressableScale({
+export default function <span class="fstat-no" title="function not covered" >PressableScale(</span>{
   children,
-  scaleTo = <span class="branch-0 cbranch-no" title="branch not covered" >0.98,</span>
-  duration = 120,
+  scaleTo = <span class="branch-0 cbranch-no" title="branch not covered" >MOTION.pressScale,</span>
+  duration = <span class="branch-0 cbranch-no" title="branch not covered" >MOTION.pressDurationMs,</span>
+  haptic,
   disabled,
   onPressIn,
   onPressOut,
@@ -195,19 +216,22 @@ export default function PressableScale({
   style,
   ...props
 }: PressableScaleProps) {
-  const scale = useSharedValue(1)
+  const scale = <span class="cstat-no" title="statement not covered" >useSharedValue(1)</span>
 &nbsp;
-  const animatedStyle = useAnimatedStyle(() =&gt; ({
+  const animatedStyle = <span class="cstat-no" title="statement not covered" >useAnimatedStyle(<span class="fstat-no" title="function not covered" >()</span> =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
     transform: [{ scale: scale.value }],
   }))
 &nbsp;
-  return (
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;Pressable
       {...props}
       className={pressableClassName}
       disabled={disabled}
       onPressIn={<span class="fstat-no" title="function not covered" >(e</span>vent) =&gt; {
 <span class="cstat-no" title="statement not covered" >        if (!disabled) {</span>
+<span class="cstat-no" title="statement not covered" >          if (haptic) {</span>
+<span class="cstat-no" title="statement not covered" >            haptics[haptic]?.()</span>
+          }
 <span class="cstat-no" title="statement not covered" >          scale.value = withTiming(scaleTo, { duration })</span>
         }
 <span class="cstat-no" title="statement not covered" >        onPressIn?.(event)</span>
@@ -220,7 +244,7 @@ export default function PressableScale({
       }}
     &gt;
       &lt;Animated.View style={[animatedStyle, style]} className={className}&gt;
-        {children}
+        {typeof children === "function" ? children({ pressed: false }) : children}
       &lt;/Animated.View&gt;
     &lt;/Pressable&gt;
   )
@@ -232,7 +256,7 @@ export default function PressableScale({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-12T11:40:20.952Z
+                at 2026-05-08T08:22:05.697Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
@@ -12,13 +12,25 @@ import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import { Button } from '@/components/ui/Button';
 import PressableScale from '@/components/ui/PressableScale';
 import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import type { CartItem } from '@/types';
 
 export default function CartScreen() {
     const { cartItems, actions, getCartTotal } = useCart();
     const { formatPrice } = useCurrency();
     const router = useRouter();
+    const { isGuest } = useAuthGate();
 
-    const renderItem = useCallback(({ item }: { item: any }) => (
+    // Redirect guests to login
+    useEffect(() => {
+        if (isGuest) {
+            router.replace('/login');
+        }
+    }, [isGuest, router]);
+
+    if (isGuest) return null;
+
+    const renderItem = useCallback(({ item }: { item: CartItem }) => (
         <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm flex-row items-center border border-border">
             <Image
                 source={{ uri: item.image_url }}
@@ -32,7 +44,7 @@ export default function CartScreen() {
             <View className="flex-1 ml-4 mr-2">
                 <Text className="text-text-main font-bold text-right text-base" numberOfLines={1}>{item.name}</Text>
                 <Text className="text-text-secondary text-xs text-right mb-2 font-medium">{item.supplier_name}</Text>
-                <Text className="text-primary-600 font-bold text-right text-lg">{formatPrice(item.effective_selling_price)}</Text>
+                <Text className="text-primary-600 font-bold text-right text-lg">{formatPrice(Number(item.effective_selling_price))}</Text>
             </View>
 
             <View className="items-center">
@@ -90,7 +102,7 @@ export default function CartScreen() {
                 <View className="flex-1">
                     <FlashList
                         data={cartItems}
-                        keyExtractor={(item: any) => item.product_id}
+                        keyExtractor={(item: CartItem) => item.product_id}
                         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
                         estimatedItemSize={120}
                         removeClippedSubviews

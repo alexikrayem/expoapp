@@ -187,7 +187,43 @@
 <a name='L122'></a><a href='#L122'>122</a>
 <a name='L123'></a><a href='#L123'>123</a>
 <a name='L124'></a><a href='#L124'>124</a>
-<a name='L125'></a><a href='#L125'>125</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -311,9 +347,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
+ * @deprecated CacheContext duplicates React Query's built-in caching (staleTime, gcTime, dedup).
+ * All consumers have been migrated to useQuery. This provider is retained temporarily for
+ * backward compatibility and should be removed in a follow-up cleanup.
+ * See: Finding 4 in Architecture &amp; Navigation Review.
+ */
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 &nbsp;
-const CacheContext = createContext&lt;any&gt;(null);
+interface CacheEntry {
+    data: unknown;
+    expiry: number;
+}
+&nbsp;
+interface CacheContextType {
+    cachedApiCall: (key: string, apiCallFn: () =&gt; Promise&lt;unknown&gt;, ttl?: number) =&gt; Promise&lt;unknown&gt;;
+    invalidateCache: (prefix: string) =&gt; void;
+    clearCache: () =&gt; void;
+    isLoading: (key: string) =&gt; boolean;
+}
+&nbsp;
+const CacheContext = createContext&lt;CacheContextType | null&gt;(null);
 &nbsp;
 export const useCache = () =&gt; {
     const context = useContext(CacheContext);
@@ -324,12 +378,12 @@ export const useCache = () =&gt; {
 };
 &nbsp;
 export const CacheProvider = ({ children }: { children: React.ReactNode }) =&gt; {
-    const [cacheState, setCacheState] = useState(new Map());
-    const [loadingState, setLoadingState] = useState(new Map());
+    const [cacheState, setCacheState] = useState(new Map&lt;string, CacheEntry&gt;());
+    const [loadingState, setLoadingState] = useState(new Map&lt;string, boolean&gt;());
 &nbsp;
     const cacheRef = useRef(cacheState);
     const loadingRef = useRef(loadingState);
-    const activeRequests = useRef(new Map());
+    const activeRequests = useRef(new Map&lt;string, Promise&lt;unknown&gt;&gt;());
 &nbsp;
     useEffect(() =&gt; {
         cacheRef.current = cacheState;
@@ -347,8 +401,8 @@ export const CacheProvider = ({ children }: { children: React.ReactNode }) =&gt;
         return null;
     }, []);
 &nbsp;
-    const setCachedData = useCallback((key: string, data: any, ttl = <span class="branch-0 cbranch-no" title="branch not covered" >5 * 60 * 1000)</span> =&gt; {
-        setCacheState((prev: Map&lt;string, any&gt;) =&gt; {
+    const setCachedData = useCallback((key: string, data: unknown, ttl = <span class="branch-0 cbranch-no" title="branch not covered" >5 * 60 * 1000)</span> =&gt; {
+        setCacheState((prev: Map&lt;string, CacheEntry&gt;) =&gt; {
             const newCache = new Map(prev);
             newCache.set(key, {
                 data,
@@ -359,7 +413,7 @@ export const CacheProvider = ({ children }: { children: React.ReactNode }) =&gt;
     }, []);
 &nbsp;
     const invalidateCache = useCallback((prefix: string) =&gt; {
-        setCacheState((prev: Map&lt;string, any&gt;) =&gt; {
+        setCacheState((prev: Map&lt;string, CacheEntry&gt;) =&gt; {
             const newCache = new Map(prev);
             for (const key of Array.from(newCache.keys())) {
                 <span class="missing-if-branch" title="else path not taken" >E</span>if (key.startsWith(prefix)) {
@@ -392,7 +446,7 @@ export const CacheProvider = ({ children }: { children: React.ReactNode }) =&gt;
 <span class="cstat-no" title="statement not covered" >        return loadingRef.current.has(key);</span>
     }, []);
 &nbsp;
-    const cachedApiCall = useCallback(async (key: string, apiCallFn: () =&gt; Promise&lt;any&gt;, ttl = <span class="branch-0 cbranch-no" title="branch not covered" >5 * 60 * 1000)</span> =&gt; {
+    const cachedApiCall = useCallback(async (key: string, apiCallFn: () =&gt; Promise&lt;unknown&gt;, ttl = <span class="branch-0 cbranch-no" title="branch not covered" >5 * 60 * 1000)</span> =&gt; {
         const cachedData = getCachedData(key);
         if (cachedData !== null) {
             return cachedData;
@@ -442,7 +496,7 @@ export const CacheProvider = ({ children }: { children: React.ReactNode }) =&gt;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-12T11:40:20.952Z
+                at 2026-05-08T08:22:05.697Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

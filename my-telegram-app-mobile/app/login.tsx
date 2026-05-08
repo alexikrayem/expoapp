@@ -52,8 +52,8 @@ export default function LoginScreen() {
     try {
       await authService.sendOtp(phoneNumber)
       setStep('OTP')
-    } catch (error: any) {
-      Alert.alert("فشل", error.message || "حدث خطأ أثناء إرسال الرمز")
+    } catch (error: unknown) {
+      Alert.alert("فشل", error instanceof Error ? error.message : "حدث خطأ أثناء إرسال الرمز")
     } finally {
       setLoading(false)
     }
@@ -68,7 +68,7 @@ export default function LoginScreen() {
     setLoading(true)
     try {
       // verifyOtp returns { isNew, ... }
-      const data = await authService.verifyOtp(phoneNumber, otp)
+      const data = await authService.verifyOtp(phoneNumber, otp) as { isNew: boolean;[key: string]: unknown }
 
       if (data.isNew) {
         // Navigate to Registration
@@ -80,8 +80,8 @@ export default function LoginScreen() {
         // Existing user, tokens are already set by authService -> apiClient
         await refreshAuth()
       }
-    } catch (error: any) {
-      Alert.alert("فشل", error.message || "رمز التحقق غير صحيح")
+    } catch (error: unknown) {
+      Alert.alert("فشل", error instanceof Error ? error.message : "رمز التحقق غير صحيح")
     } finally {
       setLoading(false)
     }
@@ -145,6 +145,16 @@ export default function LoginScreen() {
                   size="lg"
                   className="mt-2"
                 />
+
+                <Button
+                  title="تصفح كضيف"
+                  variant="ghost"
+                  size="sm"
+                  onPress={() => router.replace("/(tabs)")}
+                  disabled={loading}
+                  className="self-center mt-3"
+                  textClassName="text-text-secondary"
+                />
               </>
             ) : (
               <>
@@ -176,6 +186,16 @@ export default function LoginScreen() {
                   onPress={() => setStep("PHONE")}
                   disabled={loading}
                   className="self-center mt-2"
+                  textClassName="text-text-secondary"
+                />
+
+                <Button
+                  title="تصفح كضيف"
+                  variant="ghost"
+                  size="sm"
+                  onPress={() => router.replace("/(tabs)")}
+                  disabled={loading}
+                  className="self-center mt-1"
                   textClassName="text-text-secondary"
                 />
               </>

@@ -1,0 +1,27 @@
+__tests__/context/CacheContext.test.tsx(38,7): error TS2322: Type 'unknown' is not assignable to type 'string | null'.
+__tests__/context/CacheContext.test.tsx(42,7): error TS2322: Type 'unknown' is not assignable to type 'string | null'.
+__tests__/context/CurrencyContext.test.tsx(25,5): error TS2322: Type 'Response' is not assignable to type '{ (input: RequestInfo | URL, init?: RequestInit | undefined): Promise<Response>; (input: RequestInfo, init?: RequestInit | undefined): Promise<...>; (input: string | ... 1 more ... | URL, init?: RequestInit | undefined): Promise<...>; (input: RequestInfo, init?: RequestInit | undefined): Promise<...>; (input: Reques...'.
+  Type 'Response' provides no match for the signature '(input: RequestInfo | URL, init?: RequestInit | undefined): Promise<Response>'.
+app/(tabs)/index.tsx(189,54): error TS2322: Type 'Dispatch<SetStateAction<{ category: string; }>>' is not assignable to type '(filters: ProductFilters) => void'.
+  Types of parameters 'value' and 'filters' are incompatible.
+    Type 'ProductFilters' is not assignable to type 'SetStateAction<{ category: string; }>'.
+      Type 'ProductFilters' is not assignable to type '{ category: string; }'.
+        Types of property 'category' are incompatible.
+          Type 'string | undefined' is not assignable to type 'string'.
+            Type 'undefined' is not assignable to type 'string'.
+app/cart.tsx(36,94): error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'number | null | undefined'.
+  Type 'string' is not assignable to type 'number'.
+app/login.tsx(73,11): error TS18046: 'data' is of type 'unknown'.
+components/CustomTabBar.tsx(9,15): error TS2305: Module '"@/types"' has no exported member 'TabIconComponent'.
+components/ExternalLink.tsx(13,7): error TS2322: Type 'string' is not assignable to type '"/" | RelativePathString | ExternalPathString | "/cart" | `/cart?${string}` | `/cart#${string}` | "/checkout" | `/checkout?${string}` | `/checkout#${string}` | "/login" | `/login?${string}` | ... 48 more ... | { ...; }'.
+components/ui/Button.tsx(62,6): error TS2326: Types of property 'style' are incompatible.
+  Type 'StyleProp<ViewStyle> | ((state: PressableStateCallbackType) => StyleProp<ViewStyle>)' is not assignable to type 'StyleProp<ViewStyle>'.
+    Type '(state: PressableStateCallbackType) => StyleProp<ViewStyle>' is not assignable to type 'StyleProp<ViewStyle>'.
+context/ModalContext.tsx(52,25): error TS2741: Property 'product' is missing in type '{ show: true; onClose: () => void; }' but required in type 'ProductDetailModalProps'.
+context/ModalContext.tsx(54,25): error TS2741: Property 'userProfile' is missing in type '{ visible: true; onClose: () => void; }' but required in type 'ProfileModalProps'.
+context/ModalContext.tsx(56,25): error TS2741: Property 'onSaveAndProceed' is missing in type '{ visible: true; onClose: () => void; }' but required in type 'AddressModalProps'.
+context/ModalContext.tsx(58,25): error TS2739: Type '{ visible: true; onClose: () => void; }' is missing the following properties from type 'AddressConfirmationModalProps': profileData, onConfirmAndProceed, onEditAddress, onCancel
+context/ModalContext.tsx(60,25): error TS2739: Type '{ visible: true; onClose: () => void; }' is missing the following properties from type 'OrderConfirmationModalProps': orderDetails, customerInfo
+context/ModalContext.tsx(62,25): error TS2741: Property 'dealId' is missing in type '{ show: true; onClose: () => void; }' but required in type 'DealDetailModalProps'.
+context/ModalContext.tsx(64,25): error TS2739: Type '{ show: true; onClose: () => void; }' is missing the following properties from type 'SupplierDetailModalProps': supplierId, onProductClick
+context/ModalContext.tsx(66,25): error TS2741: Property 'list' is missing in type '{ show: true; onClose: () => void; openModal: any; }' but required in type 'FeaturedListModalProps'.

@@ -7,9 +7,10 @@ import Text from "@/components/ThemedText"
 import { Tag, Clock, ArrowRight } from "lucide-react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { IMAGE_PLACEHOLDER_BLURHASH } from "@/utils/image"
+import type { DealDetail } from "@/types"
 
 interface DealCardProps {
-  deal: any
+  deal: DealDetail
   onShowDetails: (dealId: string) => void
 }
 
@@ -27,12 +28,12 @@ const DealCard = React.memo(
       rawDaysRemaining !== undefined && rawDaysRemaining !== null
         ? Number(rawDaysRemaining)
         : (() => {
-            if (!endDateValue) return 0
-            const endTimestamp = new Date(endDateValue).getTime()
-            if (!Number.isFinite(endTimestamp)) return 0
-            const dayMs = 24 * 60 * 60 * 1000
-            return Math.max(0, Math.ceil((endTimestamp - Date.now()) / dayMs))
-          })()
+          if (!endDateValue) return 0
+          const endTimestamp = new Date(endDateValue).getTime()
+          if (!Number.isFinite(endTimestamp)) return 0
+          const dayMs = 24 * 60 * 60 * 1000
+          return Math.max(0, Math.ceil((endTimestamp - Date.now()) / dayMs))
+        })()
 
     const daysRemaining = Number.isFinite(computedDaysRemaining) ? computedDaysRemaining : 0
 
@@ -100,5 +101,7 @@ const DealCard = React.memo(
     )
   },
 )
+
+DealCard.displayName = 'DealCard';
 
 export default DealCard

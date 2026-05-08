@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Modal, Animated, StyleSheet, Pressable } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import Text from '@/components/ThemedText';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { X, MapPin, Check } from 'lucide-react-native';
 import { cityService } from '@/services/cityService';
+import type { City } from '@/types';
 import { userService } from '@/services/userService';
 import { useAuth } from '@/context/AuthContext';
 import PressableScale from '@/components/ui/PressableScale';
@@ -17,7 +18,7 @@ interface CitySelectionModalProps {
 
 export default function CitySelectionModal({ visible, onClose }: CitySelectionModalProps) {
     const { userProfile, refreshProfile } = useAuth();
-    const [cities, setCities] = useState<any[]>([]);
+    const [cities, setCities] = useState<City[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
 
@@ -46,12 +47,12 @@ export default function CitySelectionModal({ visible, onClose }: CitySelectionMo
                 setShowModal(false);
             });
         }
-    }, [visible]);
+    }, [visible, slideAnim]);
 
     const fetchCities = async () => {
         try {
             const data = await cityService.getCities();
-            setCities(data || []);
+            setCities((data as City[]) || []);
         } catch (error) {
             console.error('Failed to fetch cities:', error);
         } finally {
@@ -59,7 +60,7 @@ export default function CitySelectionModal({ visible, onClose }: CitySelectionMo
         }
     };
 
-    const handleSelectCity = async (city: any) => {
+    const handleSelectCity = async (city: City) => {
         if (isUpdating) return;
         setIsUpdating(true);
         try {
@@ -127,14 +128,14 @@ export default function CitySelectionModal({ visible, onClose }: CitySelectionMo
                     ) : (
                         <FlashList
                             data={cities}
-                            keyExtractor={(item: any) => item.id.toString()}
+                            keyExtractor={(item: City) => item.id.toString()}
                             contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-                                                        estimatedItemSize={80}
+                            estimatedItemSize={80}
                             removeClippedSubviews
                             initialNumToRender={10}
                             maxToRenderPerBatch={10}
                             windowSize={5}
-                            renderItem={({ item }: { item: any }) => {
+                            renderItem={({ item }: { item: City }) => {
                                 const isSelected = userProfile?.selected_city_id === item.id;
                                 return (
                                     <Pressable

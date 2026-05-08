@@ -4,6 +4,7 @@ import {
 } from "../utils/tokenManager"
 import { API_CONFIG } from "../utils/constants"
 import { logger } from "../utils/logger"
+import type { ApiError } from "../types"
 
 const API_BASE_URL = API_CONFIG.BASE_URL
 const REQUEST_TIMEOUT = API_CONFIG.TIMEOUT
@@ -52,11 +53,12 @@ const fetchWithTimeout = async (
             signal: requestController.signal,
         })
         return response
-    } catch (err: any) {
-        if (err?.name === "AbortError") {
-            err.isTimeout = didTimeout
+    } catch (err: unknown) {
+        const abortErr = err as Error & { isTimeout?: boolean }
+        if (abortErr?.name === "AbortError") {
+            abortErr.isTimeout = didTimeout
         }
-        throw err
+        throw abortErr
     } finally {
         clearTimeout(timeoutId)
         timeoutController.signal.removeEventListener("abort", onTimeoutAbort)
@@ -70,9 +72,9 @@ const fetchWithTimeout = async (
 // Main API Client
 // ---------------------------------------------------------------------------
 
-export async function apiClient<T = any>(
+export async function apiClient<T = unknown>(
     endpoint: string,
-    { body, ...customConfig }: Omit<RequestInit, "body"> & { body?: any } = {},
+    { body, ...customConfig }: Omit<RequestInit, "body"> & { body?: unknown } = {},
 ): Promise<T | null> {
     const headers: Record<string, string> = { "Content-Type": "application/json" }
 
@@ -114,15 +116,15 @@ export async function apiClient<T = any>(
 
         // ── Error handling ──
         if (!response.ok) {
-            let error: any = { message: `Request failed with status ${response.status}` }
+            let error: ApiError = { message: `Request failed with status ${response.status}` }
             try {
-                const parsedError = await response.json()
+                const parsedError: unknown = await response.json()
                 if (parsedError && typeof parsedError === "object") {
-                    error = parsedError
+                    error = parsedError as ApiError
                 } else if (typeof parsedError === "string") {
                     error = { message: parsedError }
                 }
-            } catch (_) { }
+            } catch { }
 
             if (!error.message) {
                 if (typeof error.error === "string") {
@@ -153,14 +155,15 @@ export async function apiClient<T = any>(
         const textPreview = await response.text().catch(() => "(unreadable)")
         logger.warn(`Non-JSON response from ${endpoint}:`, textPreview.slice(0, 200))
         return null
-    } catch (err: any) {
-        if (err.name === "AbortError" && err.isTimeout) {
+    } catch (err: unknown) {
+        const fetchErr = err as Error & { isTimeout?: boolean }
+        if (fetchErr.name === "AbortError" && fetchErr.isTimeout) {
             return Promise.reject({ message: "انتهت مهلة الطلب. يرجى التحقق من اتصالك بالإنترنت.", isTimeout: true })
         }
-        if (err.name === "AbortError") {
-            return Promise.reject(err)
+        if (fetchErr.name === "AbortError") {
+            return Promise.reject(fetchErr)
         }
-        logger.error("API Client Error:", err)
-        return Promise.reject(err)
+        logger.error("API Client Error:", fetchErr)
+        return Promise.reject(fetchErr)
     }
 }

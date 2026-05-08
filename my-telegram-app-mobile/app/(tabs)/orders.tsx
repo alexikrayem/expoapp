@@ -3,20 +3,23 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { View, ScrollView, Alert, RefreshControl } from 'react-native';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import Text from '@/components/ThemedText';
 import { useAuth } from '@/context/AuthContext';
 import { useOrders } from '@/hooks/useOrders';
 import { useCart } from '@/context/CartContext';
 import { useCheckout } from '@/context/CheckoutContext';
 import { useCurrency } from '@/context/CurrencyContext';
+import { useAuthGate } from '@/hooks/useAuthGate';
 import { orderService } from '@/services/orderService';
-import { Clock, CheckCircle, XCircle, Package, Trash2, Plus, Minus } from 'lucide-react-native';
+import type { Order as OrderType, OrderItem as OrderItemType, CartItem as CartItemType } from '@/types';
+import { Clock, CheckCircle, XCircle, Package, Trash2, Plus, Minus, LogIn } from 'lucide-react-native';
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import PressableScale from '@/components/ui/PressableScale';
 import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
+import { useRouter } from 'expo-router';
 
 const CheckoutCard = () => {
   const { cartItems, getCartTotal, actions } = useCart();
@@ -44,7 +47,7 @@ const CheckoutCard = () => {
       </View>
 
       <View className="p-4 max-h-60">
-        {cartItems.map((item: any) => (
+        {cartItems.map((item: CartItemType) => (
           <View key={item.product_id} className="flex-row items-center mb-4 border-b border-gray-50 pb-3 last:border-0 last:pb-0 last:mb-0">
             <Image
               source={{ uri: item.image_url }}
@@ -58,7 +61,7 @@ const CheckoutCard = () => {
             <View className="flex-1 mx-3">
               <Text className="font-bold text-sm text-text-main text-right" numberOfLines={1}>{item.name}</Text>
               <Text className="text-xs text-text-secondary text-right mb-1">{item.supplier_name}</Text>
-              <Text className="text-primary-600 font-bold text-xs text-right">{formatPrice(item.effective_selling_price)}</Text>
+              <Text className="text-primary-600 font-bold text-xs text-right">{formatPrice(Number(item.effective_selling_price))}</Text>
             </View>
             <View className="flex-row items-center bg-surface rounded-lg p-1 border border-border">
               <PressableScale onPress={() => actions.decreaseQuantity(item.product_id)} scaleTo={0.92} haptic="light" className="p-1.5 bg-white rounded-md shadow-sm">
@@ -91,7 +94,7 @@ const CheckoutCard = () => {
   );
 };
 
-const OrderItem = React.memo(({ order, onCancel }: { order: any, onCancel: (id: string) => void }) => {
+const OrderItem = React.memo(({ order, onCancel }: { order: OrderType, onCancel: (id: string) => void }) => {
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'pending': return { text: 'قيد الانتظار', color: '#B45309', bg: 'bg-yellow-50', border: 'border-yellow-200', icon: Clock };
@@ -118,13 +121,13 @@ const OrderItem = React.memo(({ order, onCancel }: { order: any, onCancel: (id: 
         <View className="items-end">
           <Text className="text-sm text-text-secondary font-medium mb-1">طلب رقم <Text className="font-bold text-text-main">#{String(order.id ?? order.order_id ?? order._id ?? 'Unknown').slice(0, 8)}
           </Text></Text>
-          <Text className="font-extrabold text-primary-600 text-lg">{parseFloat(order.total_amount).toFixed(2)} د.إ</Text>
+          <Text className="font-extrabold text-primary-600 text-lg">{parseFloat(String(order.total_amount)).toFixed(2)} د.إ</Text>
         </View>
       </View>
 
       {/* Items */}
       <View className="p-5">
-        {order.items?.map((item: any, index: number) => (
+        {order.items?.map((item: OrderItemType, index: number) => (
           <View key={index} className="flex-row justify-between items-center mb-4 last:mb-0">
             <View className="flex-1 flex-row items-center justify-end">
               <View className="mr-3 items-end flex-1">
@@ -135,7 +138,7 @@ const OrderItem = React.memo(({ order, onCancel }: { order: any, onCancel: (id: 
                 <Package size={18} color="#94a3b8" />
               </View>
             </View>
-            <Text className="text-sm font-bold text-text-main w-20 text-left">{parseFloat(item.price_at_time_of_order).toFixed(2)}</Text>
+            <Text className="text-sm font-bold text-text-main w-20 text-left">{parseFloat(String(item.price_at_time_of_order)).toFixed(2)}</Text>
           </View>
         ))}
       </View>
@@ -158,7 +161,44 @@ const OrderItem = React.memo(({ order, onCancel }: { order: any, onCancel: (id: 
   );
 });
 
+OrderItem.displayName = 'OrderItem';
+
 export default function OrdersScreen() {
+  const router = useRouter();
+  const { isGuest } = useAuthGate();
+
+  // Guest CTA — show sign-in prompt instead of fetching orders
+  if (isGuest) {
+    return (
+      <View className="flex-1 bg-surface">
+        <AnimatedScreen>
+          <View className="p-6 bg-white shadow-sm mb-4 border-b border-border">
+            <Text className="text-3xl font-bold text-text-main text-right mb-1">الطلبات</Text>
+            <Text className="text-text-secondary text-sm text-right font-medium">راجع طلباتك الحالية والسابقة</Text>
+          </View>
+          <View className="flex-1 justify-center items-center p-8">
+            <View className="bg-gray-100 p-8 rounded-full mb-6 shadow-sm">
+              <Package size={56} color="#94a3b8" />
+            </View>
+            <Text className="text-xl font-semibold text-text-main mb-2 leading-tight text-center">
+              سجّل الدخول لعرض طلباتك
+            </Text>
+            <Text className="text-text-secondary text-center leading-6 text-sm px-8 mb-6">
+              أنشئ حسابك لتتبع طلباتك وإدارتها بسهولة
+            </Text>
+            <Button
+              title="تسجيل الدخول"
+              onPress={() => router.push('/login')}
+              size="lg"
+              className="w-full max-w-xs"
+              rightIcon={<LogIn size={20} color="#ffffff" />}
+            />
+          </View>
+        </AnimatedScreen>
+      </View>
+    );
+  }
+
   const { userProfile } = useAuth();
   const { orders, isLoadingOrders, refetchOrders } = useOrders(userProfile?.id);
   const [activeFilter, setActiveFilter] = useState('all');
@@ -167,7 +207,7 @@ export default function OrdersScreen() {
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
     if (activeFilter === 'all') return orders;
-    return orders.filter((order: any) => order.status === activeFilter);
+    return orders.filter((order: OrderType) => order.status === activeFilter);
   }, [orders, activeFilter]);
 
   const handleRefresh = useCallback(async () => {
@@ -189,8 +229,8 @@ export default function OrdersScreen() {
             try {
               await orderService.updateOrderStatus(orderId, "cancelled");
               refetchOrders();
-            } catch (error: any) {
-              Alert.alert("خطأ", `فشل في إلغاء الطلب: ${error.message}`);
+            } catch (error: unknown) {
+              Alert.alert("خطأ", `فشل في إلغاء الطلب: ${error instanceof Error ? error.message : "Unknown error"}`);
             }
           }
         }
@@ -199,7 +239,7 @@ export default function OrdersScreen() {
   }, [refetchOrders]);
 
   const renderOrderItem = useCallback(
-    ({ item }: { item: any }) => <OrderItem order={item} onCancel={handleCancelOrder} />,
+    ({ item }: { item: OrderType }) => <OrderItem order={item} onCancel={handleCancelOrder} />,
     [handleCancelOrder]
   );
 
@@ -238,8 +278,8 @@ export default function OrdersScreen() {
         <FlashList
           data={filteredOrders}
           renderItem={renderOrderItem}
-                    estimatedItemSize={200}
-          keyExtractor={(item: any) => item.id.toString()}
+          estimatedItemSize={200}
+          keyExtractor={(item: OrderType) => (item.id ?? item.order_id ?? item._id ?? Math.random()).toString()}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews

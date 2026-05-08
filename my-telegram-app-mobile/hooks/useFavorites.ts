@@ -2,8 +2,13 @@ import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '../services/userService';
 import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
 
 const normalizeProductId = (productId: string | number) => String(productId);
+
+interface MutationError {
+    message?: string;
+}
 
 /**
  * useFavorites Hook
@@ -13,15 +18,17 @@ const normalizeProductId = (productId: string | number) => String(productId);
  */
 export const useFavorites = () => {
     const { showToast } = useToast();
+    const { isAuthenticated } = useAuth();
     const queryClient = useQueryClient();
 
-    // Query to fetch favorite IDs
+    // Query to fetch favorite IDs — disabled for guests
     const { data, isLoading, error } = useQuery({
         queryKey: ['favorites'],
         queryFn: async () => {
             const result = await userService.getFavorites();
             return new Set<string>((result?.favorite_ids || []).map((id: string | number) => String(id)));
         },
+        enabled: isAuthenticated,
     });
 
     // Mutation to add a product to favorites
@@ -41,7 +48,7 @@ export const useFavorites = () => {
         onSuccess: () => {
             showToast('تم إضافة المنتج إلى المفضلة', 'success');
         },
-        onError: (err: any, productId, context) => {
+        onError: (err: MutationError, _productId, context) => {
             queryClient.setQueryData(['favorites'], context?.previousFavorites);
             showToast(`خطأ: ${err.message || 'فشل في إضافة المنتج إلى المفضلة'}`, 'error');
         },
@@ -67,7 +74,7 @@ export const useFavorites = () => {
         onSuccess: () => {
             showToast('تم إزالة المنتج من المفضلة', 'info');
         },
-        onError: (err: any, productId, context) => {
+        onError: (err: MutationError, _productId, context) => {
             queryClient.setQueryData(['favorites'], context?.previousFavorites);
             showToast(`خطأ: ${err.message || 'فشل في إزالة المنتج من المفضلة'}`, 'error');
         },

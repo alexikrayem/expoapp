@@ -9,11 +9,12 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { apiClient } from '../../api/apiClient';
 import PressableScale from '@/components/ui/PressableScale';
 import { IMAGE_PLACEHOLDER_BLURHASH, prefetchImages } from '@/utils/image';
+import type { FeaturedListItem } from '@/types';
 
 interface FeaturedListModalProps {
     show: boolean;
     onClose: () => void;
-    openModal?: (type: string, props?: any) => void;
+    openModal?: (type: string, props?: unknown) => void;
     list: {
         id: string;
         title: string;
@@ -24,10 +25,24 @@ interface FeaturedListModalProps {
 }
 
 export default function FeaturedListModal({ show, onClose, openModal, list }: FeaturedListModalProps) {
-    const [items, setItems] = useState<any[]>([]);
+    const [items, setItems] = useState<FeaturedListItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { formatPrice } = useCurrency();
+
+    const fetchListItems = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const data = await apiClient(`featured-items/list/${list.id}`);
+            setItems((data as FeaturedListItem[]) || []);
+        } catch (err: unknown) {
+            console.error("Error fetching list items:", err);
+            setError(err instanceof Error ? err.message : "فشل في تحميل عناصر القائمة");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [list?.id]);
 
     useEffect(() => {
         if (show && list?.id) {
@@ -38,31 +53,17 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
             setIsLoading(true);
             setError(null);
         }
-    }, [show, list?.id]);
+    }, [show, list?.id, fetchListItems]);
 
     useEffect(() => {
         if (!items || items.length === 0) return;
         prefetchImages(
-            items.map((item: any) => item.imageUrl || item.image_url || item.image),
+            items.map((item: FeaturedListItem) => item.imageUrl || item.image_url || item.image),
             12
         );
     }, [items]);
 
-    const fetchListItems = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const data = await apiClient(`featured-items/list/${list.id}`);
-            setItems(data || []);
-        } catch (err: any) {
-            console.error("Error fetching list items:", err);
-            setError(err.message || "فشل في تحميل عناصر القائمة");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleItemClick = useCallback((item: any) => {
+    const handleItemClick = useCallback((item: FeaturedListItem) => {
         if (!openModal) return;
 
         // Close this modal first
@@ -89,7 +90,7 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
         }, 300);
     }, [onClose, openModal]);
 
-    const renderItem = useCallback(({ item }: { item: any }) => (
+    const renderItem = useCallback(({ item }: { item: FeaturedListItem }) => (
         <Pressable
             onPress={() => handleItemClick(item)}
             android_ripple={{ color: '#e2e8f0' }}
@@ -222,8 +223,8 @@ export default function FeaturedListModal({ show, onClose, openModal, list }: Fe
                             <FlashList
                                 data={items}
                                 renderItem={renderItem}
-                                                                estimatedItemSize={150}
-                                keyExtractor={(item: any) => `${item.type}-${item.id}`}
+                                estimatedItemSize={150}
+                                keyExtractor={(item: FeaturedListItem) => `${item.type}-${item.id}`}
                                 showsVerticalScrollIndicator={false}
                                 contentContainerStyle={{ paddingBottom: 20 }}
                                 removeClippedSubviews

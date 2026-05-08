@@ -4,6 +4,12 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 
+const hashOtpForTest = (phone, code) =>
+  crypto
+    .createHmac('sha256', process.env.OTP_HASH_SECRET)
+    .update(`${phone}:${String(code || '').trim()}`)
+    .digest('hex');
+
 // Create a test app
 const createTestApp = () => {
   const app = express();
@@ -24,6 +30,7 @@ describe('Auth Routes', () => {
     global.mockDb.reset();
     process.env.OTP_HASH_SECRET = 'test_otp_secret';
     process.env.CORS_ORIGINS = 'http://localhost:3000';
+    delete process.env.EXPOSE_OTP;
     app = createTestApp();
   });
 
@@ -109,6 +116,137 @@ describe('Auth Routes', () => {
 
       expect(res.status).toBe(401);
     });
+
+    it('returns 401 when password is incorrect', async () => {
+      const bcrypt = require('bcrypt');
+      const passwordHash = await bcrypt.hash('correct-password', 10);
+
+      global.mockDb.query.mockResolvedValue({ rows: [] });
+      global.mockDb.query.mockResolvedValueOnce({
+        rows: [{
+          id: 77,
+          email: 'admin@test.com',
+          full_name: 'Admin User',
+          role: 'admin',
+          password_hash: passwordHash,
+        }],
+      });
+
+      const res = await request(app)
+        .post('/api/auth/admin/login')
+        .send({ email: 'admin@test.com', password: 'wrong-password' });
+
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual({ error: 'Invalid credentials' });
+    });
+
+    it('returns access token and admin payload for valid credentials', async () => {
+      const bcrypt = require('bcrypt');
+      const passwordHash = await bcrypt.hash('correct-password', 10);
+
+      global.mockDb.query.mockResolvedValue({ rows: [] });
+      global.mockDb.query.mockResolvedValueOnce({
+        rows: [{
+          id: 10,
+          email: 'admin@test.com',
+          full_name: 'Admin User',
+          role: 'admin',
+          password_hash: passwordHash,
+        }],
+      });
+
+      const res = await request(app)
+        .post('/api/auth/admin/login')
+        .send({ email: 'admin@test.com', password: 'correct-password' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.accessToken).toBeDefined();
+      expect(res.body.admin).toEqual({
+        id: 10,
+        name: 'Admin User',
+        email: 'admin@test.com',
+        role: 'admin',
+      });
+      expect(String(res.headers['set-cookie'] || '')).toContain('refreshToken=');
+    });
+  });
+
+  describe('POST /api/auth/delivery/login', () => {
+    it('returns 401 when delivery agent is not found', async () => {
+      global.mockDb.query.mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(app)
+        .post('/api/auth/delivery/login')
+        .send({ phoneNumber: '+963955111222', password: 'any-pass' });
+
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual({ error: 'Invalid credentials' });
+    });
+
+    it('returns 401 when delivery password is incorrect', async () => {
+      const bcrypt = require('bcrypt');
+      const passwordHash = await bcrypt.hash('correct-delivery-pass', 10);
+
+      global.mockDb.query.mockResolvedValueOnce({
+        rows: [{
+          id: 5,
+          supplier_id: 11,
+          full_name: 'Delivery Agent',
+          phone_number: '+963955111222',
+          password_hash: passwordHash,
+          is_active: true,
+        }],
+      });
+
+      const res = await request(app)
+        .post('/api/auth/delivery/login')
+        .send({ phoneNumber: '+963955111222', password: 'wrong-delivery-pass' });
+
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual({ error: 'Invalid credentials' });
+    });
+
+    it('returns delivery access token for valid credentials', async () => {
+      const bcrypt = require('bcrypt');
+      const passwordHash = await bcrypt.hash('correct-delivery-pass', 10);
+
+      global.mockDb.query.mockResolvedValue({ rows: [] });
+      global.mockDb.query.mockResolvedValueOnce({
+        rows: [{
+          id: 5,
+          supplier_id: 11,
+          full_name: 'Delivery Agent',
+          phone_number: '+963955111222',
+          password_hash: passwordHash,
+          is_active: true,
+        }],
+      });
+
+      const res = await request(app)
+        .post('/api/auth/delivery/login')
+        .send({ phoneNumber: '+963955111222', password: 'correct-delivery-pass' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.accessToken).toBeDefined();
+      expect(res.body.agent).toEqual({
+        id: 5,
+        name: 'Delivery Agent',
+        phone: '+963955111222',
+        supplierId: 11,
+      });
+      expect(String(res.headers['set-cookie'] || '')).toContain('refreshToken=');
+    });
+
+    it('returns 500 when delivery login query fails', async () => {
+      global.mockDb.query.mockRejectedValueOnce(new Error('delivery lookup failed'));
+
+      const res = await request(app)
+        .post('/api/auth/delivery/login')
+        .send({ phoneNumber: '+963955111222', password: 'correct-delivery-pass' });
+
+      expect(res.status).toBe(500);
+      expect(res.body).toEqual({ error: 'Internal server error' });
+    });
   });
 
   describe('POST /api/auth/send-otp', () => {
@@ -135,6 +273,28 @@ describe('Auth Routes', () => {
       expect(params[0]).toBe('+963912345678');
       expect(params[1]).toMatch(/^[a-f0-9]{64}$/);
     });
+
+    it('returns 400 when phone number format is invalid', async () => {
+      const res = await request(app)
+        .post('/api/auth/send-otp')
+        .send({ phone_number: '+++' });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ error: 'Invalid phone number format' });
+    });
+
+    it('exposes OTP in non-production when EXPOSE_OTP is true', async () => {
+      process.env.EXPOSE_OTP = 'true';
+      global.mockDb.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+
+      const res = await request(app)
+        .post('/api/auth/send-otp')
+        .send({ phone_number: '00963 911 123 456' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe('OTP sent successfully');
+      expect(String(res.body.dev_code)).toMatch(/^\d{6}$/);
+    });
   });
 
   describe('POST /api/auth/verify-otp', () => {
@@ -156,13 +316,93 @@ describe('Auth Routes', () => {
       expect(res.status).toBe(400);
     });
 
+    it('returns 429 when OTP attempt limit is reached', async () => {
+      global.mockDb.query.mockResolvedValueOnce({
+        rows: [{
+          code: '123456',
+          expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+          attempts: 5,
+        }],
+      });
+
+      const res = await request(app)
+        .post('/api/auth/verify-otp')
+        .send({ phone_number: '+963912345678', code: '123456' });
+
+      expect(res.status).toBe(429);
+      expect(res.body).toEqual({ error: 'Too many failed attempts. Please request a new code.' });
+    });
+
+    it('returns 400 when OTP is expired', async () => {
+      global.mockDb.query.mockResolvedValueOnce({
+        rows: [{
+          code: '123456',
+          expires_at: new Date(Date.now() - 60 * 1000).toISOString(),
+          attempts: 0,
+        }],
+      });
+
+      const res = await request(app)
+        .post('/api/auth/verify-otp')
+        .send({ phone_number: '+963912345678', code: '123456' });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ error: 'OTP expired. Please request a new one.' });
+    });
+
+    it('increments attempts and returns 400 when OTP code is incorrect', async () => {
+      const normalizedPhone = '+963912345678';
+      const storedHash = hashOtpForTest(normalizedPhone, '222222');
+
+      global.mockDb.query
+        .mockResolvedValueOnce({
+          rows: [{
+            code: storedHash,
+            expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+            attempts: 0,
+          }],
+        })
+        .mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(app)
+        .post('/api/auth/verify-otp')
+        .send({ phone_number: normalizedPhone, code: '111111' });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({ error: 'Invalid code' });
+      expect(global.mockDb.query.mock.calls[1][0]).toContain('UPDATE otp_verifications SET attempts = attempts +');
+    });
+
+    it('returns isNew=true when OTP is valid and profile does not exist', async () => {
+      const normalizedPhone = '+963912345678';
+      const code = '654321';
+      const hashedCode = hashOtpForTest(normalizedPhone, code);
+
+      global.mockDb.query
+        .mockResolvedValueOnce({
+          rows: [{
+            code: hashedCode,
+            expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+            attempts: 0,
+          }],
+        })
+        .mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(app)
+        .post('/api/auth/verify-otp')
+        .send({ phone_number: '00963 912 345 678', code });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        isNew: true,
+        phone_number: normalizedPhone,
+      });
+    });
+
     it('accepts hashed OTP and logs in existing user', async () => {
       const normalizedPhone = '+963912345678';
       const submittedCode = '654321';
-      const hashedCode = crypto
-        .createHmac('sha256', process.env.OTP_HASH_SECRET)
-        .update(`${normalizedPhone}:${submittedCode}`)
-        .digest('hex');
+      const hashedCode = hashOtpForTest(normalizedPhone, submittedCode);
 
       global.mockDb.query
         .mockResolvedValueOnce({
@@ -192,6 +432,85 @@ describe('Auth Routes', () => {
       expect(res.body.isNew).toBe(false);
       expect(res.body.accessToken).toBeDefined();
       expect(global.mockDb.query.mock.calls[0][1]).toEqual([normalizedPhone]);
+    });
+  });
+
+  describe('POST /api/auth/register-phone', () => {
+    const validProfileData = {
+      full_name: 'User Name',
+      address_line1: 'Main Street',
+      city: 'Damascus',
+    };
+
+    it('returns 409 when user already exists for phone number', async () => {
+      const normalizedPhone = '+963912345678';
+      const code = '222222';
+      const hashedCode = hashOtpForTest(normalizedPhone, code);
+
+      global.mockDb.query
+        .mockResolvedValueOnce({
+          rows: [{
+            code: hashedCode,
+            expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+          }],
+        })
+        .mockResolvedValueOnce({ rows: [{ exists: 1 }] });
+
+      const res = await request(app)
+        .post('/api/auth/register-phone')
+        .send({
+          phone_number: normalizedPhone,
+          code,
+          profileData: validProfileData,
+        });
+
+      expect(res.status).toBe(409);
+      expect(res.body).toEqual({ error: 'User already exists with this phone number.' });
+    });
+
+    it('registers new user and returns tokens when OTP is valid', async () => {
+      const normalizedPhone = '+963912345678';
+      const code = '333333';
+      const hashedCode = hashOtpForTest(normalizedPhone, code);
+      const createdUser = {
+        user_id: 123456,
+        full_name: validProfileData.full_name,
+        phone_number: normalizedPhone,
+        address_line1: validProfileData.address_line1,
+        city: validProfileData.city,
+      };
+
+      global.mockDb.query
+        .mockResolvedValueOnce({
+          rows: [{
+            code: hashedCode,
+            expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+          }],
+        })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [createdUser] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      const res = await request(app)
+        .post('/api/auth/register-phone')
+        .send({
+          phone_number: '00963 912 345 678',
+          code,
+          profileData: validProfileData,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe('Registration successful');
+      expect(res.body.accessToken).toBeDefined();
+      expect(res.body.userProfile).toMatchObject({
+        user_id: createdUser.user_id,
+        phone_number: normalizedPhone,
+      });
+      expect(String(res.headers['set-cookie'] || '')).toContain('refreshToken=');
     });
   });
 

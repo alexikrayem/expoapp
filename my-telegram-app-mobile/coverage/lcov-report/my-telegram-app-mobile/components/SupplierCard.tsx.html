@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
@@ -113,7 +113,18 @@
 <a name='L48'></a><a href='#L48'>48</a>
 <a name='L49'></a><a href='#L49'>49</a>
 <a name='L50'></a><a href='#L50'>50</a>
-<a name='L51'></a><a href='#L51'>51</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -127,7 +138,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -161,33 +176,46 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from 'react';
-import { View } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import Text from '@/components/ThemedText';
 import { MapPin, Star } from 'lucide-react-native';
-import PressableScale from '@/components/ui/PressableScale';
+import { IMAGE_PLACEHOLDER_BLURHASH } from '@/utils/image';
+import type { Supplier } from '@/types';
 &nbsp;
 interface SupplierCardProps {
-    supplier: any;
+    supplier: Supplier;
     onShowDetails: (supplierId: string) =&gt; void;
 }
 &nbsp;
 const SupplierCard = <span class="cstat-no" title="statement not covered" >React.memo(<span class="fstat-no" title="function not covered" >({</span> supplier, onShowDetails }: SupplierCardProps) =&gt; {</span>
+    const supplierImage = <span class="cstat-no" title="statement not covered" >supplier.logoUrl || supplier.logo_url || supplier.logo || supplier.image_url || supplier.imageUrl;</span>
+    const supplierLocation = <span class="cstat-no" title="statement not covered" >supplier.city || supplier.location;</span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    return (</span>
-        &lt;PressableScale
-            className="bg-white rounded-xl shadow-sm mb-4 p-4 flex-row items-center border border-gray-100"
+        &lt;Pressable
             onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >onShowDetails(supplier.id)}</span>
-            scaleTo={0.98}
+            android_ripple={{ color: '#e2e8f0' }}
+            style={<span class="fstat-no" title="function not covered" >({</span> pressed }) =&gt; <span class="cstat-no" title="statement not covered" >[{ opacity: pressed ? 0.96 : 1 }]}</span>
+            className="bg-white rounded-xl shadow-sm mb-4 p-4 flex-row items-center border border-gray-100"
         &gt;
-            {supplier.logoUrl?.startsWith('http') ? (
+            {supplierImage?.startsWith('http') ? (
                 &lt;Image
-                    source={{ uri: supplier.logoUrl }}
+                    source={{ uri: supplierImage }}
                     style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#f3f4f6' }}
                     contentFit="cover"
                     transition={200}
+                    cachePolicy="memory-disk"
+                    placeholder={IMAGE_PLACEHOLDER_BLURHASH}
+                    recyclingKey={`supplier-${supplier.id ?? supplier.name}`}
                 /&gt;
             ) : (
                 &lt;View className="w-16 h-16 rounded-full bg-primary-100 items-center justify-center"&gt;
@@ -205,12 +233,14 @@ const SupplierCard = <span class="cstat-no" title="statement not covered" >React
                 &lt;Text className="text-gray-500 text-sm mb-2" numberOfLines={1}&gt;{supplier.category}&lt;/Text&gt;
                 &lt;View className="flex-row items-center"&gt;
                     &lt;MapPin size={12} color="#9CA3AF" className="mr-1" /&gt;
-                    &lt;Text className="text-gray-400 text-xs"&gt;{supplier.city}&lt;/Text&gt;
+                    &lt;Text className="text-gray-400 text-xs"&gt;{supplierLocation}&lt;/Text&gt;
                 &lt;/View&gt;
             &lt;/View&gt;
-        &lt;/PressableScale&gt;
+        &lt;/Pressable&gt;
     );
 });
+&nbsp;
+<span class="cstat-no" title="statement not covered" >SupplierCard.displayName = 'SupplierCard';</span>
 &nbsp;
 export default SupplierCard;
 &nbsp;</pre></td></tr></table></pre>
@@ -220,7 +250,7 @@ export default SupplierCard;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-12T11:40:20.952Z
+                at 2026-05-08T08:22:05.697Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -19,13 +19,25 @@ jest.mock("../../context/ToastContext", () => ({
   }),
 }))
 
+jest.mock("../../context/AuthContext", () => ({
+  useAuth: () => ({
+    isAuthenticated: true,
+    isGuest: false,
+    isLoading: false,
+    userProfile: null,
+    logout: jest.fn(),
+    refreshProfile: jest.fn(),
+    refreshAuth: jest.fn(),
+  }),
+}))
+
 const mockStorageGetItem = jest.fn()
 const mockStorageSetItem = jest.fn()
 
 jest.mock("../../utils/storage", () => ({
   storage: {
-    getItem: (...args: any[]) => mockStorageGetItem(...args),
-    setItem: (...args: any[]) => mockStorageSetItem(...args),
+    getItem: (...args: string[]) => mockStorageGetItem(...args),
+    setItem: (...args: string[]) => mockStorageSetItem(...args),
   },
 }))
 
@@ -35,7 +47,7 @@ const product = {
   image_url: "http://example.com/1.png",
   supplier_name: "Supplier",
   effective_selling_price: 5,
-} as any
+} as unknown as import("../../types").Product
 
 const CartConsumer = () => {
   const { cartItems, getCartItemCount, getCartTotal, actions, isLoadingCart } = useCart()

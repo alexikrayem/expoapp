@@ -1,5 +1,3 @@
-import { Image } from "expo-image"
-
 
 /**
  * Performance constants for lists

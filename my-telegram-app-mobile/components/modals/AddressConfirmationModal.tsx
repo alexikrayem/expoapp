@@ -1,13 +1,14 @@
 import React from 'react';
-import { View, Modal, ScrollView } from 'react-native';
+import { View, Modal } from 'react-native';
 import Text from '@/components/ThemedText';
 import { CheckCircle, Edit3, MapPin, User, Phone } from 'lucide-react-native';
 import PressableScale from '@/components/ui/PressableScale';
+import type { AddressData } from '@/types';
 
 interface AddressConfirmationModalProps {
     visible: boolean;
     onClose: () => void;
-    profileData: any;
+    profileData: AddressData;
     onConfirmAndProceed: () => void;
     onEditAddress: () => void;
     onCancel: () => void;

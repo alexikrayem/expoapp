@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/37</span>
+                <span class='fraction'>0/38</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/22</span>
+                <span class='fraction'>0/24</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/9</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/35</span>
+                <span class='fraction'>0/36</span>
             </div>
         
             
@@ -228,7 +228,12 @@
 <a name='L163'></a><a href='#L163'>163</a>
 <a name='L164'></a><a href='#L164'>164</a>
 <a name='L165'></a><a href='#L165'>165</a>
-<a name='L166'></a><a href='#L166'>166</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -348,7 +353,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -363,12 +367,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -394,13 +402,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator, Modal, Animated, StyleSheet } from 'react-native';
+import { View, Modal, Animated, StyleSheet, Pressable } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { SafeAreaView } from 'react-native-safe-area-context';
+&nbsp;
 import Text from '@/components/ThemedText';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { X, MapPin, Check } from 'lucide-react-native';
 import { cityService } from '@/services/cityService';
+import type { City } from '@/types';
 import { userService } from '@/services/userService';
 import { useAuth } from '@/context/AuthContext';
 import PressableScale from '@/components/ui/PressableScale';
@@ -412,7 +421,7 @@ interface CitySelectionModalProps {
 &nbsp;
 export default function <span class="fstat-no" title="function not covered" >CitySelectionModal(</span>{ visible, onClose }: CitySelectionModalProps) {
     const { userProfile, refreshProfile } = <span class="cstat-no" title="statement not covered" >useAuth();</span>
-    const [cities, setCities] = <span class="cstat-no" title="statement not covered" >useState&lt;any[]&gt;([]);</span>
+    const [cities, setCities] = <span class="cstat-no" title="statement not covered" >useState&lt;City[]&gt;([]);</span>
     const [isLoading, setIsLoading] = <span class="cstat-no" title="statement not covered" >useState(true);</span>
     const [isUpdating, setIsUpdating] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
 &nbsp;
@@ -441,12 +450,12 @@ export default function <span class="fstat-no" title="function not covered" >Cit
 <span class="cstat-no" title="statement not covered" >                setShowModal(false);</span>
             });
         }
-    }, [visible]);
+    }, [visible, slideAnim]);
 &nbsp;
     const fetchCities = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >        try {</span>
             const data = <span class="cstat-no" title="statement not covered" >await cityService.getCities();</span>
-<span class="cstat-no" title="statement not covered" >            setCities(data || []);</span>
+<span class="cstat-no" title="statement not covered" >            setCities((data as City[]) || []);</span>
         } catch (error) {
 <span class="cstat-no" title="statement not covered" >            console.error('Failed to fetch cities:', error);</span>
         } finally {
@@ -454,7 +463,7 @@ export default function <span class="fstat-no" title="function not covered" >Cit
         }
     };
 &nbsp;
-    const handleSelectCity = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (city: any) =&gt; {</span>
+    const handleSelectCity = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (city: City) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >        if (isUpdating) <span class="cstat-no" title="statement not covered" >return;</span></span>
 <span class="cstat-no" title="statement not covered" >        setIsUpdating(true);</span>
 <span class="cstat-no" title="statement not covered" >        try {</span>
@@ -480,9 +489,8 @@ export default function <span class="fstat-no" title="function not covered" >Cit
             navigationBarTranslucent
         &gt;
             &lt;View className="flex-1 justify-end bg-black/60 backdrop-blur-sm"&gt;
-                &lt;PressableScale
+                &lt;Pressable
                     onPress={onClose}
-                    scaleTo={1}
                     style={StyleSheet.absoluteFill}
                 /&gt;
                 &lt;Animated.View
@@ -523,17 +531,21 @@ export default function <span class="fstat-no" title="function not covered" >Cit
                     ) : (
                         &lt;FlashList
                             data={cities}
-                            keyExtractor={<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; <span class="cstat-no" title="statement not covered" >item.id.toString()}</span>
+                            keyExtractor={<span class="fstat-no" title="function not covered" >(i</span>tem: City) =&gt; <span class="cstat-no" title="statement not covered" >item.id.toString()}</span>
                             contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-                            // @ts-ignore
                             estimatedItemSize={80}
-                            renderItem={<span class="fstat-no" title="function not covered" >({</span> item }: { item: any }) =&gt; {
+                            removeClippedSubviews
+                            initialNumToRender={10}
+                            maxToRenderPerBatch={10}
+                            windowSize={5}
+                            renderItem={<span class="fstat-no" title="function not covered" >({</span> item }: { item: City }) =&gt; {
                                 const isSelected = <span class="cstat-no" title="statement not covered" >userProfile?.selected_city_id === item.id;</span>
 <span class="cstat-no" title="statement not covered" >                                return (</span>
-                                    &lt;PressableScale
+                                    &lt;Pressable
                                         onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >handleSelectCity(item)}</span>
                                         disabled={isUpdating}
-                                        scaleTo={0.98}
+                                        android_ripple={{ color: '#e2e8f0' }}
+                                        style={<span class="fstat-no" title="function not covered" >({</span> pressed }) =&gt; <span class="cstat-no" title="statement not covered" >[{ opacity: pressed ? 0.96 : 1 }]}</span>
                                         className={`flex-row items-center justify-between p-4 mb-3 rounded-2xl border active:scale-[0.99] ${isSelected
                                             ? 'bg-primary-50 border-primary-200'
                                             : 'bg-white border-border'
@@ -548,7 +560,7 @@ export default function <span class="fstat-no" title="function not covered" >Cit
                                         &lt;View className={`p-2.5 rounded-xl ml-3 ${isSelected ? 'bg-primary-100' : 'bg-surface border border-border'}`}&gt;
                                             &lt;MapPin size={20} color={isSelected ? '#2563EB' : '#94a3b8'} /&gt;
                                         &lt;/View&gt;
-                                    &lt;/PressableScale&gt;
+                                    &lt;/Pressable&gt;
                                 );
                             }}
                         /&gt;
@@ -565,7 +577,7 @@ export default function <span class="fstat-no" title="function not covered" >Cit
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-12T11:40:20.952Z
+                at 2026-05-08T08:22:05.697Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

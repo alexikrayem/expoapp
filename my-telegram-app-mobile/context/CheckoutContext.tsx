@@ -5,6 +5,7 @@ import { userService } from '../services/userService';
 import { orderService } from '../services/orderService';
 import { emitter } from '../utils/emitter';
 import { UserProfile } from '@/types';
+import { logger } from '@/utils/logger';
 
 interface AddressData {
     fullName: string;
@@ -77,7 +78,7 @@ export const CheckoutProvider = ({ children }: { children: React.ReactNode }) =>
 
         } catch (err: unknown) {
             const error = err as { status?: number; message?: string };
-            console.error('Order creation error:', error);
+            logger.error('Order creation error:', error);
             const errorMessage = error.message || 'فشل في إنشاء الطلب';
 
             if (error.status === 409 || error.message?.includes('Insufficient stock')) {
@@ -89,6 +90,7 @@ export const CheckoutProvider = ({ children }: { children: React.ReactNode }) =>
         } finally {
             setIsPlacingOrder(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cartItems, getCartTotal, cartActions, openModal]);
 
     const handleSaveAddressAndProceed = useCallback(async (addressData: AddressData, onProfileUpdate?: () => Promise<void>) => {
@@ -113,7 +115,7 @@ export const CheckoutProvider = ({ children }: { children: React.ReactNode }) =>
 
         } catch (err: unknown) {
             const error = err as { message?: string };
-            console.error('Error saving profile:', error);
+            logger.error('Error saving profile:', error);
             const errorMessage = error.message || 'فشل في حفظ البيانات';
             setCheckoutError(errorMessage);
             throw new Error(errorMessage);

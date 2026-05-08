@@ -8,7 +8,7 @@ import { emitter } from "../../utils/emitter"
 const mockOpenModal = jest.fn()
 const mockCloseModal = jest.fn()
 
-let mockCartItems: any[] = []
+let mockCartItems: import("../../types").CartItem[] = []
 const mockClearCart = jest.fn()
 const mockGetCartTotal = jest.fn(() => 25)
 
@@ -88,7 +88,7 @@ describe("CheckoutContext", () => {
     })
 
     const userProfile = {
-      userId: "u1",
+      id: "u1",
       full_name: "Jane Doe",
       phone_number: "111",
       address_line1: "Street 1",
@@ -117,7 +117,7 @@ describe("CheckoutContext", () => {
     })
 
     const userProfile = {
-      userId: "u1",
+      id: "u1",
       full_name: "Jane Doe",
       phone_number: "111",
       address_line1: "",
@@ -135,7 +135,7 @@ describe("CheckoutContext", () => {
   })
 
   it("creates order and opens confirmation modal", async () => {
-    ;(orderService.createOrderFromCart as jest.Mock).mockResolvedValue({
+    ; (orderService.createOrderFromCart as jest.Mock).mockResolvedValue({
       id: "order-1",
     })
 

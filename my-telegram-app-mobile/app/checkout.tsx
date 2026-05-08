@@ -8,11 +8,13 @@ import { useCart } from '@/context/CartContext';
 import { useCheckout } from '@/context/CheckoutContext';
 import { useModal } from '@/context/ModalContext';
 import { useCurrency } from '@/context/CurrencyContext';
-import { MapPin, CreditCard, CheckCircle, AlertCircle, ChevronRight, Edit3 } from 'lucide-react-native';
+import { MapPin, CreditCard, CheckCircle, AlertCircle, Edit3 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import AnimatedScreen from '@/components/ui/AnimatedScreen';
 import CheckoutSlider from '@/components/CheckoutSlider';
 import PressableScale from '@/components/ui/PressableScale';
+import { useAuthGate } from '@/hooks/useAuthGate';
+import type { AddressData } from '@/types';
 
 export default function CheckoutScreen() {
     const { userProfile, isAuthenticated, isLoading: isLoadingAuth, refreshProfile } = useAuth();
@@ -21,6 +23,16 @@ export default function CheckoutScreen() {
     const { openModal } = useModal();
     const { formatPrice } = useCurrency();
     const router = useRouter();
+    const { isGuest } = useAuthGate();
+
+    // Redirect guests to login
+    useEffect(() => {
+        if (isGuest) {
+            router.replace('/login');
+        }
+    }, [isGuest, router]);
+
+    if (isGuest) return null;
 
     const [paymentMethod, setPaymentMethod] = useState('cod'); // 'cod' or 'card'
 
@@ -39,7 +51,7 @@ export default function CheckoutScreen() {
             phoneNumber: userProfile.phone_number || '',
             addressLine1: userProfile.address_line1 || '',
             addressLine2: userProfile.address_line2 || '',
-            city: userProfile.city || (userProfile as any).selected_city_name || '',
+            city: userProfile.city || (userProfile as { selected_city_name?: string }).selected_city_name || '',
         };
 
         await placeOrder(addressData, refreshProfile);
@@ -56,7 +68,7 @@ export default function CheckoutScreen() {
 
         openModal('address', {
             initialData,
-            onSaveAndProceed: async (data: any) => {
+            onSaveAndProceed: async (_data: AddressData) => {
                 // We just want to save the address, not proceed with order immediately from modal
                 // But CheckoutContext's handleSaveAddressAndProceed does both.
                 // For now, we can use the same flow or just update profile.

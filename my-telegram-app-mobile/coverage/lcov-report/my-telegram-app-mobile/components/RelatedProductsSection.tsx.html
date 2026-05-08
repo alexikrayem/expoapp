@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/14</span>
+                <span class='fraction'>0/15</span>
             </div>
         
             
@@ -122,7 +122,16 @@
 <a name='L57'></a><a href='#L57'>57</a>
 <a name='L58'></a><a href='#L58'>58</a>
 <a name='L59'></a><a href='#L59'>59</a>
-<a name='L60'></a><a href='#L60'>60</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -146,21 +155,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -172,6 +169,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -181,7 +185,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from 'react';
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import Text from '@/components/ThemedText';
 import { FlashList } from "@shopify/flash-list";
@@ -205,9 +223,24 @@ export const RelatedProductsSection = <span class="cstat-no" title="statement no
     const { openModal } = <span class="cstat-no" title="statement not covered" >useModal();</span>
     const { actions: { addToCart } } = <span class="cstat-no" title="statement not covered" >useCart();</span>
 &nbsp;
-    // Mock user for favorites
-    const telegramUser = <span class="cstat-no" title="statement not covered" >{ id: 12345 };</span>
-    const { isFavorite, toggleFavorite } = <span class="cstat-no" title="statement not covered" >useFavorites(telegramUser);</span>
+    const { isFavorite, toggleFavorite } = <span class="cstat-no" title="statement not covered" >useFavorites();</span>
+&nbsp;
+    const renderItem = <span class="cstat-no" title="statement not covered" >useCallback(</span>
+<span class="fstat-no" title="function not covered" >        ({</span> item }: { item: Product }) =&gt; (
+<span class="cstat-no" title="statement not covered" >            &lt;View style={{ width: 160, marginRight: 12, height: 240 }}&gt;</span>
+                &lt;ProductCard
+                    product={item}
+                    onAddToCart={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >addToCart(item)}</span>
+                    onToggleFavorite={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >toggleFavorite(item.id)}</span>
+                    onShowDetails={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >openModal("productDetail", { product: item })}</span>
+                    isFavorite={isFavorite(item.id)}
+                /&gt;
+            &lt;/View&gt;
+        ),
+        [addToCart, isFavorite, openModal, toggleFavorite]
+    );
+&nbsp;
+    const keyExtractor = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >(i</span>tem: Product) =&gt; <span class="cstat-no" title="statement not covered" >item.id,</span> []);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (isLoading || !relatedProducts || relatedProducts.length === 0) <span class="cstat-no" title="statement not covered" >return null;</span></span>
 &nbsp;
@@ -220,22 +253,16 @@ export const RelatedProductsSection = <span class="cstat-no" title="statement no
                 data={relatedProducts}
 &nbsp;
                 // Explicitly type the item parameter here to eliminate the 'implicit any' error
-                renderItem={<span class="fstat-no" title="function not covered" >({</span> item }: { item: Product }) =&gt; (
-<span class="cstat-no" title="statement not covered" >                    &lt;View style={{ width: 160, marginRight: 12, height: 240 }}&gt;</span>
-                        &lt;ProductCard
-                            product={item}
-                            onAddToCart={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >addToCart(item)}</span>
-                            onToggleFavorite={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >toggleFavorite(item.id)}</span>
-                            onShowDetails={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >openModal("productDetail", { product: item })}</span>
-                            isFavorite={isFavorite(item.id)}
-                        /&gt;
-                    &lt;/View&gt;
-                )}
-                keyExtractor={<span class="fstat-no" title="function not covered" >(i</span>tem: Product) =&gt; <span class="cstat-no" title="statement not covered" >item.id}</span>
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 16 }}
                 inverted={true} // RTL support
                 estimatedItemSize={172}
+                removeClippedSubviews
+                initialNumToRender={4}
+                maxToRenderPerBatch={4}
+                windowSize={3}
             /&gt;
         &lt;/View&gt;
     );
@@ -247,7 +274,7 @@ export const RelatedProductsSection = <span class="cstat-no" title="statement no
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-12T11:40:20.952Z
+                at 2026-05-08T08:22:05.697Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

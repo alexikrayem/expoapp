@@ -2,18 +2,17 @@ import React, { useEffect } from 'react';
 import { View, Modal, Animated } from 'react-native';
 import Text from '@/components/ThemedText';
 import { CheckCircle, Package, MapPin, Phone, User, ArrowRight } from 'lucide-react-native';
-import { useCurrency } from '../../context/CurrencyContext';
 import PressableScale from '@/components/ui/PressableScale';
+import type { OrderConfirmationDetails, AddressData } from '@/types';
 
 interface OrderConfirmationModalProps {
     visible: boolean;
     onClose: () => void;
-    orderDetails: any;
-    customerInfo: any;
+    orderDetails: OrderConfirmationDetails;
+    customerInfo: AddressData;
 }
 
 export default function OrderConfirmationModal({ visible, onClose, orderDetails, customerInfo }: OrderConfirmationModalProps) {
-    const { formatPrice } = useCurrency();
     const fadeAnim = React.useRef(new Animated.Value(0)).current;
     const scaleAnim = React.useRef(new Animated.Value(0.5)).current;
 
@@ -42,7 +41,7 @@ export default function OrderConfirmationModal({ visible, onClose, orderDetails,
             fadeAnim.setValue(0);
             scaleAnim.setValue(0.5);
         }
-    }, [visible]);
+    }, [visible, fadeAnim, scaleAnim, onClose]);
 
     if (!visible) return null;
 

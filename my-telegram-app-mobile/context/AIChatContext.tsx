@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Keyboard } from 'react-native';
-import { useSharedValue, withSpring } from 'react-native-reanimated';
+import { useSharedValue, withSpring, SharedValue } from 'react-native-reanimated';
 
 interface AIChatContextType {
     isAIMode: boolean;
     toggleAIMode: () => void;
-    animation: any; // SharedValue<number>
+    animation: SharedValue<number>;
 }
 
 const AIChatContext = createContext<AIChatContextType | undefined>(undefined);

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { productService } from '../services/productService';
 import { useEffect } from 'react';
 import { prefetchImages } from '@/utils/image';
+import type { Deal } from '@/types';
 
 export const useDeals = (cityId: string | null) => {
     const { data, isLoading, isError, error, refetch, isRefetching } = useQuery({
@@ -14,7 +15,7 @@ export const useDeals = (cityId: string | null) => {
     useEffect(() => {
         if (!data || !Array.isArray(data)) return;
         prefetchImages(
-            data.map((deal: any) => deal.imageUrl || deal.image_url),
+            data.map((deal: Deal) => deal.imageUrl || deal.image_url),
             8
         );
     }, [data]);
